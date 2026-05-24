@@ -10,7 +10,6 @@ on:
         default: smoke
         options:
           - smoke
-          - all
 
 permissions:
   contents: read
@@ -19,15 +18,6 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - stack: smoke
-            compose_file: stacks/smoke/docker-compose.yml
-            env_file: |
-              TZ=Europe/Moscow
-    if: ${{ inputs.stack == 'all' || inputs.stack == matrix.stack }}
     steps:
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
@@ -36,10 +26,11 @@ jobs:
           ssh-port: ${{ vars.SERVER_SSH_PORT }}
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-          service-folder: ${{ vars.SERVICE_FOLDER }}/${{ matrix.stack }}
+          service-folder: ${{ vars.SERVICE_FOLDER }}/${{ inputs.stack }}
 
-          compose-file: ${{ matrix.compose_file }}
-          env-file: ${{ matrix.env_file }}
+          compose-file: stacks/${{ inputs.stack }}/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
 
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}
