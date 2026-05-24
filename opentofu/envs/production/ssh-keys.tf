@@ -5,6 +5,14 @@ resource "twc_ssh_key" "oldstrategyforge_273273" {
 
   lifecycle {
     prevent_destroy = true
+
+    postcondition {
+      condition = contains(
+        [for server in self.used_by : tostring(server.id)],
+        tostring(twc_server.tacticalheroes_dev.id)
+      )
+      error_message = "OldStrategyForge SSH key must be attached to TacticalHeroes.Dev in Timeweb."
+    }
   }
 }
 
@@ -23,5 +31,13 @@ resource "twc_ssh_key" "infrastructure_605568" {
 
   lifecycle {
     prevent_destroy = true
+
+    postcondition {
+      condition = contains(
+        [for server in self.used_by : tostring(server.id)],
+        tostring(twc_server.infrastructure.id)
+      )
+      error_message = "Infrastructure SSH key must be attached to infrastructure in Timeweb."
+    }
   }
 }
