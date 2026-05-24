@@ -10,7 +10,7 @@ override.tf.json
 *_override.tf.json
 .env
 *.env
-!compose/.env.example
+!stacks/**/.env.example
 
 ansible/*.retry
 ansible/collections/

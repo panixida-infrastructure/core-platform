@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap infrastructure server
-  hosts: infra
+  hosts: core_platform
   become: true
   gather_facts: true
 
@@ -31,9 +31,9 @@
         append: true
       loop: "{{ docker_users }}"
 
-    - name: Create infra service folder
+    - name: Create core platform base folder
       ansible.builtin.file:
-        path: "{{ infra_service_folder }}"
+        path: "{{ core_platform_base_folder }}"
         state: directory
         owner: root
         group: root

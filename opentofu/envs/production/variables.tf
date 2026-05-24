@@ -1,5 +1,5 @@
 variable "twc_token" {
-  description = "Timeweb Cloud API token. Prefer TWC_TOKEN/TF_VAR_twc_token in environment, not tfvars."
+  description = "Timeweb Cloud API token. Prefer TF_VAR_twc_token in environment, not tfvars."
   type        = string
   sensitive   = true
   default     = null

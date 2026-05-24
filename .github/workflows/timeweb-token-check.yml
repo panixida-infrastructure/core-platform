@@ -1,0 +1,32 @@
+name: Timeweb Token Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check token availability
+        env:
+          TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TIMEWEB_TOKEN:-}" ]; then
+            echo "::error::TIMEWEB_TOKEN is not available to this repository"
+            exit 1
+          fi
+
+          status="$(
+            curl -sS \
+              -o /tmp/timeweb-projects.json \
+              -w "%{http_code}" \
+              -H "Authorization: Bearer ${TIMEWEB_TOKEN}" \
+              https://api.timeweb.cloud/api/v1/projects
+          )"
+
+          echo "Timeweb /api/v1/projects HTTP status: ${status}"
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            exit 1
+          fi

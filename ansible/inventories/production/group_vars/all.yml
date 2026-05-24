@@ -1,5 +1,5 @@
 ---
-infra_service_folder: /root/infra
-infra_timezone: Europe/Moscow
+core_platform_base_folder: /opt/core-platform
+core_platform_timezone: Europe/Moscow
 docker_users:
   - codexvpn
