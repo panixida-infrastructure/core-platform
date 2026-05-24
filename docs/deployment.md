@@ -50,12 +50,6 @@ The playbook currently manages only the base server shape required by compose de
 - `/opt/core-platform`.
 - The shared Docker network `core-platform-edge`.
 
-The initial smoke stack passes its non-secret env inline:
-
-```text
-TZ=Europe/Moscow
-```
-
 The deploy action uploads the selected stack compose file and the generated `.env` file to the server folder, then runs:
 
 ```bash
@@ -64,7 +58,7 @@ docker compose up -d --pull always
 docker image prune -a -f
 ```
 
-The initial workflow logs in to `ghcr.io` with the ephemeral `GITHUB_TOKEN` only because the shared action requires registry inputs. The initial stack uses public images and does not require a long-lived registry PAT.
+The deploy workflow logs in to `ghcr.io` with the ephemeral `GITHUB_TOKEN` only because the shared action requires registry inputs. Current platform stacks use public images and do not require a long-lived registry PAT.
 
 The `komodo` stack also needs bootstrap secrets for its local database and initial admin. OIDC should be enabled after the Keycloak realm and client exist.
 

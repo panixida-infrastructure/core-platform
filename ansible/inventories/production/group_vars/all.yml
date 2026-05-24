@@ -34,3 +34,4 @@ docker_users:
 
 retired_compose_stacks:
   - portainer
+  - smoke
