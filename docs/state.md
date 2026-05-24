@@ -17,13 +17,16 @@ For this platform, the preferred next step is an S3-compatible backend, for exam
 ```hcl
 terraform {
   backend "s3" {
-    endpoint                    = "https://s3.twcstorage.ru"
     bucket                      = "panixida-tofu-state"
     key                         = "core-platform/production.tfstate"
     region                      = "ru-1"
+    endpoints                   = {
+      s3 = "https://s3.twcstorage.ru"
+    }
     skip_credentials_validation = true
     skip_metadata_api_check     = true
     skip_region_validation      = true
+    skip_requesting_account_id  = true
     use_lockfile                = true
   }
 }
