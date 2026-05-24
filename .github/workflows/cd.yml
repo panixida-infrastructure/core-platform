@@ -11,12 +11,16 @@ on:
         options:
           - edge
           - identity
+          - identity-sso
           - secrets
           - komodo
+          - observability
+          - sonarqube
 
 permissions:
   contents: read
   packages: read
+  id-token: write
 
 concurrency:
   group: core-platform-deploy-production
@@ -27,6 +31,12 @@ jobs:
     if: inputs.stack == 'edge'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh edge
+
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
           server-user: ${{ vars.SERVER_USER }}
@@ -41,6 +51,11 @@ jobs:
             TZ=Europe/Moscow
             TRAEFIK_ACME_EMAIL=${{ vars.TRAEFIK_ACME_EMAIL }}
             TRAEFIK_DASHBOARD_HOST=traefik.panixida.ru
+            OAUTH2_PROXY_HOST=auth.panixida.ru
+            OAUTH2_PROXY_CLIENT_ID=panixida-edge
+            OAUTH2_PROXY_CLIENT_SECRET=${{ steps.openbao.outputs.OAUTH2_PROXY_CLIENT_SECRET }}
+            OAUTH2_PROXY_COOKIE_SECRET=${{ steps.openbao.outputs.OAUTH2_PROXY_COOKIE_SECRET }}
+            SSO_OIDC_ISSUER_URL=https://identity.panixida.ru/realms/panixida
 
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}
@@ -50,6 +65,12 @@ jobs:
     if: inputs.stack == 'identity'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh identity
+
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
           server-user: ${{ vars.SERVER_USER }}
@@ -66,10 +87,10 @@ jobs:
             KEYCLOAK_DB_HOST=89.191.229.210
             KEYCLOAK_DB_PORT=5432
             KEYCLOAK_DB_NAME=keycloak
-            KEYCLOAK_DB_USERNAME=${{ secrets.KEYCLOAK_DB_USERNAME }}
-            KEYCLOAK_DB_PASSWORD=${{ secrets.KEYCLOAK_DB_PASSWORD }}
-            KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME=${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
-            KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
+            KEYCLOAK_DB_USERNAME=${{ steps.openbao.outputs.KEYCLOAK_DB_USERNAME }}
+            KEYCLOAK_DB_PASSWORD=${{ steps.openbao.outputs.KEYCLOAK_DB_PASSWORD }}
+            KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME=${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
+            KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
 
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}
@@ -101,6 +122,12 @@ jobs:
     if: inputs.stack == 'komodo'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh komodo
+
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
           server-user: ${{ vars.SERVER_USER }}
@@ -118,14 +145,14 @@ jobs:
             KOMODO_HOST=https://komodo.panixida.ru
             KOMODO_TITLE=Panixida Komodo
             KOMODO_LOCAL_AUTH=true
-            KOMODO_INIT_ADMIN_USERNAME=${{ secrets.KOMODO_INIT_ADMIN_USERNAME }}
-            KOMODO_INIT_ADMIN_PASSWORD=${{ secrets.KOMODO_INIT_ADMIN_PASSWORD }}
+            KOMODO_INIT_ADMIN_USERNAME=${{ steps.openbao.outputs.KOMODO_INIT_ADMIN_USERNAME }}
+            KOMODO_INIT_ADMIN_PASSWORD=${{ steps.openbao.outputs.KOMODO_INIT_ADMIN_PASSWORD }}
             KOMODO_DISABLE_USER_REGISTRATION=true
             KOMODO_ENABLE_NEW_USERS=false
-            KOMODO_DATABASE_USERNAME=${{ secrets.KOMODO_DATABASE_USERNAME }}
-            KOMODO_DATABASE_PASSWORD=${{ secrets.KOMODO_DATABASE_PASSWORD }}
-            KOMODO_WEBHOOK_SECRET=${{ secrets.KOMODO_WEBHOOK_SECRET }}
-            KOMODO_JWT_SECRET=${{ secrets.KOMODO_JWT_SECRET }}
+            KOMODO_DATABASE_USERNAME=${{ steps.openbao.outputs.KOMODO_DATABASE_USERNAME }}
+            KOMODO_DATABASE_PASSWORD=${{ steps.openbao.outputs.KOMODO_DATABASE_PASSWORD }}
+            KOMODO_WEBHOOK_SECRET=${{ steps.openbao.outputs.KOMODO_WEBHOOK_SECRET }}
+            KOMODO_JWT_SECRET=${{ steps.openbao.outputs.KOMODO_JWT_SECRET }}
             KOMODO_FIRST_SERVER_NAME=infrastructure
             PERIPHERY_CORE_ADDRESS=ws://core:9120
             PERIPHERY_CONNECT_AS=infrastructure
@@ -137,8 +164,179 @@ jobs:
             KOMODO_OIDC_ENABLED=${{ vars.KOMODO_OIDC_ENABLED }}
             KOMODO_OIDC_PROVIDER=${{ vars.KOMODO_OIDC_PROVIDER }}
             KOMODO_OIDC_CLIENT_ID=${{ vars.KOMODO_OIDC_CLIENT_ID }}
-            KOMODO_OIDC_CLIENT_SECRET=${{ secrets.KOMODO_OIDC_CLIENT_SECRET }}
+            KOMODO_OIDC_CLIENT_SECRET=${{ steps.openbao.outputs.KOMODO_OIDC_CLIENT_SECRET }}
+            KOMODO_OIDC_USE_FULL_EMAIL=true
+            KOMODO_OIDC_AUTO_REDIRECT=true
 
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}
           registry-token: ${{ github.token }}
+
+  observability:
+    if: inputs.stack == 'observability'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh observability
+
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/observability
+
+          compose-file: stacks/observability/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            GRAFANA_HOST=grafana.panixida.ru
+            METRICS_HOST=metrics.panixida.ru
+            LOGS_HOST=logs.panixida.ru
+            TRACES_HOST=traces.panixida.ru
+            ALERTS_HOST=alerts.panixida.ru
+            GRAFANA_ADMIN_USER=${{ steps.openbao.outputs.GRAFANA_ADMIN_USER }}
+            GRAFANA_ADMIN_PASSWORD=${{ steps.openbao.outputs.GRAFANA_ADMIN_PASSWORD }}
+            GRAFANA_OIDC_CLIENT_SECRET=${{ steps.openbao.outputs.GRAFANA_OIDC_CLIENT_SECRET }}
+            OBSERVABILITY_VM_REMOTE_WRITE_USERNAME=${{ steps.openbao.outputs.OBSERVABILITY_VM_REMOTE_WRITE_USERNAME }}
+            OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD=${{ steps.openbao.outputs.OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD }}
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+  sonarqube:
+    if: inputs.stack == 'sonarqube'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh sonarqube
+
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/sonarqube
+
+          compose-file: stacks/sonarqube/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            SONAR_HOST=sonar.panixida.ru
+            SONAR_DB_USERNAME=${{ steps.openbao.outputs.SONAR_DB_USERNAME }}
+            SONAR_DB_PASSWORD=${{ steps.openbao.outputs.SONAR_DB_PASSWORD }}
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+      - name: Set SonarQube admin password
+        env:
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SONAR_ADMIN_PASSWORD: ${{ steps.openbao.outputs.SONAR_ADMIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ssh_key
+          ssh -i ssh_key -p "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" "
+            set -euo pipefail
+            for i in \$(seq 1 60); do
+              if docker run --rm --network sonarqube_internal curlimages/curl:8.17.0 -fsS http://sonarqube:9000/api/system/status >/tmp/sonar-status.json 2>/dev/null; then
+                if grep -q '\"status\":\"UP\"' /tmp/sonar-status.json; then
+                  break
+                fi
+              fi
+              sleep 10
+            done
+
+            docker run --rm --network sonarqube_internal curlimages/curl:8.17.0 -fsS \
+              -u admin:admin \
+              -X POST http://sonarqube:9000/api/users/change_password \
+              -d login=admin \
+              -d previousPassword=admin \
+              --data-urlencode password='${SONAR_ADMIN_PASSWORD}' || true
+          "
+
+  identity-sso:
+    if: inputs.stack == 'identity-sso'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch OpenBao secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh identity-sso
+
+      - name: Configure Keycloak SSO realm and clients
+        env:
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME: ${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
+          KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
+          SSO_ADMIN_USERNAME: ${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
+          SSO_ADMIN_PASSWORD: ${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
+          SSO_ADMIN_EMAIL: admin@panixida.ru
+          KOMODO_OIDC_CLIENT_SECRET: ${{ steps.openbao.outputs.KOMODO_OIDC_CLIENT_SECRET }}
+          OAUTH2_PROXY_CLIENT_SECRET: ${{ steps.openbao.outputs.OAUTH2_PROXY_CLIENT_SECRET }}
+          GRAFANA_OIDC_CLIENT_SECRET: ${{ steps.openbao.outputs.GRAFANA_OIDC_CLIENT_SECRET }}
+          OPENBAO_OIDC_CLIENT_SECRET: ${{ steps.openbao.outputs.OPENBAO_OIDC_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for name in SERVER_USER SERVER_HOST SERVER_SSH_PORT SERVER_SSH_PRIVATE_KEY KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD KOMODO_OIDC_CLIENT_SECRET OAUTH2_PROXY_CLIENT_SECRET GRAFANA_OIDC_CLIENT_SECRET OPENBAO_OIDC_CLIENT_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is required"
+              exit 1
+            fi
+          done
+
+          umask 077
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ssh_key
+          {
+            printf 'KEYCLOAK_REALM=%s\n' panixida
+            printf 'KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME=%s\n' "$KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME"
+            printf 'KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=%s\n' "$KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD"
+            printf 'SSO_ADMIN_USERNAME=%s\n' "$SSO_ADMIN_USERNAME"
+            printf 'SSO_ADMIN_PASSWORD=%s\n' "$SSO_ADMIN_PASSWORD"
+            printf 'SSO_ADMIN_EMAIL=%s\n' "$SSO_ADMIN_EMAIL"
+            printf 'KOMODO_OIDC_CLIENT_SECRET=%s\n' "$KOMODO_OIDC_CLIENT_SECRET"
+            printf 'OAUTH2_PROXY_CLIENT_SECRET=%s\n' "$OAUTH2_PROXY_CLIENT_SECRET"
+            printf 'GRAFANA_OIDC_CLIENT_SECRET=%s\n' "$GRAFANA_OIDC_CLIENT_SECRET"
+            printf 'OPENBAO_OIDC_CLIENT_SECRET=%s\n' "$OPENBAO_OIDC_CLIENT_SECRET"
+          } > keycloak-sso.env
+
+          ssh -i ssh_key -p "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" "install -m 0700 -d /tmp/core-platform-sso"
+          scp -i ssh_key -P "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no keycloak-sso.env scripts/keycloak/configure-sso.sh "$SERVER_USER@$SERVER_HOST:/tmp/core-platform-sso/"
+          ssh -i ssh_key -p "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" '
+            set -euo pipefail
+            cd /tmp/core-platform-sso
+            set -a
+            . ./keycloak-sso.env
+            set +a
+            docker exec -i \
+              -e KEYCLOAK_REALM \
+              -e KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME \
+              -e KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD \
+              -e SSO_ADMIN_USERNAME \
+              -e SSO_ADMIN_PASSWORD \
+              -e SSO_ADMIN_EMAIL \
+              -e KOMODO_OIDC_CLIENT_SECRET \
+              -e OAUTH2_PROXY_CLIENT_SECRET \
+              -e GRAFANA_OIDC_CLIENT_SECRET \
+              -e OPENBAO_OIDC_CLIENT_SECRET \
+              identity-keycloak-1 bash -s < configure-sso.sh
+            rm -rf /tmp/core-platform-sso
+          '

@@ -2,6 +2,7 @@
 core_platform_base_folder: /opt/core-platform
 core_platform_edge_network: core-platform-edge
 core_platform_timezone: Europe/Moscow
+core_platform_observability_folder: "{{ core_platform_base_folder }}/observability"
 
 core_platform_operator_user: codexvpn
 core_platform_operator_uid: 1500
@@ -36,3 +37,15 @@ docker_users:
 retired_compose_stacks:
   - portainer
   - smoke
+
+observability_agent_folder: /opt/core-platform/agents
+observability_node_exporter_image: "{{ lookup('env', 'OBSERVABILITY_NODE_EXPORTER_IMAGE') | default('quay.io/prometheus/node-exporter:v1.11.1', true) }}"
+observability_cadvisor_image: "{{ lookup('env', 'OBSERVABILITY_CADVISOR_IMAGE') | default('gcr.io/cadvisor/cadvisor:v0.52.1', true) }}"
+observability_vmagent_image: "{{ lookup('env', 'OBSERVABILITY_VMAGENT_IMAGE') | default('victoriametrics/vmagent:v1.143.0', true) }}"
+observability_vlagent_image: "{{ lookup('env', 'OBSERVABILITY_VLAGENT_IMAGE') | default('victoriametrics/vlagent:v1.50.0', true) }}"
+observability_vm_remote_write_url: "{{ lookup('env', 'OBSERVABILITY_VM_REMOTE_WRITE_URL') | default('https://metrics.panixida.ru/api/v1/write', true) }}"
+observability_vm_remote_write_username: "{{ lookup('env', 'OBSERVABILITY_VM_REMOTE_WRITE_USERNAME') }}"
+observability_vm_remote_write_password: "{{ lookup('env', 'OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD') }}"
+observability_logs_remote_write_url: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_URL') | default('https://logs.panixida.ru/insert/native', true) }}"
+observability_logs_remote_write_username: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_USERNAME') | default(observability_vm_remote_write_username, true) }}"
+observability_logs_remote_write_password: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_PASSWORD') | default(observability_vm_remote_write_password, true) }}"

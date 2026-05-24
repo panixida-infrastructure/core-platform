@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - https://identity.panixida.ru
+          - https://komodo.panixida.ru
+          - https://secrets.panixida.ru
+          - https://traefik.panixida.ru
+          - https://grafana.panixida.ru
+          - https://sonar.panixida.ru
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  - job_name: keycloak
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - identity-keycloak-1:9000
+
+  - job_name: victoria
+    static_configs:
+      - targets:
+          - victoriametrics:8428
+          - victorialogs:9428
+          - victoriatraces:10428
+          - vmagent:8429
+          - vmalert:8880

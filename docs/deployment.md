@@ -31,15 +31,16 @@ TIMEWEB_TOKEN
 
 ## Repository secrets
 
-Set these on this repository while OpenBao bootstrap is still in progress:
+Repository secrets should contain only OpenTofu state backend credentials:
 
 ```text
-SERVER_GH_PAT
+TOFU_STATE_ACCESS_KEY
+TOFU_STATE_SECRET_KEY
 ```
 
 ## Server bootstrap
 
-Server package/bootstrap changes go through the manual `Ansible Bootstrap` workflow. It runs `ansible/playbooks/bootstrap.yml` over SSH using the organization/repository SSH variables and secret.
+Server package/bootstrap changes go through the manual `Ansible Bootstrap` workflow. It runs `ansible/playbooks/bootstrap.yml` over SSH using organization SSH variables and the organization `SERVER_SSH_PRIVATE_KEY` secret. Runtime bootstrap secrets are read from OpenBao through GitHub Actions OIDC.
 
 The playbook currently manages only the base server shape required by compose deployments:
 
@@ -60,7 +61,7 @@ docker image prune -a -f
 
 The deploy workflow logs in to `ghcr.io` with the ephemeral `GITHUB_TOKEN` only because the shared action requires registry inputs. Current platform stacks use public images and do not require a long-lived registry PAT.
 
-The `komodo` stack also needs bootstrap secrets for its local database and initial admin. OIDC should be enabled after the Keycloak realm and client exist.
+The `komodo` stack reads its local database, initial admin, and OIDC secrets from OpenBao.
 
 The `identity` stack starts Keycloak in production mode and uses the PostgreSQL default `public` schema.
 
@@ -74,6 +75,7 @@ Use one folder under `/opt/core-platform` per platform area:
 /opt/core-platform/observability
 /opt/core-platform/secrets
 /opt/core-platform/komodo
+/opt/core-platform/sonarqube
 ```
 
 Each stack gets its own compose file under `stacks/<stack>/docker-compose.yml` and should be deployed independently.
@@ -85,4 +87,25 @@ traefik.panixida.ru
 identity.panixida.ru
 secrets.panixida.ru
 komodo.panixida.ru
+auth.panixida.ru
+grafana.panixida.ru
+metrics.panixida.ru
+logs.panixida.ru
+traces.panixida.ru
+alerts.panixida.ru
+sonar.panixida.ru
 ```
+
+## Managed server agents
+
+The `Ansible Bootstrap` workflow runs two playbooks:
+
+- `bootstrap.yml` configures only the core platform server.
+- `managed-agents.yml` configures every host in the `managed_servers` inventory group.
+
+SSH keys are host-specific:
+
+- `SERVER_SSH_PRIVATE_KEY` is used only for `infrastructure`.
+- `TACTICALHEROES_DEV_SSH_PRIVATE_KEY` is used only for `TacticalHeroes.Dev`.
+
+The managed agents stack installs `node_exporter`, `cAdvisor`, `vmagent`, and `vlagent` on every managed server. Metrics are remote-written to VictoriaMetrics and logs are remote-written to VictoriaLogs.

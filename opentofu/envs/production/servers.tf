@@ -4,6 +4,7 @@ resource "twc_server" "tacticalheroes_dev" {
   os_id             = 47
   preset_id         = 2455
   project_id        = 1152653
+  ssh_keys_ids      = [twc_ssh_key.oldstrategyforge_273273.id]
 
   lifecycle {
     prevent_destroy = true
@@ -16,6 +17,7 @@ resource "twc_server" "infrastructure" {
   os_id             = 145
   preset_id         = 4803
   project_id        = 1619863
+  ssh_keys_ids      = [twc_ssh_key.infrastructure_605568.id]
 
   lifecycle {
     prevent_destroy = true

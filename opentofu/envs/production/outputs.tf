@@ -38,6 +38,13 @@ output "timeweb_inventory" {
       identity = "identity.panixida.ru"
       secrets  = "secrets.panixida.ru"
       komodo   = "komodo.panixida.ru"
+      auth     = "auth.panixida.ru"
+      grafana  = "grafana.panixida.ru"
+      metrics  = "metrics.panixida.ru"
+      logs     = "logs.panixida.ru"
+      traces   = "traces.panixida.ru"
+      alerts   = "alerts.panixida.ru"
+      sonar    = "sonar.panixida.ru"
     }
   }
 }

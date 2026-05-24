@@ -49,6 +49,7 @@ jobs:
       - name: Syntax check
         run: |
           ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/bootstrap.yml --syntax-check
+          ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/managed-agents.yml --syntax-check
 
       - name: Lint
         run: ansible-lint ansible/playbooks

@@ -1,4 +1,40 @@
 services:
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.12.0
+    restart: unless-stopped
+    command:
+      - --provider=oidc
+      - --oidc-issuer-url=${SSO_OIDC_ISSUER_URL}
+      - --client-id=${OAUTH2_PROXY_CLIENT_ID}
+      - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
+      - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
+      - --cookie-secure=true
+      - --cookie-domain=.panixida.ru
+      - --email-domain=*
+      - --http-address=0.0.0.0:4180
+      - --redirect-url=https://${OAUTH2_PROXY_HOST}/oauth2/callback
+      - --reverse-proxy=true
+      - --set-xauthrequest=true
+      - --pass-access-token=true
+      - --pass-authorization-header=true
+      - --upstream=static://202
+    networks:
+      - edge
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.oauth2-proxy.rule=Host(`${OAUTH2_PROXY_HOST}`)
+      - traefik.http.routers.oauth2-proxy.entrypoints=websecure
+      - traefik.http.routers.oauth2-proxy.tls=true
+      - traefik.http.routers.oauth2-proxy.tls.certresolver=letsencrypt
+      - traefik.http.services.oauth2-proxy.loadbalancer.server.port=4180
+      - traefik.http.middlewares.sso-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth
+      - traefik.http.middlewares.sso-auth.forwardauth.trustForwardHeader=true
+      - traefik.http.middlewares.sso-auth.forwardauth.authResponseHeaders=X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Preferred-Username,Authorization
+      - traefik.http.middlewares.sso-signin.errors.status=401
+      - traefik.http.middlewares.sso-signin.errors.service=oauth2-proxy
+      - traefik.http.middlewares.sso-signin.errors.query=/oauth2/sign_in?rd={url}
+      - traefik.http.middlewares.sso.chain.middlewares=sso-auth,sso-signin
+
   traefik:
     image: traefik:v3.7.1
     restart: unless-stopped
@@ -32,6 +68,7 @@ services:
       - traefik.http.routers.traefik.tls=true
       - traefik.http.routers.traefik.tls.certresolver=letsencrypt
       - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.middlewares=sso@docker
 
 volumes:
   traefik_letsencrypt:

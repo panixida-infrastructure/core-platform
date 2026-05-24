@@ -351,13 +351,6 @@
   ],
   "ssh_keys": [
     {
-      "id": 245799,
-      "name": "OldStrategyForge",
-      "is_default": false,
-      "created_at": "2024-11-10T19:01:49.000Z",
-      "body": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPX6O0nnlxe9pdm7jHFuyqUHj8ygP5JvHLUCNYomOdra OldStrategyForge"
-    },
-    {
       "id": 273273,
       "name": "OldStrategyForge",
       "is_default": true,
@@ -481,11 +474,6 @@
       "name": "postgres_database",
       "import_id": "4104619",
       "note": "managed through twc_database_cluster; Timeweb API also reports cluster_id 439761"
-    },
-    {
-      "resource_type": "twc_ssh_key",
-      "name": "oldstrategyforge_245799",
-      "import_id": "245799"
     },
     {
       "resource_type": "twc_ssh_key",

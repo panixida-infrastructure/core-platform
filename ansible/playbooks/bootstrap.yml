@@ -280,6 +280,52 @@
       when: core_platform_edge_network_check.rc != 0
       changed_when: core_platform_edge_network_check.rc != 0
 
+    - name: Configure SonarQube sysctl
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-sonarqube.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          vm.max_map_count = 524288
+      notify: Reload sysctl
+
+    - name: Create observability config folders
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ core_platform_observability_folder }}/config/alertmanager"
+        - "{{ core_platform_observability_folder }}/config/blackbox"
+        - "{{ core_platform_observability_folder }}/config/grafana/provisioning/datasources"
+        - "{{ core_platform_observability_folder }}/config/otelcol"
+        - "{{ core_platform_observability_folder }}/config/vmagent"
+        - "{{ core_platform_observability_folder }}/config/vmalert"
+
+    - name: Render observability config files
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ core_platform_observability_folder }}/config/{{ item.dest }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - src: observability-alertmanager.yml.j2
+          dest: alertmanager/alertmanager.yml
+        - src: observability-blackbox.yml.j2
+          dest: blackbox/blackbox.yml
+        - src: observability-grafana-datasources.yml.j2
+          dest: grafana/provisioning/datasources/datasources.yml
+        - src: observability-otelcol.yml.j2
+          dest: otelcol/config.yml
+        - src: observability-vmagent.yml.j2
+          dest: vmagent/scrape.yml
+        - src: observability-vmalert.yml.j2
+          dest: vmalert/rules.yml
+
   handlers:
     - name: Reload ssh
       ansible.builtin.service:

@@ -23,7 +23,6 @@ import_if_missing twc_server.infrastructure 8034806
 
 import_if_missing twc_database_cluster.postgres_database 4104619
 
-import_if_missing twc_ssh_key.oldstrategyforge_245799 245799
 import_if_missing twc_ssh_key.oldstrategyforge_273273 273273
 import_if_missing twc_ssh_key.infrastructure_605568 605568
 

@@ -12,10 +12,9 @@ Planned platform layers:
 
 - Traefik + Let's Encrypt for public entrypoints.
 - Keycloak for SSO.
-- Prometheus, Grafana, Alloy, Loki, Tempo for observability.
-- OpenBao or Infisical for secrets.
+- Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmalert, Alertmanager, blackbox_exporter, vmagent, vlagent, and OpenTelemetry Collector for observability.
+- OpenBao for secrets.
 - Komodo for server and compose management.
-- Harbor plus BaGetter or Nexus for registries/packages.
 - Restic backups with restore checks.
 - Trivy, SonarQube, CodeQL in CI.
 - K3s later, if Docker Compose stops being enough.
@@ -41,9 +40,10 @@ Examples:
 
 - `/opt/core-platform/edge` for Traefik and public entrypoints.
 - `/opt/core-platform/identity` for Keycloak.
-- `/opt/core-platform/observability` for Prometheus, Grafana, Alloy, Loki, Tempo.
-- `/opt/core-platform/secrets` for OpenBao or Infisical.
+- `/opt/core-platform/observability` for Grafana and the VictoriaMetrics observability stack.
+- `/opt/core-platform/secrets` for OpenBao.
 - `/opt/core-platform/komodo` for Komodo.
+- `/opt/core-platform/sonarqube` for SonarQube.
 - `/opt/core-platform/backups` for Restic jobs.
 
 This keeps blast radius small: deploying one stack should not restart unrelated platform tools.

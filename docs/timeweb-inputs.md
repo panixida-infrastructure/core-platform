@@ -19,7 +19,7 @@ OpenTofu currently models these existing Timeweb resources:
 - Projects.
 - Two cloud servers.
 - One managed Postgres database cluster through `twc_database_cluster`.
-- Three SSH public keys.
+- Two SSH public keys.
 - Three floating IPs.
 - The Timeweb S3 bucket used for state, as a data source.
 

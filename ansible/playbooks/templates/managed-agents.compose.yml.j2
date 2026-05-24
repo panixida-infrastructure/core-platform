@@ -1,0 +1,77 @@
+services:
+  node_exporter:
+    image: {{ observability_node_exporter_image }}
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.rootfs=/host
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - agents
+
+  cadvisor:
+    image: {{ observability_cadvisor_image }}
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - agents
+
+  vmagent:
+    image: {{ observability_vmagent_image }}
+    restart: unless-stopped
+    command:
+      - -promscrape.config=/etc/vmagent/vmagent.yml
+      - -remoteWrite.url={{ observability_vm_remote_write_url }}
+      - -remoteWrite.tmpDataPath=/vmagentdata
+{% if observability_vm_remote_write_username | length > 0 %}
+      - -remoteWrite.basicAuth.username={{ observability_vm_remote_write_username }}
+{% endif %}
+{% if observability_vm_remote_write_password | length > 0 %}
+      - -remoteWrite.basicAuth.password={{ observability_vm_remote_write_password }}
+{% endif %}
+    volumes:
+      - ./vmagent.yml:/etc/vmagent/vmagent.yml:ro
+      - vmagent_data:/vmagentdata
+    depends_on:
+      - node_exporter
+      - cadvisor
+    networks:
+      - agents
+
+  vlagent:
+    image: {{ observability_vlagent_image }}
+    restart: unless-stopped
+    command:
+      - -remoteWrite.url={{ observability_logs_remote_write_url }}
+      - -remoteWrite.tmpDataPath=/vlagentdata
+      - -fileCollector.glob=/var/log/*.log
+      - -fileCollector.glob=/var/lib/docker/containers/*/*-json.log
+      - -fileCollector.streamFields=hostname,file
+{% if observability_logs_remote_write_username | length > 0 %}
+      - -remoteWrite.basicAuth.username={{ observability_logs_remote_write_username }}
+{% endif %}
+{% if observability_logs_remote_write_password | length > 0 %}
+      - -remoteWrite.basicAuth.password={{ observability_logs_remote_write_password }}
+{% endif %}
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - vlagent_data:/vlagentdata
+    networks:
+      - agents
+
+volumes:
+  vmagent_data:
+  vlagent_data:
+
+networks:
+  agents:
