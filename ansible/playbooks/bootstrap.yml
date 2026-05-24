@@ -99,6 +99,7 @@
         gh auth setup-git --hostname github.com >/dev/null
       args:
         executable: /bin/bash
+      become: true
       become_user: "{{ item.name }}"
       environment:
         HOME: "{{ item.home }}"

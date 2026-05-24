@@ -37,7 +37,7 @@ output "timeweb_inventory" {
       traefik   = "traefik.panixida.ru"
       identity  = "identity.panixida.ru"
       secrets   = "secrets.panixida.ru"
-      komodo    = "komodo.panixida.ru"
+      komodo   = "komodo.panixida.ru"
     }
   }
 }
