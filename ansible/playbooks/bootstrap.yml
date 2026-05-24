@@ -1,0 +1,40 @@
+---
+- name: Bootstrap infrastructure server
+  hosts: infra
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - docker.io
+          - docker-compose-v2
+          - git
+          - gnupg
+          - python3-apt
+        state: present
+        update_cache: true
+
+    - name: Enable Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add operators to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+
+    - name: Create infra service folder
+      ansible.builtin.file:
+        path: "{{ infra_service_folder }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"

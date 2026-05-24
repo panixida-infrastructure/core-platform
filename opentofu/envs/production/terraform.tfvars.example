@@ -1,0 +1,8 @@
+name_prefix          = "panixida"
+location             = "ru-1"
+timeweb_project_name = "Production"
+
+tags = {
+  managed_by = "opentofu"
+  owner      = "panixida-infrastructure"
+}

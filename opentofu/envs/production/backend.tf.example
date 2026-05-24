@@ -1,0 +1,14 @@
+# Copy this file to backend.tf after choosing a remote state backend.
+# Do not commit real credentials.
+#
+# terraform {
+#   backend "s3" {
+#     endpoint                    = "https://s3.timeweb.cloud"
+#     bucket                      = "panixida-tofu-state"
+#     key                         = "infra/production.tfstate"
+#     region                      = "ru-1"
+#     skip_credentials_validation = true
+#     skip_metadata_api_check     = true
+#     skip_region_validation      = true
+#   }
+# }

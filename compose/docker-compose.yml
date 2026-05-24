@@ -1,0 +1,21 @@
+name: panixida-infra
+
+services:
+  infra-smoke:
+    image: alpine:3.20
+    container_name: infra-smoke
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    networks:
+      - infra
+    labels:
+      org.panixida.stack: infra
+      org.panixida.role: deploy-smoke
+
+networks:
+  infra:
+    name: panixida_infra
+    driver: bridge

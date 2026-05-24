@@ -1,0 +1,5 @@
+---
+infra_service_folder: /root/infra
+infra_timezone: Europe/Moscow
+docker_users:
+  - codexvpn

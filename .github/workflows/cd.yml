@@ -1,0 +1,34 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - compose/**
+      - .github/workflows/cd.yml
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}
+
+          compose-file: ${{ vars.COMPOSE_FILE }}
+          env-file: ${{ secrets.ENV_FILE }}
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}

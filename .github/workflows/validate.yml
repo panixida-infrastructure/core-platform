@@ -1,0 +1,45 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  opentofu:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: opentofu/envs/production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: opentofu/setup-opentofu@v1
+
+      - name: Format
+        run: tofu fmt -check -recursive ../..
+
+      - name: Init
+        run: tofu init -backend=false
+
+      - name: Validate
+        run: tofu validate
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible ansible-lint
+
+      - name: Syntax check
+        run: |
+          ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/bootstrap.yml --syntax-check
+          ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/deploy-compose.yml --syntax-check
+
+      - name: Lint
+        run: ansible-lint ansible/playbooks
