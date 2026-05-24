@@ -43,6 +43,6 @@ For this repository, the expected GitHub Actions secret name is `TIMEWEB_TOKEN`.
 
 ## Import notes
 
-The Timeweb token can be used to inventory resources that the token is allowed to see across projects. It cannot recover secrets that the provider/API does not expose, such as root passwords, database passwords, private SSH keys, or application-level secrets.
+The Timeweb token can be used to inventory resources that the token is allowed to see across projects. Some sensitive fields may be returned by API, such as server root passwords, database passwords, and S3 credentials. These values must stay outside Git.
 
 Because this repository is public, do not print full Timeweb inventory into GitHub Actions logs or public artifacts. Discovery output should either be heavily redacted or produced outside public CI.

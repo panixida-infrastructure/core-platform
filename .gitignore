@@ -11,6 +11,7 @@ override.tf.json
 .env
 *.env
 !stacks/**/.env.example
+.secrets/
 
 ansible/*.retry
 ansible/collections/
