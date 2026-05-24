@@ -48,3 +48,4 @@
     - name: Create core platform edge network
       ansible.builtin.command: docker network create "{{ core_platform_edge_network }}" # noqa command-instead-of-module
       when: core_platform_edge_network_check.rc != 0
+      changed_when: core_platform_edge_network_check.rc != 0
