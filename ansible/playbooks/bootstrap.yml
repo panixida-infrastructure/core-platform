@@ -193,7 +193,7 @@
 
     - name: Configure WireGuard interface
       ansible.builtin.template:
-        src: "{{ playbook_dir }}/../templates/wg0.conf.j2"
+        src: wg0.conf.j2
         dest: "/etc/wireguard/{{ wireguard_interface_name }}.conf"
         owner: root
         group: root
