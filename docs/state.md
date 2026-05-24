@@ -12,17 +12,19 @@ Local state is also awkward for collaboration: two operators can run different s
 
 Use remote state before importing real Timeweb resources.
 
-For this platform, the preferred next step is an S3-compatible backend, for example Timeweb Object Storage:
+For this platform, production state uses the existing Timeweb Object Storage bucket:
 
 ```hcl
 terraform {
   backend "s3" {
-    bucket                      = "panixida-tofu-state"
-    key                         = "core-platform/production.tfstate"
-    region                      = "ru-1"
-    endpoints                   = {
+    bucket = "db202587-tactical-heroes"
+    key    = "core-platform/production.tfstate"
+    region = "ru-1"
+
+    endpoints = {
       s3 = "https://s3.twcstorage.ru"
     }
+
     skip_credentials_validation = true
     skip_metadata_api_check     = true
     skip_region_validation      = true
@@ -32,4 +34,13 @@ terraform {
 }
 ```
 
-Enable bucket versioning if Timeweb Object Storage supports it for the selected bucket.
+GitHub Actions reads the S3 credentials from repository secrets:
+
+```text
+TOFU_STATE_ACCESS_KEY
+TOFU_STATE_SECRET_KEY
+```
+
+The bucket itself is referenced as a `twc_s3_bucket` data source for now. It is not managed as a resource yet because the current provider docs do not document import syntax for `twc_s3_bucket`; managing the state bucket from the same state also deserves an explicit `prevent_destroy` review before we turn it into a resource.
+
+Enable bucket versioning if Timeweb Object Storage supports it for this bucket.

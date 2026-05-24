@@ -1,7 +1,5 @@
 locals {
-  name_prefix = var.name_prefix
-  tags        = var.tags
+  name_prefix            = var.name_prefix
+  tags                   = var.tags
+  tofu_state_bucket_name = "db202587-tactical-heroes"
 }
-
-# Real Timeweb resources will be added after we decide whether to import the
-# existing server or create new resources from scratch.

@@ -447,8 +447,10 @@
       "usage_space": 0
     }
   ],
+  "vpcs": [],
   "empty_resource_types": {
     "firewall_groups": 0,
+    "vpcs": 0,
     "routers": 0,
     "k8s_clusters": 0,
     "network_drives": 0
@@ -475,9 +477,10 @@
       "import_id": "8034806/24710948"
     },
     {
-      "resource_type": "twc_db_postgres",
+      "resource_type": "twc_database_cluster",
       "name": "postgres_database",
-      "import_id": "4104619"
+      "import_id": "4104619",
+      "note": "managed through twc_database_cluster; Timeweb API also reports cluster_id 439761"
     },
     {
       "resource_type": "twc_ssh_key",

@@ -1,0 +1,68 @@
+name: OpenTofu Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type apply-production to apply the current production OpenTofu configuration
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opentofu-production
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: opentofu/envs/production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "apply-production" ]; then
+            echo "::error::Confirmation must be exactly apply-production"
+            exit 1
+          fi
+
+      - name: Install OpenTofu
+        run: |
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+            | sudo gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+          sudo chmod a+r /etc/apt/keyrings/opentofu-repo.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" \
+            | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y tofu
+
+      - name: Check required secrets
+        run: |
+          set -euo pipefail
+          for name in TF_VAR_twc_token AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is not available"
+              exit 1
+            fi
+          done
+
+      - name: Init
+        run: tofu init -input=false
+
+      - name: Plan
+        run: tofu plan -input=false -no-color -out=production.tfplan
+
+      - name: Apply
+        run: tofu apply -input=false -auto-approve production.tfplan

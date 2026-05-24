@@ -26,6 +26,18 @@ Set these on this repository if they are not inherited from the organization:
 SERVER_SSH_PRIVATE_KEY
 ```
 
+## Server bootstrap
+
+Server package/bootstrap changes go through the manual `Ansible Bootstrap` workflow. It runs `ansible/playbooks/bootstrap.yml` over SSH using the organization/repository SSH variables and secret.
+
+The playbook currently manages only the base server shape required by compose deployments:
+
+- Base packages.
+- Docker and Compose plugin.
+- Docker service state.
+- Docker users.
+- `/opt/core-platform`.
+
 The initial smoke stack passes its non-secret env inline:
 
 ```text

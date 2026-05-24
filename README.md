@@ -68,6 +68,15 @@ OpenTofu is wired for the Timeweb Cloud provider:
 source = "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud"
 ```
 
-Do not commit real tokens or state. In GitHub Actions, map `secrets.TIMEWEB_TOKEN` to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
+Production state is stored in the existing Timeweb S3-compatible bucket `db202587-tactical-heroes` at `core-platform/production.tfstate`.
+
+Do not commit real tokens or state. In GitHub Actions, `secrets.TIMEWEB_TOKEN` is mapped to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
+
+Manual workflows:
+
+- `OpenTofu Import Existing Infra` imports known Timeweb resources into remote state using `tofu import`, then shows drift.
+- `OpenTofu Plan` runs an authoritative plan against the S3-backed state.
+- `OpenTofu Apply` applies the current production configuration after an explicit confirmation string.
+- `Ansible Bootstrap` applies server bootstrap through SSH.
 
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.

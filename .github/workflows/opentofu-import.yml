@@ -1,0 +1,68 @@
+name: OpenTofu Import Existing Infra
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type import-production to import existing Timeweb resources into state
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opentofu-production
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: opentofu/envs/production
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "import-production" ]; then
+            echo "::error::Confirmation must be exactly import-production"
+            exit 1
+          fi
+
+      - name: Install OpenTofu
+        run: |
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+            | sudo gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+          sudo chmod a+r /etc/apt/keyrings/opentofu-repo.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" \
+            | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y tofu
+
+      - name: Check required secrets
+        run: |
+          set -euo pipefail
+          for name in TF_VAR_twc_token AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is not available"
+              exit 1
+            fi
+          done
+
+      - name: Init
+        run: tofu init -input=false
+
+      - name: Import existing resources
+        run: ../../scripts/import-production.sh
+
+      - name: Show drift after import
+        run: tofu plan -input=false -no-color
