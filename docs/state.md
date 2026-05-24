@@ -17,7 +17,7 @@ For this platform, the preferred next step is an S3-compatible backend, for exam
 ```hcl
 terraform {
   backend "s3" {
-    endpoint                    = "https://s3.timeweb.cloud"
+    endpoint                    = "https://s3.twcstorage.ru"
     bucket                      = "panixida-tofu-state"
     key                         = "core-platform/production.tfstate"
     region                      = "ru-1"

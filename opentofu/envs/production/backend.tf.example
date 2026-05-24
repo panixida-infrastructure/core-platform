@@ -3,7 +3,7 @@
 #
 # terraform {
 #   backend "s3" {
-#     endpoint                    = "https://s3.timeweb.cloud"
+#     endpoint                    = "https://s3.twcstorage.ru"
 #     bucket                      = "panixida-tofu-state"
 #     key                         = "core-platform/production.tfstate"
 #     region                      = "ru-1"
