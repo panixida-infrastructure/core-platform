@@ -8,6 +8,7 @@ Set these on this repository:
 
 ```text
 SERVICE_FOLDER=core-platform
+TRAEFIK_ACME_EMAIL=<lets-encrypt-account-email>
 ```
 
 The existing repositories appear to use organization-level values for:
@@ -37,6 +38,7 @@ The playbook currently manages only the base server shape required by compose de
 - Docker service state.
 - Docker users.
 - `/opt/core-platform`.
+- The shared Docker network `core-platform-edge`.
 
 The initial smoke stack passes its non-secret env inline:
 
@@ -60,10 +62,19 @@ Use one folder under `/opt/core-platform` per platform area:
 
 ```text
 /opt/core-platform/edge
-/opt/core-platform/auth
+/opt/core-platform/identity
 /opt/core-platform/observability
 /opt/core-platform/secrets
-/opt/core-platform/backups
+/opt/core-platform/portainer
 ```
 
 Each stack gets its own compose file under `stacks/<stack>/docker-compose.yml` and should be deployed independently.
+
+Current UI domains:
+
+```text
+traefik.panixida.ru
+identity.panixida.ru
+secrets.panixida.ru
+portainer.panixida.ru
+```

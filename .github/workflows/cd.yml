@@ -7,8 +7,12 @@ on:
         description: Stack to deploy
         required: true
         type: choice
-        default: smoke
+        default: edge
         options:
+          - edge
+          - identity
+          - secrets
+          - portainer
           - smoke
 
 permissions:
@@ -16,7 +20,104 @@ permissions:
   packages: read
 
 jobs:
-  deploy:
+  edge:
+    if: inputs.stack == 'edge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/edge
+
+          compose-file: stacks/edge/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            TRAEFIK_ACME_EMAIL=${{ vars.TRAEFIK_ACME_EMAIL }}
+            TRAEFIK_DASHBOARD_HOST=traefik.panixida.ru
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+  identity:
+    if: inputs.stack == 'identity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/identity
+
+          compose-file: stacks/identity/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            KEYCLOAK_HOST=identity.panixida.ru
+            KEYCLOAK_DB_HOST=89.191.229.210
+            KEYCLOAK_DB_PORT=5432
+            KEYCLOAK_DB_NAME=keycloak
+            KEYCLOAK_DB_USERNAME=${{ secrets.KEYCLOAK_DB_USERNAME }}
+            KEYCLOAK_DB_PASSWORD=${{ secrets.KEYCLOAK_DB_PASSWORD }}
+            KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME=${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
+            KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=${{ secrets.KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD }}
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+  secrets:
+    if: inputs.stack == 'secrets'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/secrets
+
+          compose-file: stacks/secrets/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            OPENBAO_HOST=secrets.panixida.ru
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+  portainer:
+    if: inputs.stack == 'portainer'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
+        with:
+          server-user: ${{ vars.SERVER_USER }}
+          server-host: ${{ vars.SERVER_HOST }}
+          ssh-port: ${{ vars.SERVER_SSH_PORT }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+
+          service-folder: ${{ vars.SERVICE_FOLDER }}/portainer
+
+          compose-file: stacks/portainer/docker-compose.yml
+          env-file: |
+            TZ=Europe/Moscow
+            PORTAINER_HOST=portainer.panixida.ru
+
+          registry-url: ghcr.io
+          registry-user: ${{ github.actor }}
+          registry-token: ${{ github.token }}
+
+  smoke:
+    if: inputs.stack == 'smoke'
     runs-on: ubuntu-latest
     steps:
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main

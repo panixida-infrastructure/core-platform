@@ -32,5 +32,12 @@ output "timeweb_inventory" {
     }
 
     tofu_state_bucket_id = data.twc_s3_bucket.tofu_state.id
+
+    dns_records = {
+      traefik   = "traefik.panixida.ru"
+      identity  = "identity.panixida.ru"
+      secrets   = "secrets.panixida.ru"
+      portainer = "portainer.panixida.ru"
+    }
   }
 }

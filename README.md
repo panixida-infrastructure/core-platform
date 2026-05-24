@@ -11,7 +11,7 @@ This repository starts with:
 Planned platform layers:
 
 - Traefik + Let's Encrypt for public entrypoints.
-- authentik for SSO.
+- Keycloak for SSO.
 - Prometheus, Grafana, Alloy, Loki, Tempo for observability.
 - OpenBao or Infisical for secrets.
 - Harbor plus BaGetter or Nexus for registries/packages.
@@ -39,9 +39,10 @@ Stacks should deploy under one repository-owned namespace:
 Examples:
 
 - `/opt/core-platform/edge` for Traefik and public entrypoints.
-- `/opt/core-platform/auth` for authentik.
+- `/opt/core-platform/identity` for Keycloak.
 - `/opt/core-platform/observability` for Prometheus, Grafana, Alloy, Loki, Tempo.
 - `/opt/core-platform/secrets` for OpenBao or Infisical.
+- `/opt/core-platform/portainer` for Portainer.
 - `/opt/core-platform/backups` for Restic jobs.
 
 This keeps blast radius small: deploying one stack should not restart unrelated platform tools.
@@ -80,3 +81,4 @@ Manual workflows:
 - `Ansible Bootstrap` applies server bootstrap through SSH.
 
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.
+See [docs/platform-domains.md](docs/platform-domains.md) and [docs/secrets.md](docs/secrets.md) for platform UI domains and the OpenBao bootstrap model.

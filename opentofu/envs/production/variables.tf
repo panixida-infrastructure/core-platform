@@ -23,6 +23,12 @@ variable "location" {
   default     = "ru-1"
 }
 
+variable "platform_public_ipv4" {
+  description = "Public IPv4 address for platform UI DNS records."
+  type        = string
+  default     = "81.200.158.9"
+}
+
 variable "tags" {
   description = "Common metadata tags for modules that support tags."
   type        = map(string)

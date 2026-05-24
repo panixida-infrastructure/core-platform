@@ -38,3 +38,13 @@
         owner: root
         group: root
         mode: "0755"
+
+    - name: Check core platform edge network
+      ansible.builtin.command: docker network inspect "{{ core_platform_edge_network }}" # noqa command-instead-of-module
+      register: core_platform_edge_network_check
+      changed_when: false
+      failed_when: false
+
+    - name: Create core platform edge network
+      ansible.builtin.command: docker network create "{{ core_platform_edge_network }}" # noqa command-instead-of-module
+      when: core_platform_edge_network_check.rc != 0
