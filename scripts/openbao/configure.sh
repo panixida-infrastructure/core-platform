@@ -3,8 +3,8 @@ set -eu
 
 realm="${KEYCLOAK_REALM:-panixida}"
 issuer="${OPENBAO_OIDC_ISSUER_URL:-https://identity.panixida.ru/realms/${realm}}"
-github_audience="${OPENBAO_GITHUB_AUDIENCE:-https://github.com/PANiXiDA-Infrastructure/core-platform}"
-github_repository="${OPENBAO_GITHUB_REPOSITORY:-PANiXiDA-Infrastructure/core-platform}"
+github_audience="${OPENBAO_GITHUB_AUDIENCE:-https://github.com/panixida-infrastructure/core-platform}"
+github_repository="${OPENBAO_GITHUB_REPOSITORY:-panixida-infrastructure/core-platform}"
 
 if [ -z "${OPENBAO_OIDC_CLIENT_SECRET:-}" ]; then
   echo "OPENBAO_OIDC_CLIENT_SECRET is required" >&2

@@ -3,7 +3,7 @@ set -euo pipefail
 
 openbao_addr="${OPENBAO_ADDR:-https://secrets.panixida.ru}"
 openbao_role="${OPENBAO_ROLE:-core-platform-github-actions}"
-openbao_audience="${OPENBAO_AUDIENCE:-https://github.com/PANiXiDA-Infrastructure/core-platform}"
+openbao_audience="${OPENBAO_AUDIENCE:-https://github.com/panixida-infrastructure/core-platform}"
 
 if [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
   echo "GitHub Actions OIDC request variables are not available" >&2
