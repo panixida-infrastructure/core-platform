@@ -20,10 +20,13 @@ wireguard_routed_uid: "{{ core_platform_operator_uid }}"
 wireguard_socket_fwmark: 0x2
 
 github_cli_pat: "{{ lookup('env', 'SERVER_GH_PAT') }}"
+github_cli_username: "{{ lookup('env', 'SERVER_GH_USER') | default('PANiXiDA', true) }}"
 github_cli_auth_users:
   - name: root
+    group: root
     home: /root
   - name: "{{ core_platform_operator_user }}"
+    group: "{{ core_platform_operator_user }}"
     home: "/home/{{ core_platform_operator_user }}"
 
 docker_users:

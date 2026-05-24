@@ -17,6 +17,7 @@ The existing repositories appear to use organization-level values for:
 SERVER_USER
 SERVER_HOST
 SERVER_SSH_PORT
+SERVER_GH_USER
 ```
 
 ## Organization secrets

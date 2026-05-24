@@ -27,6 +27,7 @@ jobs:
       WIREGUARD_PERSISTENT_KEEPALIVE: ${{ vars.WIREGUARD_PERSISTENT_KEEPALIVE }}
       WIREGUARD_PRIVATE_KEY: ${{ secrets.WIREGUARD_PRIVATE_KEY }}
       WIREGUARD_PRESHARED_KEY: ${{ secrets.WIREGUARD_PRESHARED_KEY }}
+      SERVER_GH_USER: ${{ vars.SERVER_GH_USER }}
       SERVER_GH_PAT: ${{ secrets.SERVER_GH_PAT }}
     steps:
       - uses: actions/checkout@v6

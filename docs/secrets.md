@@ -57,6 +57,7 @@ The bootstrap playbook reads non-secret SSH and WireGuard parameters from GitHub
 SERVER_HOST
 SERVER_USER
 SERVER_SSH_PORT
+SERVER_GH_USER
 CODEXVPN_SSH_PUBLIC_KEY
 ROOT_SSH_PUBLIC_KEY
 WIREGUARD_ADDRESS
