@@ -8,8 +8,8 @@ resource "twc_ssh_key" "oldstrategyforge_273273" {
 
     postcondition {
       condition = contains(
-        [for server in self.used_by : tostring(server.id)],
-        tostring(twc_server.tacticalheroes_dev.id)
+        [for server in self.used_by : server.name],
+        twc_server.tacticalheroes_dev.name
       )
       error_message = "OldStrategyForge SSH key must be attached to TacticalHeroes.Dev in Timeweb."
     }
@@ -34,8 +34,8 @@ resource "twc_ssh_key" "infrastructure_605568" {
 
     postcondition {
       condition = contains(
-        [for server in self.used_by : tostring(server.id)],
-        tostring(twc_server.infrastructure.id)
+        [for server in self.used_by : server.name],
+        twc_server.infrastructure.name
       )
       error_message = "Infrastructure SSH key must be attached to infrastructure in Timeweb."
     }
