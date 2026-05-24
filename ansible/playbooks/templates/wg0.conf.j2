@@ -2,27 +2,27 @@
 PrivateKey = {{ wireguard_private_key }}
 Address = {{ wireguard_interface_address }}
 Table = off
-FwMark = {{ wireguard_socket_fwmark }}
 
-PostUp = ip route replace default dev {{ wireguard_interface_name }} table 51820
-PostUp = ip rule add fwmark 0x1 lookup 51820 priority 1000 2>/dev/null || true
+PreUp = while iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j RETURN 2>/dev/null; do :; done
+PreUp = while iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -p tcp --sport 22 -j RETURN 2>/dev/null; do :; done
+PreUp = while iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -d 127.0.0.0/8 -j RETURN 2>/dev/null; do :; done
+PreUp = while iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j MARK --set-mark 0x1 2>/dev/null; do :; done
+PreUp = ip rule del uidrange {{ wireguard_routed_uid }}-{{ wireguard_routed_uid }} lookup {{ wireguard_route_table }} priority {{ wireguard_uid_rule_priority }} 2>/dev/null || true
+PreUp = ip rule del fwmark 0x1 lookup {{ wireguard_route_table }} priority 1000 2>/dev/null || true
 
-PostUp = iptables -t mangle -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -p tcp --sport 22 -j RETURN
-PostUp = iptables -t mangle -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -d 127.0.0.0/8 -j RETURN
-PostUp = iptables -t mangle -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j MARK --set-mark 0x1
+PostUp = ip route replace default dev {{ wireguard_interface_name }} table {{ wireguard_route_table }}
+PostUp = ip rule add uidrange {{ wireguard_routed_uid }}-{{ wireguard_routed_uid }} lookup {{ wireguard_route_table }} priority {{ wireguard_uid_rule_priority }} 2>/dev/null || true
 
 PostUp = ip6tables -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -p tcp --sport 22 -j RETURN
+PostUp = ip6tables -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -d ::1/128 -j RETURN
 PostUp = ip6tables -A OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j REJECT
 
-PostDown = iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -p tcp --sport 22 -j RETURN 2>/dev/null || true
-PostDown = iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -d 127.0.0.0/8 -j RETURN 2>/dev/null || true
-PostDown = iptables -t mangle -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j MARK --set-mark 0x1 2>/dev/null || true
-
 PostDown = ip6tables -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -p tcp --sport 22 -j RETURN 2>/dev/null || true
+PostDown = ip6tables -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -d ::1/128 -j RETURN 2>/dev/null || true
 PostDown = ip6tables -D OUTPUT -m owner --uid-owner {{ wireguard_routed_uid }} -j REJECT 2>/dev/null || true
 
-PostDown = ip rule del fwmark 0x1 lookup 51820 priority 1000 2>/dev/null || true
-PostDown = ip route flush table 51820
+PostDown = ip rule del uidrange {{ wireguard_routed_uid }}-{{ wireguard_routed_uid }} lookup {{ wireguard_route_table }} priority {{ wireguard_uid_rule_priority }} 2>/dev/null || true
+PostDown = ip route flush table {{ wireguard_route_table }}
 
 [Peer]
 PublicKey = {{ wireguard_peer_public_key }}

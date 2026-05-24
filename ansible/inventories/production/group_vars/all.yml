@@ -14,10 +14,11 @@ wireguard_private_key: "{{ lookup('env', 'WIREGUARD_PRIVATE_KEY') }}"
 wireguard_peer_public_key: "{{ lookup('env', 'WIREGUARD_PEER_PUBLIC_KEY') }}"
 wireguard_preshared_key: "{{ lookup('env', 'WIREGUARD_PRESHARED_KEY') }}"
 wireguard_peer_endpoint: "{{ lookup('env', 'WIREGUARD_ENDPOINT') }}"
-wireguard_peer_allowed_ips: "{{ lookup('env', 'WIREGUARD_ALLOWED_IPS') | default('0.0.0.0/0', true) }}"
-wireguard_persistent_keepalive: "{{ lookup('env', 'WIREGUARD_PERSISTENT_KEEPALIVE') | default('25', true) }}"
+wireguard_peer_allowed_ips: "{{ lookup('env', 'WIREGUARD_ALLOWED_IPS') | default('0.0.0.0/0, ::/0', true) }}"
+wireguard_persistent_keepalive: "{{ lookup('env', 'WIREGUARD_PERSISTENT_KEEPALIVE') | default('0', true) }}"
 wireguard_routed_uid: "{{ core_platform_operator_uid }}"
-wireguard_socket_fwmark: 0x2
+wireguard_route_table: 51820
+wireguard_uid_rule_priority: 900
 
 github_cli_pat: "{{ lookup('env', 'SERVER_GH_PAT') }}"
 github_cli_username: "{{ lookup('env', 'SERVER_GH_USER') | default('PANiXiDA', true) }}"
