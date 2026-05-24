@@ -2,5 +2,32 @@
 core_platform_base_folder: /opt/core-platform
 core_platform_edge_network: core-platform-edge
 core_platform_timezone: Europe/Moscow
+
+core_platform_operator_user: codexvpn
+core_platform_operator_uid: 1500
+core_platform_operator_ssh_public_key: "{{ lookup('env', 'CODEXVPN_SSH_PUBLIC_KEY') | default('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF24IfpOKOfreBxvhsTICQzi/r+qvc0kQX9RIAKKwLfL infrastructure', true) }}"
+core_platform_root_ssh_public_key: "{{ lookup('env', 'ROOT_SSH_PUBLIC_KEY') | default(core_platform_operator_ssh_public_key, true) }}"
+
+wireguard_interface_name: wg0
+wireguard_interface_address: "{{ lookup('env', 'WIREGUARD_ADDRESS') | default('10.8.0.9/24', true) }}"
+wireguard_private_key: "{{ lookup('env', 'WIREGUARD_PRIVATE_KEY') }}"
+wireguard_peer_public_key: "{{ lookup('env', 'WIREGUARD_PEER_PUBLIC_KEY') }}"
+wireguard_preshared_key: "{{ lookup('env', 'WIREGUARD_PRESHARED_KEY') }}"
+wireguard_peer_endpoint: "{{ lookup('env', 'WIREGUARD_ENDPOINT') }}"
+wireguard_peer_allowed_ips: "{{ lookup('env', 'WIREGUARD_ALLOWED_IPS') | default('0.0.0.0/0', true) }}"
+wireguard_persistent_keepalive: "{{ lookup('env', 'WIREGUARD_PERSISTENT_KEEPALIVE') | default('25', true) }}"
+wireguard_routed_uid: "{{ core_platform_operator_uid }}"
+wireguard_socket_fwmark: 0x2
+
+github_cli_pat: "{{ lookup('env', 'SERVER_GH_PAT') }}"
+github_cli_auth_users:
+  - name: root
+    home: /root
+  - name: "{{ core_platform_operator_user }}"
+    home: "/home/{{ core_platform_operator_user }}"
+
 docker_users:
-  - codexvpn
+  - "{{ core_platform_operator_user }}"
+
+retired_compose_stacks:
+  - portainer

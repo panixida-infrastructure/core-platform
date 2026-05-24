@@ -12,12 +12,16 @@ on:
           - edge
           - identity
           - secrets
-          - portainer
+          - komodo
           - smoke
 
 permissions:
   contents: read
   packages: read
+
+concurrency:
+  group: core-platform-deploy-production
+  cancel-in-progress: false
 
 jobs:
   edge:
@@ -94,8 +98,8 @@ jobs:
           registry-user: ${{ github.actor }}
           registry-token: ${{ github.token }}
 
-  portainer:
-    if: inputs.stack == 'portainer'
+  komodo:
+    if: inputs.stack == 'komodo'
     runs-on: ubuntu-latest
     steps:
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
@@ -105,12 +109,36 @@ jobs:
           ssh-port: ${{ vars.SERVER_SSH_PORT }}
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-          service-folder: ${{ vars.SERVICE_FOLDER }}/portainer
+          service-folder: ${{ vars.SERVICE_FOLDER }}/komodo
 
-          compose-file: stacks/portainer/docker-compose.yml
+          compose-file: stacks/komodo/docker-compose.yml
           env-file: |
             TZ=Europe/Moscow
-            PORTAINER_HOST=portainer.panixida.ru
+            COMPOSE_KOMODO_IMAGE_TAG=2
+            KOMODO_HOSTNAME=komodo.panixida.ru
+            KOMODO_HOST=https://komodo.panixida.ru
+            KOMODO_TITLE=Panixida Komodo
+            KOMODO_LOCAL_AUTH=true
+            KOMODO_INIT_ADMIN_USERNAME=${{ secrets.KOMODO_INIT_ADMIN_USERNAME }}
+            KOMODO_INIT_ADMIN_PASSWORD=${{ secrets.KOMODO_INIT_ADMIN_PASSWORD }}
+            KOMODO_DISABLE_USER_REGISTRATION=true
+            KOMODO_ENABLE_NEW_USERS=false
+            KOMODO_DATABASE_USERNAME=${{ secrets.KOMODO_DATABASE_USERNAME }}
+            KOMODO_DATABASE_PASSWORD=${{ secrets.KOMODO_DATABASE_PASSWORD }}
+            KOMODO_WEBHOOK_SECRET=${{ secrets.KOMODO_WEBHOOK_SECRET }}
+            KOMODO_JWT_SECRET=${{ secrets.KOMODO_JWT_SECRET }}
+            KOMODO_FIRST_SERVER_NAME=infrastructure
+            PERIPHERY_CORE_ADDRESS=ws://core:9120
+            PERIPHERY_CONNECT_AS=infrastructure
+            PERIPHERY_CORE_PUBLIC_KEYS=file:/config/keys/core.pub
+            PERIPHERY_ROOT_DIRECTORY=/opt/core-platform
+            PERIPHERY_DISABLE_TERMINALS=false
+            PERIPHERY_DISABLE_CONTAINER_TERMINALS=false
+            PERIPHERY_INCLUDE_DISK_MOUNTS=/etc/hostname
+            KOMODO_OIDC_ENABLED=${{ vars.KOMODO_OIDC_ENABLED }}
+            KOMODO_OIDC_PROVIDER=${{ vars.KOMODO_OIDC_PROVIDER }}
+            KOMODO_OIDC_CLIENT_ID=${{ vars.KOMODO_OIDC_CLIENT_ID }}
+            KOMODO_OIDC_CLIENT_SECRET=${{ secrets.KOMODO_OIDC_CLIENT_SECRET }}
 
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}

@@ -5,18 +5,177 @@
   gather_facts: true
 
   tasks:
-    - name: Install base packages
+    - name: Install apt prerequisites
       ansible.builtin.apt:
         name:
           - ca-certificates
           - curl
-          - docker.io
-          - docker-compose-v2
-          - git
           - gnupg
           - python3-apt
         state: present
         update_cache: true
+
+    - name: Ensure apt keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install GitHub CLI apt key
+      ansible.builtin.get_url:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        dest: /etc/apt/keyrings/githubcli-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Configure GitHub CLI apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg]
+          https://cli.github.com/packages stable main
+        filename: github-cli
+        state: present
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - gh
+          - git
+          - iptables
+          - nano
+          - nodejs
+          - npm
+          - vim
+          - wireguard
+        state: present
+        update_cache: true
+
+    - name: Ensure operator user exists
+      ansible.builtin.user:
+        name: "{{ core_platform_operator_user }}"
+        uid: "{{ core_platform_operator_uid }}"
+        shell: /bin/bash
+        groups:
+          - sudo
+        append: true
+        password_lock: true
+
+    - name: Ensure operator sudoers file
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ core_platform_operator_user }}"
+        owner: root
+        group: root
+        mode: "0440"
+        content: "{{ core_platform_operator_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Ensure operator home ownership
+      ansible.builtin.file:
+        path: "/home/{{ core_platform_operator_user }}"
+        state: directory
+        owner: "{{ core_platform_operator_user }}"
+        group: "{{ core_platform_operator_user }}"
+        mode: "0750"
+        recurse: true
+
+    - name: Validate required GitHub CLI token
+      ansible.builtin.assert:
+        that:
+          - github_cli_pat | length > 0
+        fail_msg: SERVER_GH_PAT must be provided through GitHub Secrets.
+      no_log: true
+
+    - name: Authenticate GitHub CLI users
+      ansible.builtin.shell: |
+        set -euo pipefail
+        if ! gh auth status --hostname github.com >/dev/null 2>&1; then
+          printf '%s\n' "$SERVER_GH_PAT" | gh auth login --hostname github.com --git-protocol https --with-token
+        fi
+        gh auth setup-git --hostname github.com >/dev/null
+      args:
+        executable: /bin/bash
+      become_user: "{{ item.name }}"
+      environment:
+        HOME: "{{ item.home }}"
+        SERVER_GH_PAT: "{{ github_cli_pat }}"
+      loop: "{{ github_cli_auth_users }}"
+      changed_when: false
+      no_log: true
+
+    - name: Authorize operator SSH key
+      ansible.posix.authorized_key:
+        user: "{{ core_platform_operator_user }}"
+        key: "{{ core_platform_operator_ssh_public_key }}"
+        state: present
+        manage_dir: true
+
+    - name: Authorize root SSH key
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ core_platform_root_ssh_public_key }}"
+        state: present
+        manage_dir: true
+
+    - name: Configure sshd pubkey-only access
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/99-root-pubkey.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          PermitRootLogin prohibit-password
+          PubkeyAuthentication yes
+          PasswordAuthentication no
+      notify: Reload ssh
+
+    - name: Validate required WireGuard secrets
+      ansible.builtin.assert:
+        that:
+          - wireguard_private_key | length > 0
+          - wireguard_peer_public_key | length > 0
+          - wireguard_preshared_key | length > 0
+          - wireguard_peer_endpoint | length > 0
+        fail_msg: WireGuard secrets and peer settings must be provided through environment variables.
+      no_log: true
+
+    - name: Ensure WireGuard config directory
+      ansible.builtin.file:
+        path: /etc/wireguard
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Configure WireGuard interface
+      ansible.builtin.template:
+        src: wg0.conf.j2
+        dest: "/etc/wireguard/{{ wireguard_interface_name }}.conf"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+      notify: Restart WireGuard
+
+    - name: Configure WireGuard policy routing sysctl
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-wireguard-policy-routing.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          net.ipv4.conf.all.src_valid_mark = 1
+      notify: Reload sysctl
+
+    - name: Enable WireGuard interface
+      ansible.builtin.service:
+        name: "wg-quick@{{ wireguard_interface_name }}"
+        state: started
+        enabled: true
 
     - name: Enable Docker service
       ansible.builtin.service:
@@ -24,12 +183,43 @@
         state: started
         enabled: true
 
+    - name: Check retired compose stack files
+      ansible.builtin.stat:
+        path: "{{ core_platform_base_folder }}/{{ item }}/docker-compose.yml"
+      loop: "{{ retired_compose_stacks }}"
+      register: retired_compose_stack_files
+
+    - name: Stop retired compose stacks
+      ansible.builtin.command: docker compose down --remove-orphans --volumes # noqa command-instead-of-module
+      args:
+        chdir: "{{ core_platform_base_folder }}/{{ item.item }}"
+      loop: "{{ retired_compose_stack_files.results }}"
+      when: item.stat.exists
+      changed_when: true
+
+    - name: Remove retired compose stack folders
+      ansible.builtin.file:
+        path: "{{ core_platform_base_folder }}/{{ item }}"
+        state: absent
+      loop: "{{ retired_compose_stacks }}"
+
     - name: Add operators to docker group
       ansible.builtin.user:
         name: "{{ item }}"
         groups: docker
         append: true
       loop: "{{ docker_users }}"
+
+    - name: Check Codex CLI installation
+      ansible.builtin.command: npm list -g @openai/codex --depth=0
+      register: codex_cli_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install Codex CLI
+      ansible.builtin.command: npm install -g @openai/codex
+      when: codex_cli_check.rc != 0
+      changed_when: true
 
     - name: Create core platform base folder
       ansible.builtin.file:
@@ -49,3 +239,18 @@
       ansible.builtin.command: docker network create "{{ core_platform_edge_network }}" # noqa command-instead-of-module
       when: core_platform_edge_network_check.rc != 0
       changed_when: core_platform_edge_network_check.rc != 0
+
+  handlers:
+    - name: Reload ssh
+      ansible.builtin.service:
+        name: ssh
+        state: reloaded
+
+    - name: Restart WireGuard
+      ansible.builtin.service:
+        name: "wg-quick@{{ wireguard_interface_name }}"
+        state: restarted
+
+    - name: Reload sysctl
+      ansible.builtin.command: sysctl --system
+      changed_when: true

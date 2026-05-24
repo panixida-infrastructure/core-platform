@@ -19,12 +19,21 @@ SERVER_HOST
 SERVER_SSH_PORT
 ```
 
-## Repository secrets
+## Organization secrets
 
-Set these on this repository if they are not inherited from the organization:
+These secrets are inherited from the organization and should not be shadowed at repository level:
 
 ```text
 SERVER_SSH_PRIVATE_KEY
+TIMEWEB_TOKEN
+```
+
+## Repository secrets
+
+Set these on this repository while OpenBao bootstrap is still in progress:
+
+```text
+SERVER_GH_PAT
 ```
 
 ## Server bootstrap
@@ -56,6 +65,10 @@ docker image prune -a -f
 
 The initial workflow logs in to `ghcr.io` with the ephemeral `GITHUB_TOKEN` only because the shared action requires registry inputs. The initial stack uses public images and does not require a long-lived registry PAT.
 
+The `komodo` stack also needs bootstrap secrets for its local database and initial admin. OIDC should be enabled after the Keycloak realm and client exist.
+
+The `identity` stack starts Keycloak in production mode and uses the PostgreSQL default `public` schema.
+
 ## Multi-stack convention
 
 Use one folder under `/opt/core-platform` per platform area:
@@ -65,7 +78,7 @@ Use one folder under `/opt/core-platform` per platform area:
 /opt/core-platform/identity
 /opt/core-platform/observability
 /opt/core-platform/secrets
-/opt/core-platform/portainer
+/opt/core-platform/komodo
 ```
 
 Each stack gets its own compose file under `stacks/<stack>/docker-compose.yml` and should be deployed independently.
@@ -76,5 +89,5 @@ Current UI domains:
 traefik.panixida.ru
 identity.panixida.ru
 secrets.panixida.ru
-portainer.panixida.ru
+komodo.panixida.ru
 ```

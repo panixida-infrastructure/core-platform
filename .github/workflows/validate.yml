@@ -44,6 +44,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install ansible ansible-lint
+          ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Syntax check
         run: |

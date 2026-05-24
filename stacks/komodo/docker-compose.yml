@@ -1,0 +1,69 @@
+services:
+  mongo:
+    image: mongo:8.2
+    restart: unless-stopped
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - internal
+    labels:
+      - komodo.skip=true
+
+  core:
+    image: ghcr.io/moghtech/komodo-core:${COMPOSE_KOMODO_IMAGE_TAG:-2}
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      KOMODO_DATABASE_ADDRESS: mongo:27017
+      KOMODO_PERIPHERY_PUBLIC_KEY: file:/config/keys/periphery.pub
+    volumes:
+      - keys:/config/keys
+      - backups:/backups
+    networks:
+      - edge
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=core-platform-edge
+      - traefik.http.routers.komodo.rule=Host(`${KOMODO_HOSTNAME}`)
+      - traefik.http.routers.komodo.entrypoints=websecure
+      - traefik.http.routers.komodo.tls=true
+      - traefik.http.routers.komodo.tls.certresolver=letsencrypt
+      - traefik.http.services.komodo.loadbalancer.server.port=9120
+
+  periphery:
+    image: ghcr.io/moghtech/komodo-periphery:${COMPOSE_KOMODO_IMAGE_TAG:-2}
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - core
+    env_file:
+      - .env
+    volumes:
+      - keys:/config/keys
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/proc
+      - ${PERIPHERY_ROOT_DIRECTORY}:${PERIPHERY_ROOT_DIRECTORY}
+    networks:
+      - internal
+
+volumes:
+  mongo_data:
+  mongo_config:
+  keys:
+  backups:
+
+networks:
+  edge:
+    external: true
+    name: core-platform-edge
+  internal:

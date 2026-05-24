@@ -6,7 +6,7 @@ All public platform UI endpoints are routed through Traefik on the infrastructur
 traefik.panixida.ru    Traefik dashboard
 identity.panixida.ru   Keycloak
 secrets.panixida.ru    OpenBao
-portainer.panixida.ru  Portainer
+komodo.panixida.ru     Komodo
 ```
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf` and point to the infrastructure server public IPv4.

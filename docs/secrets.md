@@ -9,15 +9,25 @@ OpenBao has a small bootstrap problem: GitHub Actions needs a few secrets before
 For now, GitHub keeps only deployment/bootstrap secrets:
 
 ```text
-SERVER_SSH_PRIVATE_KEY
-TIMEWEB_TOKEN
 TOFU_STATE_ACCESS_KEY
 TOFU_STATE_SECRET_KEY
 KEYCLOAK_DB_USERNAME
 KEYCLOAK_DB_PASSWORD
 KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME
 KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD
+WIREGUARD_PRIVATE_KEY
+WIREGUARD_PRESHARED_KEY
+KOMODO_DATABASE_USERNAME
+KOMODO_DATABASE_PASSWORD
+KOMODO_INIT_ADMIN_USERNAME
+KOMODO_INIT_ADMIN_PASSWORD
+KOMODO_WEBHOOK_SECRET
+KOMODO_JWT_SECRET
+KOMODO_OIDC_CLIENT_SECRET
+SERVER_GH_PAT
 ```
+
+`SERVER_SSH_PRIVATE_KEY` and `TIMEWEB_TOKEN` are inherited from organization secrets and should not be duplicated at repository level.
 
 After OpenBao is initialized, move application and infrastructure secrets into OpenBao KV and leave GitHub with only the minimum credentials needed to authenticate to OpenBao.
 
@@ -38,6 +48,27 @@ Initial setup should be done once:
 ```
 
 GitHub secret values cannot be read back from GitHub after they are created. Only secrets that still exist in local `.secrets/` files, or are re-entered by an operator, can be migrated into OpenBao.
+
+## Bootstrap variables
+
+The bootstrap playbook reads non-secret SSH and WireGuard parameters from GitHub repository variables:
+
+```text
+SERVER_HOST
+SERVER_USER
+SERVER_SSH_PORT
+CODEXVPN_SSH_PUBLIC_KEY
+ROOT_SSH_PUBLIC_KEY
+WIREGUARD_ADDRESS
+WIREGUARD_PEER_PUBLIC_KEY
+WIREGUARD_ENDPOINT
+WIREGUARD_ALLOWED_IPS
+WIREGUARD_PERSISTENT_KEEPALIVE
+```
+
+WireGuard private and preshared keys must stay in GitHub Secrets until OpenBao is initialized and CI can authenticate to it.
+
+`SERVER_GH_PAT` is used only by the Ansible bootstrap workflow to install and authenticate GitHub CLI on the infrastructure server for `root` and the operator user.
 
 ## SSO
 

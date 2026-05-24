@@ -23,9 +23,9 @@ resource "twc_dns_rr" "secrets" {
   value   = var.platform_public_ipv4
 }
 
-resource "twc_dns_rr" "portainer" {
+resource "twc_dns_rr" "komodo" {
   zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "portainer"
+  name    = "komodo"
   type    = "A"
   value   = var.platform_public_ipv4
 }

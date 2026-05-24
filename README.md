@@ -14,6 +14,7 @@ Planned platform layers:
 - Keycloak for SSO.
 - Prometheus, Grafana, Alloy, Loki, Tempo for observability.
 - OpenBao or Infisical for secrets.
+- Komodo for server and compose management.
 - Harbor plus BaGetter or Nexus for registries/packages.
 - Restic backups with restore checks.
 - Trivy, SonarQube, CodeQL in CI.
@@ -42,7 +43,7 @@ Examples:
 - `/opt/core-platform/identity` for Keycloak.
 - `/opt/core-platform/observability` for Prometheus, Grafana, Alloy, Loki, Tempo.
 - `/opt/core-platform/secrets` for OpenBao or Infisical.
-- `/opt/core-platform/portainer` for Portainer.
+- `/opt/core-platform/komodo` for Komodo.
 - `/opt/core-platform/backups` for Restic jobs.
 
 This keeps blast radius small: deploying one stack should not restart unrelated platform tools.
@@ -59,7 +60,7 @@ Repository-specific values:
 
 - `SERVICE_FOLDER=core-platform`
 
-Shared organization values are expected to provide SSH and registry settings, the same way as the existing `portainer`, `keycloak`, and `nginx-proxy-manager` repositories.
+Shared organization values are expected to provide SSH and registry settings, the same way as the existing platform repositories.
 
 ## OpenTofu
 
