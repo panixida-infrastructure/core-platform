@@ -49,5 +49,8 @@ jobs:
       - name: Init
         run: tofu init -input=false
 
+      - name: Remove retired SSH key from state
+        run: tofu state rm twc_ssh_key.oldstrategyforge_245799 || true
+
       - name: Plan
         run: tofu plan -input=false -no-color
