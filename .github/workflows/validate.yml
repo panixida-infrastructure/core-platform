@@ -13,9 +13,18 @@ jobs:
       run:
         working-directory: opentofu/envs/production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: opentofu/setup-opentofu@v1
+      - name: Install OpenTofu
+        run: |
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+            | sudo gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+          sudo chmod a+r /etc/apt/keyrings/opentofu-repo.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" \
+            | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y tofu
 
       - name: Format
         run: tofu fmt -check -recursive ../..
@@ -29,7 +38,7 @@ jobs:
   ansible:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Ansible tooling
         run: |
