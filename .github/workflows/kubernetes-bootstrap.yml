@@ -159,4 +159,6 @@ jobs:
 
       - name: Apply Argo CD root application
         if: inputs.apply_gitops_root
-        run: kubectl apply -f kubernetes/bootstrap/argocd-root.yaml
+        run: |
+          kubectl apply -f kubernetes/bootstrap/argocd-root.yaml
+          kubectl -n argocd annotate applications.argoproj.io core-platform argocd.argoproj.io/refresh=hard --overwrite
