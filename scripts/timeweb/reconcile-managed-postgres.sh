@@ -8,7 +8,7 @@ openbao_audience="${OPENBAO_AUDIENCE:-https://github.com/panixida-infrastructure
 
 legacy_cluster_name="${LEGACY_POSTGRES_CLUSTER_NAME:-}"
 target_cluster_name="${TARGET_POSTGRES_CLUSTER_NAME:-postgres}"
-target_project_id="${TARGET_POSTGRES_PROJECT_ID:-1619863}"
+target_project_id="${TARGET_POSTGRES_PROJECT_ID:-1152653}"
 target_zone="${TARGET_POSTGRES_AVAILABILITY_ZONE:-msk-1}"
 target_preset_id="${TARGET_POSTGRES_PRESET_ID:-1173}"
 target_port="${TARGET_POSTGRES_PORT:-5432}"

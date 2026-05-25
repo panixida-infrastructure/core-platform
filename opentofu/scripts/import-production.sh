@@ -20,7 +20,18 @@ import_or_replace() {
   local current_id
 
   if tofu state show "$address" >/dev/null 2>&1; then
-    current_id="$(tofu state show -no-color "$address" | awk -F' = ' '$1 ~ /^id$/ { gsub(/"/, "", $2); print $2; exit }')"
+    current_id="$(
+      tofu state show -no-color "$address" \
+        | awk -F' = ' '{
+          key = $1
+          gsub(/^[[:space:]]+|[[:space:]]+$/, "", key)
+          if (key == "id") {
+            gsub(/"/, "", $2)
+            print $2
+            exit
+          }
+        }'
+    )"
     if [ "$current_id" = "$id" ]; then
       echo "Already imported: ${address}"
       return
@@ -34,7 +45,7 @@ import_or_replace() {
   tofu import -input=false "$address" "$id"
 }
 
-import_if_missing twc_project.infrastructure 1619863
+import_or_replace twc_project.infrastructure 1152653
 
 import_if_missing twc_server.infrastructure 8034806
 

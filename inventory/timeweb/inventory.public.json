@@ -3,7 +3,7 @@
   "generated_at": "2026-05-25",
   "projects": [
     {
-      "id": 1619863,
+      "id": 1152653,
       "name": "core-platform",
       "description": "",
       "resource_counts": {
@@ -19,7 +19,7 @@
       "id": 8034806,
       "name": "infrastructure",
       "status": "on",
-      "project_id": 1619863,
+      "project_id": 1152653,
       "project_name": "core-platform",
       "availability_zone": "msk-1",
       "main_ipv4": "81.200.158.9"
@@ -30,7 +30,7 @@
       "id": 4169562,
       "name": "postgres",
       "type": "postgres18",
-      "project_id": 1619863,
+      "project_id": 1152653,
       "project_name": "core-platform",
       "availability_zone": "msk-1",
       "preset_id": 1173,
@@ -42,7 +42,7 @@
       "id": 508508,
       "name": "panixida-storage",
       "type": "private",
-      "project_id": 1619863,
+      "project_id": 1152653,
       "project_name": "core-platform",
       "location": "ru-1",
       "hostname": "https://s3.twcstorage.ru",
@@ -78,7 +78,7 @@
   "opentofu_imports": [
     {
       "address": "twc_project.infrastructure",
-      "import_id": "1619863"
+      "import_id": "1152653"
     },
     {
       "address": "twc_server.infrastructure",

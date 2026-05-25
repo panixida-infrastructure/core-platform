@@ -18,6 +18,7 @@ concurrency:
 env:
   TF_IN_AUTOMATION: "true"
   TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
+  TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
 
@@ -51,7 +52,7 @@ jobs:
       - name: Check required secrets
         run: |
           set -euo pipefail
-          for name in TF_VAR_twc_token AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+          for name in TF_VAR_twc_token TIMEWEB_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
             if [ -z "${!name:-}" ]; then
               echo "::error::${name} is not available"
               exit 1
@@ -60,6 +61,12 @@ jobs:
 
       - name: Init
         run: tofu init -input=false
+
+      - name: Reconcile Timeweb projects
+        run: bash ../../../scripts/timeweb/reconcile-core-platform-project.sh
+
+      - name: Reconcile OpenTofu state
+        run: bash ../../scripts/reconcile-production-state.sh
 
       - name: Remove retired SSH key from state
         run: tofu state rm twc_ssh_key.oldstrategyforge_245799 || true
