@@ -20,5 +20,5 @@ resource "twc_database_backup_schedule" "postgres_database" {
   enabled           = true
   interval          = "day"
   copy_count        = 7
-  creation_start_at = "2026-05-26T00:00:00Z"
+  creation_start_at = "2026-05-25T00:00:00.000Z"
 }
