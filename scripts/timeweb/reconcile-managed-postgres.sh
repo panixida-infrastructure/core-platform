@@ -255,6 +255,8 @@ if [ -z "$target_cluster_id" ]; then
 fi
 
 wait_cluster_started "$target_cluster_id"
+twc PATCH "/api/v1/databases/${target_cluster_id}" '{"is_enabled_public_network":true}' >/dev/null
+sleep 5
 target_host="$(cluster_host "$target_cluster_id")"
 if [ -z "$target_host" ]; then
   echo "::error::Target cluster ${target_cluster_id} has no public endpoint"
