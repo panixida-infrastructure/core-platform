@@ -118,6 +118,35 @@ jobs:
           registry-user: ${{ github.actor }}
           registry-token: ${{ github.token }}
 
+      - name: Unseal OpenBao
+        env:
+          OPENBAO_ADDR: https://secrets.panixida.ru
+          OPENBAO_UNSEAL_KEY: ${{ secrets.OPENBAO_UNSEAL_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENBAO_UNSEAL_KEY:-}" ]; then
+            echo "::error::OPENBAO_UNSEAL_KEY is required to unseal OpenBao after redeploy"
+            exit 1
+          fi
+
+          for _ in $(seq 1 40); do
+            status="$(curl -fsS -o /tmp/openbao-health.json -w '%{http_code}' "${OPENBAO_ADDR}/v1/sys/health" || true)"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            if [ "$status" = "503" ]; then
+              payload="$(jq -nc --arg key "$OPENBAO_UNSEAL_KEY" '{key: $key}')"
+              curl -fsS -X POST -H "Content-Type: application/json" -d "$payload" "${OPENBAO_ADDR}/v1/sys/unseal" >/tmp/openbao-unseal.json
+              if [ "$(jq -r '.sealed' /tmp/openbao-unseal.json)" = "false" ]; then
+                exit 0
+              fi
+            fi
+            sleep 3
+          done
+
+          cat /tmp/openbao-health.json
+          exit 1
+
   komodo:
     if: inputs.stack == 'komodo'
     runs-on: ubuntu-latest
