@@ -46,6 +46,12 @@ twc() {
     return 44
   fi
 
+  if [ "$status" = "403" ] && jq -e '.error_code == "storage_action_are_prohibited"' "$response" >/dev/null 2>&1; then
+    cat "$response" >&2
+    rm -f "$response"
+    return 43
+  fi
+
   if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
     cat "$response" >&2
     rm -f "$response"
@@ -99,6 +105,7 @@ delete_unbound_floating_ip() {
 delete_storage_bucket() {
   local bucket_id="$1"
   local bucket
+  local status
 
   bucket="$(twc GET "/api/v1/storages/buckets/${bucket_id}" || true)"
   if [ -z "$bucket" ]; then
@@ -106,7 +113,17 @@ delete_storage_bucket() {
   fi
 
   echo "Deleting retired storage bucket ${bucket_id}"
+  set +e
   twc DELETE "/api/v1/storages/buckets/${bucket_id}" >/dev/null
+  status="$?"
+  set -e
+
+  if [ "$status" = "43" ]; then
+    echo "Skipping retired storage bucket ${bucket_id}: storage is in quarantine"
+    return
+  fi
+
+  return "$status"
 }
 
 clear_storage_bucket_description() {
