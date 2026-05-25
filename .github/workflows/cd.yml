@@ -203,6 +203,55 @@ jobs:
         id: openbao
         run: bash scripts/openbao/fetch-github-actions-secrets.sh komodo
 
+      - name: Backup Komodo MongoDB before engine migration
+        env:
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVICE_FOLDER: ${{ vars.SERVICE_FOLDER }}
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f ssh_key' EXIT
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ssh_key
+          ssh -i ssh_key -p "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" '
+            set -euo pipefail
+            deploy_folder="/opt/'"$SERVICE_FOLDER"'/komodo"
+            archive="${deploy_folder}/komodo.archive"
+            marker="${deploy_folder}/.mongo_v7_restored"
+
+            if [ -f "$marker" ] || [ -s "$archive" ]; then
+              exit 0
+            fi
+
+            if ! docker ps -a --format "{{.Names}}" | grep -qx komodo-mongo-1; then
+              exit 0
+            fi
+
+            cd "$deploy_folder"
+            user="$(sed -n "s/^KOMODO_DATABASE_USERNAME=//p" .env | head -n1)"
+            password="$(sed -n "s/^KOMODO_DATABASE_PASSWORD=//p" .env | head -n1)"
+
+            for _ in $(seq 1 20); do
+              if docker exec komodo-mongo-1 mongodump \
+                -u "$user" \
+                -p "$password" \
+                --authenticationDatabase admin \
+                --db komodo \
+                --archive=/tmp/komodo.archive; then
+                docker cp komodo-mongo-1:/tmp/komodo.archive "$archive"
+                docker exec komodo-mongo-1 rm -f /tmp/komodo.archive >/dev/null 2>&1 || true
+                chmod 600 "$archive"
+                exit 0
+              fi
+              sleep 3
+            done
+
+            echo "Failed to create Komodo MongoDB migration archive" >&2
+            exit 1
+          '
+
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
           server-user: ${{ vars.SERVER_USER }}
@@ -219,6 +268,7 @@ jobs:
             KOMODO_HOSTNAME=komodo.panixida.ru
             KOMODO_HOST=https://komodo.panixida.ru
             KOMODO_TITLE=Panixida Komodo
+            COMPOSE_KOMODO_MONGO_IMAGE_TAG=7.0
             KOMODO_LOCAL_AUTH=true
             KOMODO_INIT_ADMIN_USERNAME=${{ steps.openbao.outputs.KOMODO_INIT_ADMIN_USERNAME }}
             KOMODO_INIT_ADMIN_PASSWORD=${{ steps.openbao.outputs.KOMODO_INIT_ADMIN_PASSWORD }}
@@ -246,6 +296,59 @@ jobs:
           registry-url: ghcr.io
           registry-user: ${{ github.actor }}
           registry-token: ${{ github.token }}
+
+      - name: Restore Komodo MongoDB after engine migration
+        env:
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVICE_FOLDER: ${{ vars.SERVICE_FOLDER }}
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f ssh_key' EXIT
+          printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ssh_key
+          ssh -i ssh_key -p "$SERVER_SSH_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" '
+            set -euo pipefail
+            deploy_folder="/opt/'"$SERVICE_FOLDER"'/komodo"
+            archive="${deploy_folder}/komodo.archive"
+            marker="${deploy_folder}/.mongo_v7_restored"
+
+            if [ -f "$marker" ]; then
+              exit 0
+            fi
+
+            cd "$deploy_folder"
+            user="$(sed -n "s/^KOMODO_DATABASE_USERNAME=//p" .env | head -n1)"
+            password="$(sed -n "s/^KOMODO_DATABASE_PASSWORD=//p" .env | head -n1)"
+
+            for _ in $(seq 1 30); do
+              if docker exec komodo-mongo-1 mongosh \
+                -u "$user" \
+                -p "$password" \
+                --authenticationDatabase admin \
+                --quiet \
+                --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+
+            if [ -s "$archive" ]; then
+              docker cp "$archive" komodo-mongo-1:/tmp/komodo.archive
+              docker exec komodo-mongo-1 mongorestore \
+                -u "$user" \
+                -p "$password" \
+                --authenticationDatabase admin \
+                --archive=/tmp/komodo.archive \
+                --drop \
+                --nsInclude="komodo.*"
+              docker exec komodo-mongo-1 rm -f /tmp/komodo.archive >/dev/null 2>&1 || true
+            fi
+
+            touch "$marker"
+          '
 
   observability:
     if: inputs.stack == 'observability'
