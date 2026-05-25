@@ -401,7 +401,8 @@ migrate_database() {
     --file "$dump_file"
 
   PGPASSWORD="$target_password" \
-  pg_restore "host=${target_host} port=${target_port} user=${target_login} dbname=${database} sslmode=require" \
+  pg_restore \
+    --dbname "host=${target_host} port=${target_port} user=${target_login} dbname=${database} sslmode=require" \
     --clean \
     --if-exists \
     --no-owner \
