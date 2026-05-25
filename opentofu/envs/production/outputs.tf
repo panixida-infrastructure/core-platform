@@ -20,7 +20,24 @@ output "timeweb_inventory" {
     }
 
     networks = {
-      infrastructure_msk = twc_vpc.infrastructure_msk.id
+      core_platform_msk = twc_vpc.infrastructure_msk.id
+    }
+
+    kubernetes = {
+      id                    = twc_k8s_cluster.core_platform.id
+      version               = twc_k8s_cluster.core_platform.version
+      status                = twc_k8s_cluster.core_platform.status
+      network_driver        = var.k8s_network_driver
+      default_node_group_id = twc_k8s_node_group.core_platform_default.id
+    }
+
+    network_drives = {
+      core_platform_nvme = {
+        id                 = twc_network_drive.core_platform_nvme.id
+        availability_zone  = "msk-1"
+        size_gb            = var.network_drive_size_gb
+        storage_class_name = "nvme.network-drives.csi.timeweb.cloud"
+      }
     }
 
     postgres_database = {
@@ -45,4 +62,9 @@ output "timeweb_inventory" {
       sonar    = "sonar.panixida.ru"
     }
   }
+}
+
+output "core_platform_kubeconfig" {
+  value     = twc_k8s_cluster.core_platform.kubeconfig
+  sensitive = true
 }

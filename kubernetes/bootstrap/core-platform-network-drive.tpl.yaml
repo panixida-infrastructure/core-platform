@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: core-platform-retained-nvme
+spec:
+  capacity:
+    storage: ${CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: network-drives.csi.timeweb.cloud
+    volumeHandle: ${CORE_PLATFORM_NETWORK_DRIVE_ID}
+    fsType: ext4
+  storageClassName: nvme.network-drives.csi.timeweb.cloud
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: core-platform-retained-nvme
+  namespace: storage
+spec:
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: ${CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI}
+  volumeName: core-platform-retained-nvme
+  storageClassName: nvme.network-drives.csi.timeweb.cloud

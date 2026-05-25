@@ -1,0 +1,162 @@
+name: Kubernetes Bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type bootstrap-kubernetes to bootstrap the managed cluster
+        required: true
+        type: string
+      install_controllers:
+        description: Install or upgrade Kubernetes controllers with Helm
+        required: true
+        type: boolean
+        default: true
+      apply_gitops_root:
+        description: Apply the Argo CD root application from this repository
+        required: true
+        type: boolean
+        default: true
+      apply_retained_disk_pv:
+        description: Create a retained PV/PVC for the OpenTofu-managed MSK-1 network drive
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubernetes-bootstrap-production
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: ${{ runner.temp }}/core-platform.kubeconfig
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "bootstrap-kubernetes" ]; then
+            echo "::error::Confirmation must be exactly bootstrap-kubernetes"
+            exit 1
+          fi
+
+      - name: Check required secrets
+        run: |
+          set -euo pipefail
+          for name in TF_VAR_twc_token AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is not available"
+              exit 1
+            fi
+          done
+
+      - name: Install CLI tools
+        run: |
+          set -euo pipefail
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+            | sudo gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+          sudo chmod a+r /etc/apt/keyrings/opentofu-repo.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" \
+            | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y gettext-base tofu
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
+          sudo install -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Write kubeconfig from OpenTofu state
+        working-directory: opentofu/envs/production
+        run: |
+          set -euo pipefail
+          tofu init -input=false
+          tofu output -raw core_platform_kubeconfig > "$KUBECONFIG"
+          chmod 600 "$KUBECONFIG"
+          kubectl version --client=true
+          kubectl get nodes -o wide
+
+      - name: Install Kubernetes controllers
+        if: inputs.install_controllers
+        run: |
+          set -euo pipefail
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo add external-secrets https://charts.external-secrets.io
+          helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+          helm repo update
+
+          helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager \
+            --version v1.20.2 \
+            --namespace cert-manager \
+            --create-namespace \
+            --set crds.enabled=true \
+            --wait \
+            --timeout 10m
+
+          helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm \
+            --version v1.8.0 \
+            --namespace envoy-gateway-system \
+            --create-namespace \
+            --wait \
+            --timeout 10m
+
+          helm upgrade --install external-secrets external-secrets/external-secrets \
+            --version 2.4.1 \
+            --namespace external-secrets \
+            --create-namespace \
+            --set installCRDs=true \
+            --wait \
+            --timeout 10m
+
+          helm upgrade --install argo-cd argo/argo-cd \
+            --version 9.3.7 \
+            --namespace argocd \
+            --create-namespace \
+            --set server.service.type=ClusterIP \
+            --wait \
+            --timeout 15m
+
+          helm upgrade --install headlamp headlamp/headlamp \
+            --version 0.38.0 \
+            --namespace headlamp \
+            --create-namespace \
+            --set service.type=ClusterIP \
+            --wait \
+            --timeout 10m
+
+          kubectl wait --timeout=5m -n envoy-gateway-system deployment/envoy-gateway --for=condition=Available
+
+      - name: Apply retained network drive PV
+        if: inputs.apply_retained_disk_pv
+        working-directory: opentofu/envs/production
+        run: |
+          set -euo pipefail
+          CORE_PLATFORM_NETWORK_DRIVE_ID="$(tofu output -json timeweb_inventory | jq -r '.network_drives.core_platform_nvme.id')"
+          if [ -z "$CORE_PLATFORM_NETWORK_DRIVE_ID" ] || [ "$CORE_PLATFORM_NETWORK_DRIVE_ID" = "null" ]; then
+            echo "::error::core-platform NVMe network drive id is missing from OpenTofu output"
+            exit 1
+          fi
+          CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB="$(tofu output -json timeweb_inventory | jq -r '.network_drives.core_platform_nvme.size_gb')"
+          if [ -z "$CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB" ] || [ "$CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB" = "null" ]; then
+            echo "::error::core-platform NVMe network drive size is missing from OpenTofu output"
+            exit 1
+          fi
+          CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI="${CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB}Gi"
+          export CORE_PLATFORM_NETWORK_DRIVE_ID
+          export CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI
+          envsubst < ../../../kubernetes/bootstrap/core-platform-network-drive.tpl.yaml | kubectl apply -f -
+
+      - name: Apply Argo CD root application
+        if: inputs.apply_gitops_root
+        run: kubectl apply -f kubernetes/bootstrap/argocd-root.yaml

@@ -416,6 +416,7 @@ openbao_token="$(openbao_login)"
 identity_secret="$(bao_read "$openbao_token" core-platform/identity)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
+openbao_secret="$(bao_read_optional "$openbao_token" core-platform/openbao)"
 applications_secret="$(bao_read_optional "$openbao_token" core-platform/applications)"
 
 keycloak_user="$(jq -r '.KEYCLOAK_DB_USERNAME' <<<"$identity_secret")"
@@ -424,10 +425,12 @@ sonar_user="$(jq -r '.SONAR_DB_USERNAME' <<<"$sonarqube_secret")"
 sonar_password="$(jq -r '.SONAR_DB_PASSWORD' <<<"$sonarqube_secret")"
 grafana_user="$(jq -r '.GRAFANA_DB_USERNAME // "grafana_user"' <<<"$observability_secret")"
 grafana_password="$(secret_or_generate "$(jq -r '.GRAFANA_DB_PASSWORD // empty' <<<"$observability_secret")")"
+openbao_user="$(jq -r '.OPENBAO_DB_USERNAME // "openbao_user"' <<<"$openbao_secret")"
+openbao_password="$(secret_or_generate "$(jq -r '.OPENBAO_DB_PASSWORD // empty' <<<"$openbao_secret")")"
 dotnet_template_user="$(jq -r '.DOTNET_TEMPLATE_DB_USERNAME // "dotnet_template_user"' <<<"$applications_secret")"
 dotnet_template_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_DB_PASSWORD // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password dotnet_template_user dotnet_template_password; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_user dotnet_template_password; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -467,6 +470,9 @@ target_privileges[sonar]="$common_privileges"
 target_users[grafana]="$grafana_user"
 target_passwords[grafana]="$grafana_password"
 target_privileges[grafana]="$common_privileges"
+target_users[openbao]="$openbao_user"
+target_passwords[openbao]="$openbao_password"
+target_privileges[openbao]="$common_privileges"
 target_users[dotnet_template]="$dotnet_template_user"
 target_passwords[dotnet_template]="$dotnet_template_password"
 target_privileges[dotnet_template]="$common_privileges"
@@ -536,6 +542,13 @@ observability_secret="$(jq \
   --arg password "$grafana_password" \
   '. + {GRAFANA_DB_HOST: $host, GRAFANA_DB_PORT: $port, GRAFANA_DB_NAME: "grafana", GRAFANA_DB_USERNAME: $user, GRAFANA_DB_PASSWORD: $password}' \
   <<<"$observability_secret")"
+openbao_secret="$(jq \
+  --arg host "$target_host" \
+  --arg port "$target_port" \
+  --arg user "$openbao_user" \
+  --arg password "$openbao_password" \
+  '. + {OPENBAO_DB_HOST: $host, OPENBAO_DB_PORT: $port, OPENBAO_DB_NAME: "openbao", OPENBAO_DB_USERNAME: $user, OPENBAO_DB_PASSWORD: $password}' \
+  <<<"$openbao_secret")"
 applications_secret="$(jq \
   --arg host "$target_host" \
   --arg port "$target_port" \
@@ -547,6 +560,7 @@ applications_secret="$(jq \
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
 bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
 bao_write "$openbao_token" core-platform/observability "$observability_secret"
+bao_write "$openbao_token" core-platform/openbao "$openbao_secret"
 bao_write "$openbao_token" core-platform/applications "$applications_secret"
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then

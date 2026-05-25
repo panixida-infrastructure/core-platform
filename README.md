@@ -5,25 +5,26 @@ Source of truth for infrastructure automation.
 This repository starts with:
 
 - OpenTofu skeleton for Timeweb Cloud resources.
-- Ansible playbooks for server bootstrap and compose deployment.
-- Docker Compose stacks managed through the shared `ci-cd` deployment action.
+- Timeweb Managed Kubernetes provisioning.
+- A temporary Ansible and Docker Compose migration path for the old `infrastructure` server.
+- GitOps bootstrap for Kubernetes through Helm, Envoy Gateway, Argo CD, and Headlamp.
 
 Planned platform layers:
 
-- Traefik + Let's Encrypt for public entrypoints.
+- Envoy Gateway for public entrypoints.
 - Keycloak for SSO.
 - Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmalert, Alertmanager, blackbox_exporter, vmagent, vlagent, and OpenTelemetry Collector for observability.
 - OpenBao for secrets.
-- Komodo for server and compose management.
+- Argo CD and Headlamp for Kubernetes management.
 - Restic backups with restore checks.
 - Trivy, SonarQube, CodeQL in CI.
-- K3s later, if Docker Compose stops being enough.
 
 ## Layout
 
 ```text
 ansible/              Server configuration and deployment playbooks
 docs/                 Operator notes and required provider inputs
+kubernetes/           Kubernetes bootstrap and GitOps source
 opentofu/envs/        OpenTofu environments
 stacks/               Docker Compose source of truth by platform stack
 ```
@@ -79,7 +80,9 @@ Manual workflows:
 - `OpenTofu Import Existing Infra` imports known Timeweb resources into remote state using `tofu import`, then shows drift.
 - `OpenTofu Plan` runs an authoritative plan against the S3-backed state.
 - `OpenTofu Apply` applies the current production configuration after an explicit confirmation string.
+- `Kubernetes Bootstrap` installs the first Kubernetes controllers and applies the Argo CD root app.
 - `Ansible Bootstrap` applies server bootstrap through SSH.
 
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.
+See [docs/kubernetes-migration.md](docs/kubernetes-migration.md) for the Kubernetes migration plan and cutover rules.
 See [docs/platform-domains.md](docs/platform-domains.md) and [docs/secrets.md](docs/secrets.md) for platform UI domains and the OpenBao bootstrap model.

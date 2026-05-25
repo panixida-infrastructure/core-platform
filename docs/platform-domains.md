@@ -1,13 +1,10 @@
 # Platform Domains
 
-All public platform UI endpoints are routed through Traefik on the infrastructure server.
+During the migration, existing public platform UI endpoints still point to the `infrastructure` server. The Kubernetes target is Envoy Gateway with DNS repointed to the Kubernetes LoadBalancer IP after the workloads are migrated.
 
 ```text
-traefik.panixida.ru    Traefik dashboard
 identity.panixida.ru   Keycloak
 secrets.panixida.ru    OpenBao
-komodo.panixida.ru     Komodo
-auth.panixida.ru       oauth2-proxy SSO gateway
 grafana.panixida.ru    Grafana
 metrics.panixida.ru    VictoriaMetrics
 logs.panixida.ru       VictoriaLogs
@@ -16,6 +13,21 @@ alerts.panixida.ru     Alertmanager
 sonar.panixida.ru      SonarQube
 ```
 
-The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf` and point to the infrastructure server public IPv4.
+New Kubernetes UI endpoints:
 
-TLS certificates are issued by Traefik through Let's Encrypt HTTP-01 challenges.
+```text
+argocd.panixida.ru     Argo CD
+headlamp.panixida.ru   Headlamp
+```
+
+Retired after Kubernetes cutover:
+
+```text
+traefik.panixida.ru
+komodo.panixida.ru
+auth.panixida.ru
+```
+
+The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. Before final cutover, update `platform_public_ipv4` to the Envoy Gateway LoadBalancer IPv4 and remove retired records in the same plan.
+
+TLS certificates should be issued through cert-manager or Timeweb LoadBalancer SSL settings for the Envoy Gateway entrypoint.

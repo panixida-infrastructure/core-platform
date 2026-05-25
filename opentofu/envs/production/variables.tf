@@ -20,13 +20,67 @@ variable "timeweb_project_name" {
 variable "location" {
   description = "Timeweb location code, for example ru-1."
   type        = string
-  default     = "ru-1"
+  default     = "ru-3"
 }
 
 variable "platform_public_ipv4" {
   description = "Public IPv4 address for platform UI DNS records."
   type        = string
   default     = "81.200.158.9"
+}
+
+variable "k8s_version" {
+  description = "Managed Kubernetes version for the core platform cluster."
+  type        = string
+  default     = "v1.35.4+k0s.0"
+}
+
+variable "k8s_network_driver" {
+  description = "Managed Kubernetes CNI network driver."
+  type        = string
+  default     = "cilium"
+}
+
+variable "k8s_master_preset_id" {
+  description = "Timeweb Managed Kubernetes master preset id. 2947 is Promo MSK."
+  type        = number
+  default     = 2947
+}
+
+variable "k8s_worker_preset_id" {
+  description = "Timeweb Managed Kubernetes worker preset id. 2951 is Promo MSK 2 CPU / 2 GB / 40 GB."
+  type        = number
+  default     = 2951
+}
+
+variable "k8s_worker_node_count" {
+  description = "Initial worker node count. Keep in sync with autoscaling min size on first create."
+  type        = number
+  default     = 2
+}
+
+variable "k8s_worker_min_size" {
+  description = "Minimum autoscaling size for the default worker node group."
+  type        = number
+  default     = 2
+}
+
+variable "k8s_worker_max_size" {
+  description = "Maximum autoscaling size for the default worker node group."
+  type        = number
+  default     = 4
+}
+
+variable "network_drive_preset_id" {
+  description = "Timeweb network drive preset id. 3739 is NVMe in MSK-1."
+  type        = number
+  default     = 3739
+}
+
+variable "network_drive_size_gb" {
+  description = "Core platform retained NVMe network drive size in GB."
+  type        = number
+  default     = 50
 }
 
 variable "tags" {

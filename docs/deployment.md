@@ -123,6 +123,7 @@ The platform uses the managed cluster for:
 keycloak
 sonar
 grafana
+openbao
 ```
 
 The workflow writes service connection settings to:
@@ -131,4 +132,11 @@ The workflow writes service connection settings to:
 secret/core-platform/identity
 secret/core-platform/sonarqube
 secret/core-platform/observability
+secret/core-platform/openbao
 ```
+
+## Managed Kubernetes
+
+OpenTofu creates the Timeweb Managed Kubernetes cluster, the default worker node group, and the retained MSK-1 NVMe network drive. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, and applies the Argo CD root application.
+
+The intended steady state is GitOps pull from this repository through Argo CD. The existing SSH/Docker Compose workflows remain only for migration until service data is moved from the `infrastructure` server.

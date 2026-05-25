@@ -42,6 +42,10 @@ path "secret/data/core-platform/sonarqube" {
   capabilities = ["create", "read", "update"]
 }
 
+path "secret/data/core-platform/openbao" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "secret/data/core-platform/applications" {
   capabilities = ["create", "read", "update"]
 }
