@@ -520,10 +520,17 @@ for database_name in "${!target_users[@]}"; do
 done
 
 backup_start_at="$(date -u +%Y-%m-%dT00:00:00Z)"
+set +e
 twc PATCH "/api/v1/dbs/${target_cluster_id}/auto-backups" \
   "$(jq -nc --arg creation_start_at "$backup_start_at" \
     '{is_enabled: true, copy_count: 7, creation_start_at: $creation_start_at, interval: "day", day_of_week: 1}')" \
   >/dev/null
+backup_status="$?"
+set -e
+
+if [ "$backup_status" != "0" ]; then
+  echo "Skipping managed PostgreSQL auto-backup API reconcile; backup schedule is managed by OpenTofu."
+fi
 
 identity_secret="$(jq \
   --arg host "$target_host" \
