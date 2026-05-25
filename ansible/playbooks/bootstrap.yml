@@ -321,10 +321,17 @@
           dest: grafana/provisioning/datasources/datasources.yml
         - src: observability-otelcol.yml.j2
           dest: otelcol/config.yml
-        - src: observability-vmagent.yml.j2
-          dest: vmagent/scrape.yml
         - src: observability-vmalert.yml.j2
           dest: vmalert/rules.yml
+
+    - name: Render observability vmagent config
+      ansible.builtin.template:
+        src: observability-vmagent.yml.j2
+        dest: "{{ core_platform_observability_folder }}/config/vmagent/scrape.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      no_log: "{{ observability_timeweb_dbaas_exporter_password | length > 0 }}"
 
   handlers:
     - name: Reload ssh

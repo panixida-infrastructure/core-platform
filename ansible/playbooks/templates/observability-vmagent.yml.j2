@@ -39,3 +39,31 @@ scrape_configs:
           - victoriatraces:10428
           - vmagent:8429
           - vmalert:8880
+
+{% if observability_timeweb_dbaas_exporter_id | length > 0 %}
+  - job_name: timeweb-dbaas-postgres
+    scheme: https
+    metrics_path: /{{ observability_timeweb_dbaas_exporter_id }}/service/metrics
+    basic_auth:
+      username: "{{ observability_timeweb_dbaas_exporter_username }}"
+      password: "{{ observability_timeweb_dbaas_exporter_password }}"
+    static_configs:
+      - targets:
+          - {{ observability_timeweb_dbaas_exporter_host }}
+        labels:
+          db_cluster: postgres_database
+          exporter: db_exporter
+
+  - job_name: timeweb-dbaas-node
+    scheme: https
+    metrics_path: /{{ observability_timeweb_dbaas_exporter_id }}/node-exporter/metrics
+    basic_auth:
+      username: "{{ observability_timeweb_dbaas_exporter_username }}"
+      password: "{{ observability_timeweb_dbaas_exporter_password }}"
+    static_configs:
+      - targets:
+          - {{ observability_timeweb_dbaas_exporter_host }}
+        labels:
+          db_cluster: postgres_database
+          exporter: node_exporter
+{% endif %}

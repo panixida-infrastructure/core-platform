@@ -55,6 +55,14 @@ secret/core-platform/timeweb
 secret/core-platform/wireguard
 ```
 
+The managed PostgreSQL DBaaS exporter credentials also live in `secret/core-platform/observability`:
+
+```text
+OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID
+OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME
+OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD
+```
+
 ## Bootstrap variables
 
 The bootstrap playbook reads non-secret SSH and WireGuard parameters from GitHub repository variables:

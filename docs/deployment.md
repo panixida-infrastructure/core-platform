@@ -109,3 +109,5 @@ SSH keys are host-specific:
 - `TACTICALHEROES_DEV_SSH_PRIVATE_KEY` is used only for `TacticalHeroes.Dev`.
 
 The managed agents stack installs `node_exporter`, `cAdvisor`, `vmagent`, and `vlagent` on every managed server. Metrics are remote-written to VictoriaMetrics and logs are remote-written to VictoriaLogs.
+
+The central observability vmagent also scrapes the Timeweb DBaaS public exporter for the managed PostgreSQL cluster. Exporter credentials are stored in OpenBao under `secret/core-platform/observability` and are injected only into the Ansible bootstrap workflow.

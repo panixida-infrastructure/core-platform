@@ -49,3 +49,7 @@ observability_vm_remote_write_password: "{{ lookup('env', 'OBSERVABILITY_VM_REMO
 observability_logs_remote_write_url: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_URL') | default('https://logs.panixida.ru/insert/native', true) }}"
 observability_logs_remote_write_username: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_USERNAME') | default(observability_vm_remote_write_username, true) }}"
 observability_logs_remote_write_password: "{{ lookup('env', 'OBSERVABILITY_LOGS_REMOTE_WRITE_PASSWORD') | default(observability_vm_remote_write_password, true) }}"
+observability_timeweb_dbaas_exporter_host: "{{ lookup('env', 'OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_HOST') | default('dbs-exporter.timeweb.cloud', true) }}"
+observability_timeweb_dbaas_exporter_id: "{{ lookup('env', 'OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID') }}"
+observability_timeweb_dbaas_exporter_username: "{{ lookup('env', 'OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME') }}"
+observability_timeweb_dbaas_exporter_password: "{{ lookup('env', 'OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD') }}"
