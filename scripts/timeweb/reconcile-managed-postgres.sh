@@ -13,7 +13,7 @@ target_zone="${TARGET_POSTGRES_AVAILABILITY_ZONE:-msk-1}"
 target_preset_id="${TARGET_POSTGRES_PRESET_ID:-1173}"
 target_port="${TARGET_POSTGRES_PORT:-5432}"
 target_excluded_databases="${TARGET_EXCLUDED_DATABASES:-default_db digital_event_manager}"
-target_excluded_users="${TARGET_EXCLUDED_USERS:-gen_user digital_event_manager_user}"
+target_excluded_users="${TARGET_EXCLUDED_USERS:-gen_user digital_event_manager_user sonar}"
 
 common_privileges='["SELECT","INSERT","UPDATE","DELETE","CREATE","TRUNCATE","REFERENCES","TRIGGER","TEMPORARY"]'
 tmp_dir="${RUNNER_TEMP:-/tmp}/core-platform-postgres"
@@ -149,15 +149,36 @@ ensure_user() {
   local password="$3"
   local instance_id="$4"
   local privileges="$5"
-  local exists
+  local existing_user
+  local existing_id
+  local has_privileges
 
-  exists="$(twc GET "/api/v1/databases/${cluster_id}/admins" \
-    | jq -r --arg login "$login" '.admins[] | select(.login == $login) | .id' \
+  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200" \
+    | jq -c --arg login "$login" '.admins[] | select(.login == $login)' \
     | head -n1)"
 
-  if [ -n "$exists" ]; then
-    echo "User ${login} already exists in target cluster"
-    return
+  if [ -n "$existing_user" ]; then
+    existing_id="$(jq -r '.id' <<<"$existing_user")"
+    has_privileges="$(jq -re \
+      --argjson instance_id "$instance_id" \
+      --argjson required "$privileges" '
+        def privilege_array:
+          if type == "array" then .
+          elif type == "string" then split(" ") | map(select(length > 0))
+          else []
+          end;
+
+        ([.instances[]? | select(.instance_id == $instance_id) | .privileges | privilege_array][0] // []) as $actual
+        | (($required - $actual) | length) == 0
+      ' <<<"$existing_user" >/dev/null && echo true || echo false)"
+
+    if [ "$has_privileges" = "true" ]; then
+      echo "User ${login} already exists in target cluster with required privileges"
+      return
+    fi
+
+    echo "Recreating target user ${login} with required privileges"
+    twc DELETE "/api/v1/databases/${cluster_id}/admins/${existing_id}" >/dev/null
   fi
 
   twc POST "/api/v1/databases/${cluster_id}/admins" \
@@ -192,7 +213,7 @@ cleanup_excluded_target_resources() {
   local user_id
   local instance_id
 
-  admins="$(twc GET "/api/v1/databases/${cluster_id}/admins")"
+  admins="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200")"
   for login in $target_excluded_users; do
     user_id="$(jq -r --arg login "$login" '.admins[] | select(.login == $login) | .id' <<<"$admins" | head -n1)"
     if [ -n "$user_id" ]; then
@@ -201,7 +222,7 @@ cleanup_excluded_target_resources() {
     fi
   done
 
-  instances="$(twc GET "/api/v1/databases/${cluster_id}/instances")"
+  instances="$(twc GET "/api/v1/databases/${cluster_id}/instances?limit=200")"
   for database_name in $target_excluded_databases; do
     instance_id="$(jq -r --arg name "$database_name" '.instances[] | select(.name == $name) | .id' <<<"$instances" | head -n1)"
     if [ -n "$instance_id" ]; then
@@ -322,8 +343,8 @@ target_passwords[grafana]="$grafana_password"
 target_privileges[grafana]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
-  legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances")"
-  legacy_admins="$(twc GET "/api/v1/databases/${legacy_cluster_id}/admins")"
+  legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
+  legacy_admins="$(twc GET "/api/v1/databases/${legacy_cluster_id}/admins?limit=200")"
 
   while IFS= read -r row; do
     database_name="$(jq -r '.name' <<<"$row")"
@@ -346,9 +367,7 @@ if [ -n "$legacy_cluster_id" ]; then
     if [ -z "${target_users[$database_name]:-}" ]; then
       target_users[$database_name]="$(jq -r '.login' <<<"$admin")"
       target_passwords[$database_name]="$(jq -r '.password' <<<"$admin")"
-      target_privileges[$database_name]="$(jq -c --argjson instance_id "$instance_id" \
-        '[.instances[] | select(.instance_id == $instance_id) | .privileges][0] // []' \
-        <<<"$admin")"
+      target_privileges[$database_name]="$common_privileges"
     fi
   done < <(jq -rc '.instances[]' <<<"$legacy_instances")
 fi
