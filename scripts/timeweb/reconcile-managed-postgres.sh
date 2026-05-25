@@ -14,6 +14,8 @@ target_preset_id="${TARGET_POSTGRES_PRESET_ID:-1173}"
 target_port="${TARGET_POSTGRES_PORT:-5432}"
 target_excluded_databases="${TARGET_EXCLUDED_DATABASES:-default_db digital_event_manager}"
 target_excluded_users="${TARGET_EXCLUDED_USERS:-gen_user digital_event_manager_user sonar}"
+target_ssh_tunnel="${TARGET_POSTGRES_SSH_TUNNEL:-false}"
+target_ssh_tunnel_port="${TARGET_POSTGRES_SSH_TUNNEL_PORT:-15432}"
 
 common_privileges='["SELECT","INSERT","UPDATE","DELETE","CREATE","TRUNCATE","REFERENCES","TRIGGER","TEMPORARY"]'
 tmp_dir="${RUNNER_TEMP:-/tmp}/core-platform-postgres"
@@ -122,6 +124,41 @@ cluster_host() {
 
   twc GET "/api/v1/databases/${cluster_id}" \
     | jq -r '.db.domains[0].fqdn // (.db.networks[]? | select(.type == "public") | .ips[0].ip) // empty'
+}
+
+start_target_ssh_tunnel() {
+  local target_host="$1"
+  local target_port="$2"
+  local key_file
+
+  if [ "$target_ssh_tunnel" != "true" ]; then
+    return
+  fi
+
+  for name in SERVER_HOST SERVER_USER SERVER_SSH_PRIVATE_KEY; do
+    if [ -z "${!name:-}" ]; then
+      echo "::error::${name} is required when TARGET_POSTGRES_SSH_TUNNEL=true"
+      exit 1
+    fi
+  done
+
+  key_file="$(mktemp)"
+  chmod 600 "$key_file"
+  printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" >"$key_file"
+
+  echo "Opening SSH tunnel to target PostgreSQL through ${SERVER_HOST}"
+  ssh \
+    -f \
+    -N \
+    -i "$key_file" \
+    -p "${SERVER_SSH_PORT:-22}" \
+    -o ExitOnForwardFailure=yes \
+    -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -L "127.0.0.1:${target_ssh_tunnel_port}:${target_host}:${target_port}" \
+    "${SERVER_USER}@${SERVER_HOST}"
+
+  rm -f "$key_file"
 }
 
 ensure_instance() {
@@ -245,28 +282,31 @@ secret_or_generate() {
 
 database_table_count() {
   local host="$1"
-  local database="$2"
-  local login="$3"
-  local password="$4"
+  local port="$2"
+  local database="$3"
+  local login="$4"
+  local password="$5"
 
   PGPASSWORD="$password" \
-  psql "host=${host} port=${target_port} user=${login} dbname=${database} sslmode=require" \
+  psql "host=${host} port=${port} user=${login} dbname=${database} sslmode=require" \
     -tAc "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema');" \
     | tr -d '[:space:]'
 }
 
 migrate_database() {
   local source_host="$1"
-  local target_host="$2"
-  local database="$3"
-  local source_login="$4"
-  local source_password="$5"
-  local target_login="$6"
-  local target_password="$7"
+  local source_port="$2"
+  local target_host="$3"
+  local target_port="$4"
+  local database="$5"
+  local source_login="$6"
+  local source_password="$7"
+  local target_login="$8"
+  local target_password="$9"
   local dump_file="${tmp_dir}/${database}.dump"
   local table_count
 
-  table_count="$(database_table_count "$target_host" "$database" "$target_login" "$target_password")"
+  table_count="$(database_table_count "$target_host" "$target_port" "$database" "$target_login" "$target_password")"
   if [ "${table_count:-0}" != "0" ] && [ "${FORCE_RESTORE:-false}" != "true" ]; then
     echo "Target database ${database} is not empty, skipping restore"
     return
@@ -274,7 +314,7 @@ migrate_database() {
 
   echo "Migrating ${database}"
   PGPASSWORD="$source_password" \
-  pg_dump "host=${source_host} port=${target_port} user=${source_login} dbname=${database} sslmode=require" \
+  pg_dump "host=${source_host} port=${source_port} user=${source_login} dbname=${database} sslmode=require" \
     --format=custom \
     --no-owner \
     --no-acl \
@@ -415,9 +455,18 @@ bao_write "$openbao_token" core-platform/observability "$observability_secret"
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"
   legacy_host="$(cluster_host "$legacy_cluster_id")"
+  migration_target_host="$target_host"
+  migration_target_port="$target_port"
+
   if [ -z "$legacy_host" ]; then
     echo "::error::Legacy cluster ${legacy_cluster_id} has no public endpoint"
     exit 1
+  fi
+
+  start_target_ssh_tunnel "$target_host" "$target_port"
+  if [ "$target_ssh_tunnel" = "true" ]; then
+    migration_target_host="127.0.0.1"
+    migration_target_port="$target_ssh_tunnel_port"
   fi
 
   while IFS= read -r row; do
@@ -440,7 +489,9 @@ if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id
 
     migrate_database \
       "$legacy_host" \
-      "$target_host" \
+      "$target_port" \
+      "$migration_target_host" \
+      "$migration_target_port" \
       "$database_name" \
       "$(jq -r '.login' <<<"$admin")" \
       "$(jq -r '.password' <<<"$admin")" \

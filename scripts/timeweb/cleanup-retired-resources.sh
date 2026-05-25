@@ -2,6 +2,7 @@
 set -euo pipefail
 
 timeweb_api="${TIMEWEB_API:-https://api.timeweb.cloud}"
+retired_floating_ip_ids="${RETIRED_FLOATING_IP_IDS:-0be69046-72d8-4351-b812-99cdada61745 0c8f6e70-f35e-4739-94b2-801dcf2c646a 496a8dcc-e706-4796-b9a2-578d4063a459 a69fc138-6002-4ade-aab2-21603ace6d50 dae55c1e-300b-4883-ac44-177b4d5e198b}"
 
 require_env() {
   local name="$1"
@@ -73,6 +74,26 @@ delete_dns_records_for_subdomain() {
     done
 }
 
+delete_unbound_floating_ip() {
+  local floating_ip_id="$1"
+  local floating_ip
+  local bound_resource
+
+  floating_ip="$(twc GET "/api/v1/floating-ips/${floating_ip_id}" || true)"
+  if [ -z "$floating_ip" ]; then
+    return
+  fi
+
+  bound_resource="$(jq -r '.ip.resource_id // empty' <<<"$floating_ip")"
+  if [ -n "$bound_resource" ]; then
+    echo "Skipping bound floating IP ${floating_ip_id}"
+    return
+  fi
+
+  echo "Deleting retired unbound floating IP ${floating_ip_id}"
+  twc DELETE "/api/v1/floating-ips/${floating_ip_id}" >/dev/null || true
+}
+
 require_env TIMEWEB_TOKEN
 
 echo "Enabling panixida.ru autoprolong"
@@ -84,6 +105,10 @@ twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer.panixida.ru" >/dev/
 
 echo "Deleting tacticalheroesdev.ru domain"
 twc DELETE "/api/v1/domains/tacticalheroesdev.ru" >/dev/null || true
+
+for floating_ip_id in $retired_floating_ip_ids; do
+  delete_unbound_floating_ip "$floating_ip_id"
+done
 
 if [ "${DELETE_LEGACY_SPB_NETWORK:-false}" = "true" ]; then
   legacy_network_id="${LEGACY_SPB_NETWORK_ID:-network-f6c0d7e22f5f4d2d8e8df421aa68935d}"

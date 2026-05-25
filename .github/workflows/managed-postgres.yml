@@ -55,6 +55,11 @@ jobs:
           TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
           MIGRATE_LEGACY_DATABASES: ${{ inputs.migrate_legacy_databases }}
           FORCE_RESTORE: ${{ inputs.force_restore }}
+          TARGET_POSTGRES_SSH_TUNNEL: ${{ inputs.migrate_legacy_databases }}
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
         run: bash scripts/timeweb/reconcile-managed-postgres.sh
 
       - name: Dispatch dependent deploys

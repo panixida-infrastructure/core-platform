@@ -115,6 +115,8 @@ The central observability vmagent also scrapes the Timeweb DBaaS public exporter
 
 OpenTofu creates the MSK-1 managed PostgreSQL cluster and private network. The manual `Managed PostgreSQL` workflow reconciles logical databases, users, automatic backups, and OpenBao connection settings.
 
+Legacy migrations run through an SSH tunnel via the infrastructure server because the MSK DBaaS public endpoint is reachable from Timeweb but not reliably reachable from GitHub-hosted runners.
+
 The platform uses the managed cluster for:
 
 ```text
