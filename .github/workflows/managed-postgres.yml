@@ -60,6 +60,7 @@ jobs:
           SERVER_USER: ${{ vars.SERVER_USER }}
           SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          RECREATE_TARGET_DB_USERS: ${{ inputs.migrate_legacy_databases && 'dotnet_template_user keycloak_user' || '' }}
         run: bash scripts/timeweb/reconcile-managed-postgres.sh
 
       - name: Dispatch dependent deploys

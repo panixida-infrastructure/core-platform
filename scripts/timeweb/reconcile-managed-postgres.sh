@@ -16,6 +16,7 @@ target_excluded_databases="${TARGET_EXCLUDED_DATABASES:-default_db digital_event
 target_excluded_users="${TARGET_EXCLUDED_USERS:-gen_user digital_event_manager_user sonar}"
 target_ssh_tunnel="${TARGET_POSTGRES_SSH_TUNNEL:-false}"
 target_ssh_tunnel_port="${TARGET_POSTGRES_SSH_TUNNEL_PORT:-15432}"
+target_recreate_users="${RECREATE_TARGET_DB_USERS:-}"
 
 common_privileges='["SELECT","INSERT","UPDATE","DELETE","CREATE","TRUNCATE","REFERENCES","TRIGGER","TEMPORARY"]'
 tmp_dir="${RUNNER_TEMP:-/tmp}/core-platform-postgres"
@@ -196,6 +197,15 @@ ensure_user() {
 
   if [ -n "$existing_user" ]; then
     existing_id="$(jq -r '.id' <<<"$existing_user")"
+
+    if should_recreate_user "$login"; then
+      echo "Recreating target user ${login}"
+      twc DELETE "/api/v1/databases/${cluster_id}/admins/${existing_id}" >/dev/null
+      existing_user=""
+    fi
+  fi
+
+  if [ -n "$existing_user" ]; then
     has_privileges="$(jq -re \
       --argjson instance_id "$instance_id" \
       --argjson required "$privileges" '
@@ -226,6 +236,19 @@ ensure_user() {
       --argjson privileges "$privileges" \
       '{login: $login, password: $password, host: "%", instance_id: $instance_id, privileges: $privileges, description: ""}')" \
     >/dev/null
+}
+
+should_recreate_user() {
+  local login="$1"
+  local recreate_login
+
+  for recreate_login in $target_recreate_users; do
+    if [ "$login" = "$recreate_login" ]; then
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 is_excluded_database() {
