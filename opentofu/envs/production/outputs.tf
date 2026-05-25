@@ -30,12 +30,6 @@ output "timeweb_inventory" {
       port     = twc_database_cluster.postgres_database_msk.port
     }
 
-    postgres_database_legacy = {
-      id       = twc_database_cluster.postgres_database_legacy.id
-      networks = twc_database_cluster.postgres_database_legacy.networks
-      port     = twc_database_cluster.postgres_database_legacy.port
-    }
-
     tofu_state_bucket_id = data.twc_s3_bucket.tofu_state.id
 
     dns_records = {
