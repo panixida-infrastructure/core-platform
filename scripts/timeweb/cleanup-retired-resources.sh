@@ -115,6 +115,7 @@ twc PATCH "/api/v1/domains/panixida.ru" '{"is_autoprolong_enabled":true}' >/dev/
 
 echo "Deleting portainer.panixida.ru DNS records and subdomain"
 delete_dns_records_for_subdomain panixida.ru portainer
+twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer" >/dev/null || true
 twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer.panixida.ru" >/dev/null || true
 
 echo "Deleting tacticalheroesdev.ru domain"
