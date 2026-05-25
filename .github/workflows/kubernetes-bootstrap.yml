@@ -40,7 +40,7 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     env:
-      KUBECONFIG: ${{ runner.temp }}/core-platform.kubeconfig
+      KUBECONFIG: /tmp/core-platform.kubeconfig
     steps:
       - uses: actions/checkout@v6
 
