@@ -176,7 +176,7 @@ secret_or_generate() {
     return
   fi
 
-  openssl rand -hex 24 | tr -d '\n'
+  printf 'Pg1%s' "$(openssl rand -hex 6)"
 }
 
 database_table_count() {
