@@ -315,7 +315,13 @@ jobs:
             archive="${deploy_folder}/komodo.archive"
             marker="${deploy_folder}/.mongo_v7_restored"
 
+            cleanup_legacy_mongo_artifacts() {
+              rm -f "$archive"
+              docker volume rm komodo_mongo_data komodo_mongo_config >/dev/null 2>&1 || true
+            }
+
             if [ -f "$marker" ]; then
+              cleanup_legacy_mongo_artifacts
               exit 0
             fi
 
@@ -347,6 +353,7 @@ jobs:
               docker exec komodo-mongo-1 rm -f /tmp/komodo.archive >/dev/null 2>&1 || true
             fi
 
+            cleanup_legacy_mongo_artifacts
             touch "$marker"
           '
 
