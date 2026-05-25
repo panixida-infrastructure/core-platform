@@ -43,6 +43,7 @@ Current OpenBao secret paths:
 
 ```text
 secret/core-platform/github
+secret/core-platform/applications
 secret/core-platform/identity
 secret/core-platform/komodo
 secret/core-platform/observability
@@ -97,6 +98,11 @@ GRAFANA_DB_PORT
 GRAFANA_DB_NAME
 GRAFANA_DB_USERNAME
 GRAFANA_DB_PASSWORD
+DOTNET_TEMPLATE_DB_HOST
+DOTNET_TEMPLATE_DB_PORT
+DOTNET_TEMPLATE_DB_NAME
+DOTNET_TEMPLATE_DB_USERNAME
+DOTNET_TEMPLATE_DB_PASSWORD
 ```
 
 ## SSO

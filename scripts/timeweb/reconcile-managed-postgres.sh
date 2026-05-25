@@ -81,6 +81,35 @@ bao_read() {
     "${openbao_addr}/v1/secret/data/${path}" | jq '.data.data // {}'
 }
 
+bao_read_optional() {
+  local token="$1"
+  local path="$2"
+  local response
+  local status
+
+  response="$(mktemp)"
+  status="$(curl -sS \
+    -o "$response" \
+    -w '%{http_code}' \
+    -H "X-Vault-Token: ${token}" \
+    "${openbao_addr}/v1/secret/data/${path}")"
+
+  if [ "$status" = "404" ]; then
+    rm -f "$response"
+    echo '{}'
+    return
+  fi
+
+  if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+    cat "$response" >&2
+    rm -f "$response"
+    return 1
+  fi
+
+  jq '.data.data // {}' "$response"
+  rm -f "$response"
+}
+
 bao_write() {
   local token="$1"
   local path="$2"
@@ -125,6 +154,24 @@ cluster_host() {
 
   twc GET "/api/v1/databases/${cluster_id}" \
     | jq -r '.db.domains[0].fqdn // (.db.networks[]? | select(.type == "public") | .ips[0].ip) // empty'
+}
+
+ensure_public_endpoint() {
+  local cluster_id="$1"
+  local cluster
+  local public_ip_count
+  local public_network_enabled
+
+  cluster="$(twc GET "/api/v1/databases/${cluster_id}")"
+  public_network_enabled="$(jq -r '.db.is_enabled_public_network // false' <<<"$cluster")"
+  public_ip_count="$(jq -r '[.db.networks[]? | select(.type == "public") | .ips[]?] | length' <<<"$cluster")"
+
+  if [ "$public_network_enabled" = "true" ] && [ "$public_ip_count" != "0" ]; then
+    return
+  fi
+
+  twc PATCH "/api/v1/databases/${cluster_id}" '{"is_enabled_public_network":true}' >/dev/null
+  sleep 5
 }
 
 start_target_ssh_tunnel() {
@@ -228,6 +275,7 @@ ensure_user() {
     twc DELETE "/api/v1/databases/${cluster_id}/admins/${existing_id}" >/dev/null
   fi
 
+  echo "Creating target user ${login}"
   twc POST "/api/v1/databases/${cluster_id}/admins" \
     "$(jq -nc \
       --arg login "$login" \
@@ -236,6 +284,15 @@ ensure_user() {
       --argjson privileges "$privileges" \
       '{login: $login, password: $password, host: "%", instance_id: $instance_id, privileges: $privileges, description: ""}')" \
     >/dev/null
+
+  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200" \
+    | jq -c --arg login "$login" '.admins[] | select(.login == $login)' \
+    | head -n1)"
+
+  if [ -z "$existing_user" ]; then
+    echo "::error::Target user ${login} was not created"
+    exit 1
+  fi
 }
 
 should_recreate_user() {
@@ -358,6 +415,7 @@ openbao_token="$(openbao_login)"
 identity_secret="$(bao_read "$openbao_token" core-platform/identity)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
+applications_secret="$(bao_read_optional "$openbao_token" core-platform/applications)"
 
 keycloak_user="$(jq -r '.KEYCLOAK_DB_USERNAME' <<<"$identity_secret")"
 keycloak_password="$(jq -r '.KEYCLOAK_DB_PASSWORD' <<<"$identity_secret")"
@@ -365,8 +423,10 @@ sonar_user="$(jq -r '.SONAR_DB_USERNAME' <<<"$sonarqube_secret")"
 sonar_password="$(jq -r '.SONAR_DB_PASSWORD' <<<"$sonarqube_secret")"
 grafana_user="$(jq -r '.GRAFANA_DB_USERNAME // "grafana_user"' <<<"$observability_secret")"
 grafana_password="$(secret_or_generate "$(jq -r '.GRAFANA_DB_PASSWORD // empty' <<<"$observability_secret")")"
+dotnet_template_user="$(jq -r '.DOTNET_TEMPLATE_DB_USERNAME // "dotnet_template_user"' <<<"$applications_secret")"
+dotnet_template_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_DB_PASSWORD // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password dotnet_template_user dotnet_template_password; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -382,8 +442,7 @@ if [ -z "$target_cluster_id" ]; then
 fi
 
 wait_cluster_started "$target_cluster_id"
-twc PATCH "/api/v1/databases/${target_cluster_id}" '{"is_enabled_public_network":true}' >/dev/null || true
-sleep 5
+ensure_public_endpoint "$target_cluster_id"
 target_host="$(cluster_host "$target_cluster_id")"
 if [ -z "$target_host" ]; then
   echo "::error::Target cluster ${target_cluster_id} has no public endpoint"
@@ -404,6 +463,9 @@ target_privileges[sonar]="$common_privileges"
 target_users[grafana]="$grafana_user"
 target_passwords[grafana]="$grafana_password"
 target_privileges[grafana]="$common_privileges"
+target_users[dotnet_template]="$dotnet_template_user"
+target_passwords[dotnet_template]="$dotnet_template_password"
+target_privileges[dotnet_template]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
   legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
@@ -470,10 +532,18 @@ observability_secret="$(jq \
   --arg password "$grafana_password" \
   '. + {GRAFANA_DB_HOST: $host, GRAFANA_DB_PORT: $port, GRAFANA_DB_NAME: "grafana", GRAFANA_DB_USERNAME: $user, GRAFANA_DB_PASSWORD: $password}' \
   <<<"$observability_secret")"
+applications_secret="$(jq \
+  --arg host "$target_host" \
+  --arg port "$target_port" \
+  --arg user "$dotnet_template_user" \
+  --arg password "$dotnet_template_password" \
+  '. + {DOTNET_TEMPLATE_DB_HOST: $host, DOTNET_TEMPLATE_DB_PORT: $port, DOTNET_TEMPLATE_DB_NAME: "dotnet_template", DOTNET_TEMPLATE_DB_USERNAME: $user, DOTNET_TEMPLATE_DB_PASSWORD: $password}' \
+  <<<"$applications_secret")"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
 bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
 bao_write "$openbao_token" core-platform/observability "$observability_secret"
+bao_write "$openbao_token" core-platform/applications "$applications_secret"
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"
