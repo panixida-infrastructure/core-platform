@@ -12,12 +12,12 @@ Local state is also awkward for collaboration: two operators can run different s
 
 Use remote state before importing real Timeweb resources.
 
-For this platform, production state uses the existing Timeweb Object Storage bucket:
+For this platform, production state uses the Timeweb Object Storage bucket:
 
 ```hcl
 terraform {
   backend "s3" {
-    bucket = "db202587-tactical-heroes"
+    bucket = "panixida-storage"
     key    = "core-platform/production.tfstate"
     region = "ru-1"
 

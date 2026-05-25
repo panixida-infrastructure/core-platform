@@ -34,7 +34,6 @@ import_or_replace() {
   tofu import -input=false "$address" "$id"
 }
 
-import_if_missing twc_project.common 1152653
 import_if_missing twc_project.infrastructure 1619863
 
 import_if_missing twc_server.infrastructure 8034806

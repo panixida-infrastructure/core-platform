@@ -6,7 +6,7 @@ Do not paste provider tokens into chat or commit them to Git.
 
 - Timeweb Cloud API token for OpenTofu. Use `TF_VAR_twc_token` locally or map the GitHub secret to that env var in CI.
 - Existing Timeweb resources must be imported into the S3-backed state before `plan` becomes authoritative.
-- Primary region/location defaults to `ru-1`; existing resources may live in other availability zones.
+- Primary infrastructure resources live in `msk-1`; the S3-compatible state bucket is in `ru-1`.
 
 For this repository, the expected GitHub Actions secret name is `TIMEWEB_TOKEN`.
 
@@ -16,11 +16,11 @@ The sanitized inventory is stored in `inventory/timeweb/inventory.public.json`. 
 
 OpenTofu currently models these existing Timeweb resources:
 
-- Projects.
+- The `core-platform` project.
 - One cloud server.
-- The legacy SPB managed Postgres cluster and the new MSK managed Postgres cluster through `twc_database_cluster`.
+- The MSK managed Postgres cluster through `twc_database_cluster`.
 - One SSH public key.
-- Two floating IPs.
+- Two floating IPs: one for the platform server and one for managed PostgreSQL.
 - The MSK private network for infrastructure services.
 - The Timeweb S3 bucket used for state, as a data source.
 

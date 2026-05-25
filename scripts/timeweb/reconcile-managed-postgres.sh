@@ -6,8 +6,8 @@ openbao_addr="${OPENBAO_ADDR:-https://secrets.panixida.ru}"
 openbao_role="${OPENBAO_ROLE:-core-platform-github-actions}"
 openbao_audience="${OPENBAO_AUDIENCE:-https://github.com/panixida-infrastructure/core-platform}"
 
-legacy_cluster_name="${LEGACY_POSTGRES_CLUSTER_NAME:-Postgres Database}"
-target_cluster_name="${TARGET_POSTGRES_CLUSTER_NAME:-Postgres Database}"
+legacy_cluster_name="${LEGACY_POSTGRES_CLUSTER_NAME:-}"
+target_cluster_name="${TARGET_POSTGRES_CLUSTER_NAME:-postgres}"
 target_project_id="${TARGET_POSTGRES_PROJECT_ID:-1619863}"
 target_zone="${TARGET_POSTGRES_AVAILABILITY_ZONE:-msk-1}"
 target_preset_id="${TARGET_POSTGRES_PRESET_ID:-1173}"
@@ -434,7 +434,10 @@ for name in keycloak_user keycloak_password sonar_user sonar_password grafana_us
   fi
 done
 
-legacy_cluster_id="$(cluster_by_name_zone "$legacy_cluster_name" spb-3 || true)"
+legacy_cluster_id=""
+if [ -n "$legacy_cluster_name" ]; then
+  legacy_cluster_id="$(cluster_by_name_zone "$legacy_cluster_name" spb-3 || true)"
+fi
 target_cluster_id="$(cluster_by_name_zone "$target_cluster_name" "$target_zone" || true)"
 
 if [ -z "$target_cluster_id" ]; then

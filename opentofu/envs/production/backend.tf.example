@@ -3,7 +3,7 @@
 #
 # terraform {
 #   backend "s3" {
-#     bucket                      = "panixida-tofu-state"
+#     bucket                      = "panixida-storage"
 #     key                         = "core-platform/production.tfstate"
 #     region                      = "ru-1"
 #     endpoints                   = {

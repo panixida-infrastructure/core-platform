@@ -3,6 +3,7 @@ set -euo pipefail
 
 timeweb_api="${TIMEWEB_API:-https://api.timeweb.cloud}"
 retired_floating_ip_ids="${RETIRED_FLOATING_IP_IDS:-0be69046-72d8-4351-b812-99cdada61745 0c8f6e70-f35e-4739-94b2-801dcf2c646a 496a8dcc-e706-4796-b9a2-578d4063a459 8f61d71c-21f3-40e7-af2a-1e762ecb9448 926efd13-f45e-4b2f-89d3-66aee502a685 a69fc138-6002-4ade-aab2-21603ace6d50 dae55c1e-300b-4883-ac44-177b4d5e198b}"
+retired_storage_bucket_ids="${RETIRED_STORAGE_BUCKET_IDS:-344103}"
 
 require_env() {
   local name="$1"
@@ -94,6 +95,19 @@ delete_unbound_floating_ip() {
   twc DELETE "/api/v1/floating-ips/${floating_ip_id}" >/dev/null || true
 }
 
+delete_storage_bucket() {
+  local bucket_id="$1"
+  local bucket
+
+  bucket="$(twc GET "/api/v1/storages/buckets/${bucket_id}" || true)"
+  if [ -z "$bucket" ]; then
+    return
+  fi
+
+  echo "Deleting retired storage bucket ${bucket_id}"
+  twc DELETE "/api/v1/storages/buckets/${bucket_id}" >/dev/null
+}
+
 require_env TIMEWEB_TOKEN
 
 echo "Enabling panixida.ru autoprolong"
@@ -108,6 +122,10 @@ twc DELETE "/api/v1/domains/tacticalheroesdev.ru" >/dev/null || true
 
 for floating_ip_id in $retired_floating_ip_ids; do
   delete_unbound_floating_ip "$floating_ip_id"
+done
+
+for bucket_id in $retired_storage_bucket_ids; do
+  delete_storage_bucket "$bucket_id"
 done
 
 if [ "${DELETE_LEGACY_SPB_NETWORK:-false}" = "true" ]; then

@@ -9,7 +9,6 @@ output "environment" {
 output "timeweb_inventory" {
   value = {
     projects = {
-      common         = twc_project.common.id
       infrastructure = twc_project.infrastructure.id
     }
 

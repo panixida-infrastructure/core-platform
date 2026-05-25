@@ -1,5 +1,5 @@
 resource "twc_database_cluster" "postgres_database_msk" {
-  name              = "Postgres Database"
+  name              = "postgres"
   type              = "postgres18"
   preset_id         = 1173
   project_id        = twc_project.infrastructure.id

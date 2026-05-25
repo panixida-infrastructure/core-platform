@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "db202587-tactical-heroes"
+    bucket = "panixida-storage"
     key    = "core-platform/production.tfstate"
     region = "ru-1"
 

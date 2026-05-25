@@ -1,525 +1,104 @@
 {
-  "generated_from": "Timeweb API local discovery; sensitive fields redacted into local .secrets/timeweb-import-secrets.json",
+  "generated_from": "Timeweb API local discovery; sensitive fields redacted",
+  "generated_at": "2026-05-25",
   "projects": [
     {
-      "id": 1152653,
-      "name": "Общий проект",
-      "description": "",
-      "avatar_id": null,
-      "resource_counts": {
-        "servers": 1,
-        "balancers": 0,
-        "buckets": 1,
-        "clusters": 0,
-        "databases": 0,
-        "dedicated_servers": 0,
-        "apps": 0,
-        "domains": 1,
-        "registries": 0,
-        "routers": 0,
-        "agents": 0,
-        "knowledgebases": 0,
-        "mailboxes": 1,
-        "monitorings": 0,
-        "cdn": 0
-      }
-    },
-    {
       "id": 1619863,
-      "name": "Инфраструктура",
+      "name": "core-platform",
       "description": "",
-      "avatar_id": "1750957726883",
       "resource_counts": {
         "servers": 1,
-        "balancers": 0,
-        "buckets": 0,
-        "clusters": 0,
+        "buckets": 1,
         "databases": 1,
-        "dedicated_servers": 0,
-        "apps": 0,
-        "domains": 1,
-        "registries": 0,
-        "routers": 0,
-        "agents": 0,
-        "knowledgebases": 0,
-        "mailboxes": 0,
-        "monitorings": 0,
-        "cdn": 0
-      }
-    },
-    {
-      "id": 1643077,
-      "name": "tactical-heroes",
-      "description": "",
-      "avatar_id": "1751997020079",
-      "resource_counts": {
-        "servers": 0,
-        "balancers": 0,
-        "buckets": 0,
-        "clusters": 0,
-        "databases": 0,
-        "dedicated_servers": 0,
-        "apps": 0,
-        "domains": 0,
-        "registries": 0,
-        "routers": 0,
-        "agents": 0,
-        "knowledgebases": 0,
-        "mailboxes": 0,
-        "monitorings": 0,
-        "cdn": 0
+        "domains": 1
       }
     }
   ],
   "servers": [
     {
-      "id": 3761019,
-      "name": "TacticalHeroes.Dev",
-      "status": "on",
-      "project_id": 1152653,
-      "project_name": "Общий проект",
-      "location": "ru-1",
-      "availability_zone": "spb-3",
-      "os": {
-        "id": 47,
-        "name": "ubuntu",
-        "version": "18.04"
-      },
-      "preset_id": 2455,
-      "configurator_id": null,
-      "cpu": 4,
-      "ram": 8192,
-      "cpu_frequency": "3.3",
-      "boot_mode": "std",
-      "is_dedicated_cpu": false,
-      "is_ddos_guard": false,
-      "is_master_ssh": false,
-      "is_qemu_agent": true,
-      "is_allow_root_ssh_pass": true,
-      "networks": [
-        {
-          "type": "public",
-          "bandwidth": 1000,
-          "ips": [
-            {
-              "ip": "2a03:6f00:4::9a00",
-              "is_main": true,
-              "ptr": null,
-              "type": "ipv6"
-            },
-            {
-              "ip": "80.90.187.254",
-              "id": "99f2f610-9888-43de-a07a-6732ca37de4f",
-              "is_main": true,
-              "ptr": "1378593-ck97193.tw1.ru",
-              "type": "ipv4"
-            }
-          ],
-          "blocked_ports": []
-        }
-      ],
-      "disks": [
-        {
-          "id": 20302815,
-          "import_id": "3761019/20302815",
-          "size": 81920,
-          "status": "done",
-          "used": 12396,
-          "is_mounted": true,
-          "system_name": "vda",
-          "description": null,
-          "type": "nvme"
-        }
-      ],
-      "secret_refs": {
-        "root_pass": "timeweb.server.tacticalheroes_dev.root_pass",
-        "vnc_pass": null
-      }
-    },
-    {
       "id": 8034806,
       "name": "infrastructure",
       "status": "on",
       "project_id": 1619863,
-      "project_name": "Инфраструктура",
-      "location": "ru-3",
+      "project_name": "core-platform",
       "availability_zone": "msk-1",
-      "os": {
-        "id": 145,
-        "name": "ubuntu",
-        "version": "26.04"
-      },
-      "preset_id": 4803,
-      "configurator_id": null,
-      "cpu": 4,
-      "ram": 8192,
-      "cpu_frequency": "3.3",
-      "boot_mode": "std",
-      "is_dedicated_cpu": false,
-      "is_ddos_guard": false,
-      "is_master_ssh": false,
-      "is_qemu_agent": true,
-      "is_allow_root_ssh_pass": true,
-      "networks": [
-        {
-          "type": "public",
-          "bandwidth": 1000,
-          "ips": [
-            {
-              "ip": "2a03:6f00:a::2:39c5",
-              "is_main": true,
-              "ptr": null,
-              "type": "ipv6"
-            },
-            {
-              "ip": "81.200.158.9",
-              "id": "4d2c3cc1-3172-4fdd-a78b-7bada0d65a41",
-              "is_main": true,
-              "ptr": null,
-              "type": "ipv4"
-            }
-          ],
-          "blocked_ports": [
-            389,
-            587,
-            3389,
-            465,
-            25,
-            53413,
-            2525
-          ]
-        }
-      ],
-      "disks": [
-        {
-          "id": 24710948,
-          "import_id": "8034806/24710948",
-          "size": 81920,
-          "status": "done",
-          "used": 4994,
-          "is_mounted": true,
-          "system_name": "vda",
-          "description": null,
-          "type": "nvme"
-        }
-      ],
-      "secret_refs": {
-        "root_pass": "timeweb.server.infrastructure.root_pass",
-        "vnc_pass": null
-      }
+      "main_ipv4": "81.200.158.9"
     }
   ],
   "databases": [
     {
-      "id": 4104619,
-      "name": "Postgres Database",
+      "id": 4169562,
+      "name": "postgres",
       "type": "postgres18",
-      "status": "started",
-      "project_id": null,
-      "project_name": null,
-      "host": "%",
-      "port": 5432,
-      "ip": "89.191.229.210",
-      "local_ip": "192.168.0.4",
-      "preset_id": 533,
-      "disk_stats": {
-        "used": 86872,
-        "size": 20971520
-      },
-      "config_parameters": {
-        "autovacuum_analyze_scale_factor": "0.1",
-        "bgwriter_delay": "200",
-        "bgwriter_lru_maxpages": "100",
-        "deadlock_timeout": "1000",
-        "gin_pending_list_limit": "4096",
-        "idle_in_transaction_session_timeout": "0",
-        "join_collapse_limit": "8",
-        "lock_timeout": "0",
-        "max_prepared_transactions": "0",
-        "max_connections": "200",
-        "shared_buffers": "31232",
-        "log_min_duration_statement": "-1",
-        "wal_buffers": "2048",
-        "temp_buffers": "1024",
-        "work_mem": "436",
-        "autovacuum_max_workers": "3",
-        "autovacuum_naptime": "60",
-        "autovacuum_vacuum_insert_scale_factor": "0.2",
-        "autovacuum_vacuum_scale_factor": "0.2",
-        "autovacuum_work_mem": "-1",
-        "default_transaction_isolation": "read committed",
-        "effective_cache_size": "524288",
-        "max_wal_size": "1024",
-        "min_wal_size": "80",
-        "wal_level": "replica",
-        "max_replication_slots": "10",
-        "max_wal_senders": "10",
-        "max_worker_processes": "8",
-        "max_logical_replication_workers": "4",
-        "max_parallel_maintenance_workers": "2",
-        "max_parallel_workers": "8",
-        "max_parallel_workers_per_gather": "2",
-        "array_nulls": "ON",
-        "backend_flush_after": "0",
-        "backslash_quote": "safe_encoding",
-        "bgwriter_flush_after": "64",
-        "bgwriter_lru_multiplier": "2",
-        "default_transaction_read_only": "OFF",
-        "enable_hashagg": "ON",
-        "enable_hashjoin": "ON",
-        "enable_incremental_sort": "ON",
-        "enable_indexscan": "ON",
-        "enable_indexonlyscan": "ON",
-        "enable_material": "ON",
-        "enable_mergejoin": "ON",
-        "enable_parallel_append": "ON",
-        "enable_parallel_hash": "ON",
-        "enable_partition_pruning": "ON",
-        "enable_partitionwise_join": "OFF",
-        "enable_partitionwise_aggregate": "OFF",
-        "enable_seqscan": "ON",
-        "enable_sort": "ON",
-        "enable_tidscan": "ON",
-        "exit_on_error": "OFF",
-        "from_collapse_limit": "8",
-        "jit": "ON",
-        "plan_cache_mode": "auto",
-        "quote_all_identifiers": "OFF",
-        "standard_conforming_strings": "ON",
-        "transform_null_equals": "OFF",
-        "statement_timeout": "0",
-        "max_locks_per_transaction": "64",
-        "autovacuum_vacuum_cost_limit": "200",
-        "checkpoint_timeout": "300",
-        "checkpoint_completion_target": "0.5",
-        "wal_compression": "off",
-        "random_page_cost": "4",
-        "effective_io_concurrency": "1",
-        "log_lock_waits": "OFF",
-        "log_temp_files": "-1",
-        "track_io_timing": "OFF",
-        "maintenance_work_mem": "33554432",
-        "enable_memoize": "ON",
-        "idle_session_timeout": "900000",
-        "io_method": "worker",
-        "io_workers": "3"
-      },
-      "is_only_local_ip_access": false,
-      "location": "ru-1",
-      "availability_zone": "spb-3",
-      "cpu": 1,
-      "ram": 2048,
-      "cpu_frequency": "3.3",
-      "cluster_id": 439761,
-      "secret_refs": {
-        "login": "timeweb.database.postgres_database.login",
-        "password": "timeweb.database.postgres_database.password"
-      }
+      "project_id": 1619863,
+      "project_name": "core-platform",
+      "availability_zone": "msk-1",
+      "preset_id": 1173,
+      "status": "started"
     }
   ],
   "s3_buckets": [
     {
-      "id": 344103,
-      "name": "db202587-tactical-heroes",
+      "id": 508508,
+      "name": "panixida-storage",
       "type": "private",
-      "full_name": null,
-      "hostname": "https://s3.twcstorage.ru",
-      "status": "created",
-      "project_id": 1152653,
-      "project_name": "Общий проект",
+      "project_id": 1619863,
+      "project_name": "core-platform",
       "location": "ru-1",
-      "storage_class": "hot",
-      "disk_stats": {
-        "size": 10485760,
-        "used": 520864.2,
-        "limit": null,
-        "is_unlimited": false
-      },
-      "object_amount": 28,
-      "preset_id": 389,
-      "configurator_id": null,
-      "website_config": {
-        "enabled": false,
-        "error_pages": [],
-        "index_page": ""
-      },
+      "hostname": "https://s3.twcstorage.ru",
+      "object_amount": 29,
       "secret_refs": {
-        "access_key": "timeweb.s3_bucket.db202587_tactical_heroes.access_key",
-        "secret_key": "timeweb.s3_bucket.db202587_tactical_heroes.secret_key"
+        "access_key": "github.secret.TOFU_STATE_ACCESS_KEY",
+        "secret_key": "github.secret.TOFU_STATE_SECRET_KEY"
       }
-    }
-  ],
-  "ssh_keys": [
-    {
-      "id": 273273,
-      "name": "OldStrategyForge",
-      "is_default": true,
-      "created_at": "2025-02-07T21:27:47.000Z",
-      "body": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICylT7W82gnw79fHJhilqzaKosHlIkGzTFgoYvBsMn4X OldStrategyForge"
-    },
-    {
-      "id": 605568,
-      "name": "infrastructure",
-      "is_default": false,
-      "created_at": "2026-05-21T20:52:29.000Z",
-      "body": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF24IfpOKOfreBxvhsTICQzi/r+qvc0kQX9RIAKKwLfL infrastructure"
     }
   ],
   "floating_ips": [
     {
       "id": "4d2c3cc1-3172-4fdd-a78b-7bada0d65a41",
       "ip": "81.200.158.9",
-      "is_ddos_guard": false,
-      "availability_zone": "msk-1",
       "resource_type": "server",
-      "resource_id": 8034806,
-      "comment": "",
-      "created_at": "2026-05-22T19:45:38.000Z",
-      "ptr": null
+      "resource_id": "8034806"
     },
     {
-      "id": "99f2f610-9888-43de-a07a-6732ca37de4f",
-      "ip": "80.90.187.254",
-      "is_ddos_guard": false,
-      "availability_zone": "spb-3",
-      "resource_type": "server",
-      "resource_id": 3761019,
-      "comment": "",
-      "created_at": "2024-11-10T15:19:01.000Z",
-      "ptr": "1378593-ck97193.tw1.ru"
-    },
-    {
-      "id": "b74e37e1-de83-4fac-9251-3061433b24bc",
-      "ip": "89.191.229.210",
-      "is_ddos_guard": false,
-      "availability_zone": "spb-3",
+      "id": "fc66efd9-a4a1-4983-bbd4-40fdaa70c46f",
+      "ip": "85.239.41.107",
       "resource_type": "dbaas",
-      "resource_id": 4104619,
-      "comment": "",
-      "created_at": "2025-11-10T09:26:09.000Z",
-      "ptr": null
+      "resource_id": "4169562"
     }
   ],
-  "domains": [
+  "dns": [
     {
-      "id": 16856985,
-      "fqdn": "tacticalheroesdev.ru",
-      "expiration": "2026-11-16",
-      "our_domain": true
-    },
-    {
-      "id": 22752202,
-      "fqdn": "panixida.ru",
-      "expiration": "2027-05-21",
-      "our_domain": true
+      "zone": "panixida.ru",
+      "removed_records": [
+        "portainer.panixida.ru"
+      ]
     }
   ],
-  "mailboxes": [
+  "opentofu_imports": [
     {
-      "id": "support@tacticalheroesdev.ru",
-      "idn_name": "tacticalheroesdev.ru",
-      "autoreply_message": "",
-      "autoreply_status": false,
-      "autoreply_subject": "",
-      "comment": "",
-      "filter_action": "directory",
-      "filter_status": true,
-      "forward_list": [],
-      "forward_status": false,
-      "outgoing_control": false,
-      "outgoing_email": "",
-      "spambox": "",
-      "white_list": [],
-      "webmail": true,
-      "dovecot": true,
-      "fqdn": "tacticalheroesdev.ru",
-      "leave_messages": false,
-      "mailbox": "support",
-      "owner_full_name": "",
-      "project_id": 1152653,
-      "usage_space": 0
-    }
-  ],
-  "vpcs": [],
-  "empty_resource_types": {
-    "firewall_groups": 0,
-    "vpcs": 0,
-    "routers": 0,
-    "k8s_clusters": 0,
-    "network_drives": 0
-  },
-  "import_candidates": [
-    {
-      "resource_type": "twc_server",
-      "name": "tacticalheroes_dev",
-      "import_id": "3761019"
-    },
-    {
-      "resource_type": "twc_server_disk",
-      "name": "tacticalheroes_dev_vda",
-      "import_id": "3761019/20302815"
-    },
-    {
-      "resource_type": "twc_server",
-      "name": "infrastructure",
-      "import_id": "8034806"
-    },
-    {
-      "resource_type": "twc_server_disk",
-      "name": "infrastructure_vda",
-      "import_id": "8034806/24710948"
-    },
-    {
-      "resource_type": "twc_database_cluster",
-      "name": "postgres_database",
-      "import_id": "4104619",
-      "note": "managed through twc_database_cluster; Timeweb API also reports cluster_id 439761"
-    },
-    {
-      "resource_type": "twc_ssh_key",
-      "name": "oldstrategyforge_273273",
-      "import_id": "273273"
-    },
-    {
-      "resource_type": "twc_ssh_key",
-      "name": "infrastructure_605568",
-      "import_id": "605568"
-    },
-    {
-      "resource_type": "twc_floating_ip",
-      "name": "81_200_158_9",
-      "import_id": "4d2c3cc1-3172-4fdd-a78b-7bada0d65a41"
-    },
-    {
-      "resource_type": "twc_floating_ip",
-      "name": "80_90_187_254",
-      "import_id": "99f2f610-9888-43de-a07a-6732ca37de4f"
-    },
-    {
-      "resource_type": "twc_floating_ip",
-      "name": "89_191_229_210",
-      "import_id": "b74e37e1-de83-4fac-9251-3061433b24bc"
-    },
-    {
-      "resource_type": "twc_project",
-      "name": "project_1152653",
-      "import_id": "1152653"
-    },
-    {
-      "resource_type": "twc_s3_bucket",
-      "name": "db202587_tactical_heroes",
-      "import_id": "344103",
-      "note": "provider docs do not currently document import syntax; verify before import"
-    },
-    {
-      "resource_type": "twc_project",
-      "name": "project_1619863",
+      "address": "twc_project.infrastructure",
       "import_id": "1619863"
     },
     {
-      "resource_type": "twc_project",
-      "name": "tactical_heroes",
-      "import_id": "1643077"
+      "address": "twc_server.infrastructure",
+      "import_id": "8034806"
+    },
+    {
+      "address": "twc_database_cluster.postgres_database_msk",
+      "import_id": "4169562"
+    },
+    {
+      "address": "twc_ssh_key.infrastructure_605568",
+      "import_id": "605568"
+    },
+    {
+      "address": "twc_floating_ip.infrastructure_ipv4",
+      "import_id": "4d2c3cc1-3172-4fdd-a78b-7bada0d65a41"
+    },
+    {
+      "address": "twc_floating_ip.postgres_database_ipv4_msk",
+      "import_id": "fc66efd9-a4a1-4983-bbd4-40fdaa70c46f"
     }
   ]
 }

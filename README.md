@@ -70,7 +70,7 @@ OpenTofu is wired for the Timeweb Cloud provider:
 source = "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud"
 ```
 
-Production state is stored in the existing Timeweb S3-compatible bucket `db202587-tactical-heroes` at `core-platform/production.tfstate`.
+Production state is stored in the Timeweb S3-compatible bucket `panixida-storage` at `core-platform/production.tfstate`.
 
 Do not commit real tokens or state. In GitHub Actions, `secrets.TIMEWEB_TOKEN` is mapped to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
 
