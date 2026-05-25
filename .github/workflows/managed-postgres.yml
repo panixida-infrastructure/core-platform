@@ -56,6 +56,8 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/postgresql.list >/dev/null
           sudo apt-get update
           sudo apt-get install -y postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+          /usr/lib/postgresql/18/bin/pg_dump --version
 
       - name: Reconcile managed PostgreSQL
         env:
