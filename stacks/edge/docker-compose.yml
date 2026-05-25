@@ -33,7 +33,7 @@ services:
       - traefik.http.middlewares.sso-signin.errors.status=401
       - traefik.http.middlewares.sso-signin.errors.service=oauth2-proxy
       - traefik.http.middlewares.sso-signin.errors.query=/oauth2/sign_in?rd={url}
-      - traefik.http.middlewares.sso.chain.middlewares=sso-auth,sso-signin
+      - traefik.http.middlewares.sso.chain.middlewares=sso-signin,sso-auth
 
   traefik:
     image: traefik:v3.7.1
