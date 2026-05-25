@@ -12,6 +12,8 @@ target_project_id="${TARGET_POSTGRES_PROJECT_ID:-1619863}"
 target_zone="${TARGET_POSTGRES_AVAILABILITY_ZONE:-msk-1}"
 target_preset_id="${TARGET_POSTGRES_PRESET_ID:-1173}"
 target_port="${TARGET_POSTGRES_PORT:-5432}"
+target_excluded_databases="${TARGET_EXCLUDED_DATABASES:-default_db digital_event_manager}"
+target_excluded_users="${TARGET_EXCLUDED_USERS:-gen_user digital_event_manager_user}"
 
 common_privileges='["SELECT","INSERT","UPDATE","DELETE","CREATE","TRUNCATE","REFERENCES","TRIGGER","TEMPORARY"]'
 tmp_dir="${RUNNER_TEMP:-/tmp}/core-platform-postgres"
@@ -168,6 +170,47 @@ ensure_user() {
     >/dev/null
 }
 
+is_excluded_database() {
+  local name="$1"
+  local excluded
+
+  for excluded in $target_excluded_databases; do
+    if [ "$name" = "$excluded" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+cleanup_excluded_target_resources() {
+  local cluster_id="$1"
+  local admins
+  local instances
+  local login
+  local database_name
+  local user_id
+  local instance_id
+
+  admins="$(twc GET "/api/v1/databases/${cluster_id}/admins")"
+  for login in $target_excluded_users; do
+    user_id="$(jq -r --arg login "$login" '.admins[] | select(.login == $login) | .id' <<<"$admins" | head -n1)"
+    if [ -n "$user_id" ]; then
+      echo "Deleting excluded target user ${login}"
+      twc DELETE "/api/v1/databases/${cluster_id}/admins/${user_id}" >/dev/null
+    fi
+  done
+
+  instances="$(twc GET "/api/v1/databases/${cluster_id}/instances")"
+  for database_name in $target_excluded_databases; do
+    instance_id="$(jq -r --arg name "$database_name" '.instances[] | select(.name == $name) | .id' <<<"$instances" | head -n1)"
+    if [ -n "$instance_id" ]; then
+      echo "Deleting excluded target database ${database_name}"
+      twc DELETE "/api/v1/databases/${cluster_id}/instances/${instance_id}" >/dev/null
+    fi
+  done
+}
+
 secret_or_generate() {
   local value="$1"
 
@@ -285,6 +328,12 @@ if [ -n "$legacy_cluster_id" ]; then
   while IFS= read -r row; do
     database_name="$(jq -r '.name' <<<"$row")"
     instance_id="$(jq -r '.id' <<<"$row")"
+
+    if is_excluded_database "$database_name"; then
+      echo "Skipping excluded legacy database ${database_name}"
+      continue
+    fi
+
     admin="$(jq -rc --argjson instance_id "$instance_id" \
       '[.admins[] | select([.instances[] | select(.instance_id == $instance_id and (.privileges | length > 0))] | length > 0)][0] // empty' \
       <<<"$legacy_admins")"
@@ -303,6 +352,8 @@ if [ -n "$legacy_cluster_id" ]; then
     fi
   done < <(jq -rc '.instances[]' <<<"$legacy_instances")
 fi
+
+cleanup_excluded_target_resources "$target_cluster_id"
 
 for database_name in "${!target_users[@]}"; do
   instance_id="$(ensure_instance "$target_cluster_id" "$database_name")"
@@ -353,6 +404,12 @@ if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id
   while IFS= read -r row; do
     database_name="$(jq -r '.name' <<<"$row")"
     instance_id="$(jq -r '.id' <<<"$row")"
+
+    if is_excluded_database "$database_name"; then
+      echo "Skipping migration for excluded database ${database_name}"
+      continue
+    fi
+
     admin="$(jq -rc --argjson instance_id "$instance_id" \
       '[.admins[] | select([.instances[] | select(.instance_id == $instance_id and (.privileges | length > 0))] | length > 0)][0] // empty' \
       <<<"$legacy_admins")"
