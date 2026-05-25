@@ -6,10 +6,6 @@ resource "twc_server" "infrastructure" {
   project_id        = 1619863
   ssh_keys_ids      = [twc_ssh_key.infrastructure_605568.id]
 
-  local_network {
-    id = twc_vpc.infrastructure_msk.id
-  }
-
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [ssh_keys_ids]
