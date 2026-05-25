@@ -16,7 +16,7 @@ moved {
   to   = twc_database_cluster.postgres_database_legacy
 }
 
-resource "twc_database_cluster" "postgres_database" {
+resource "twc_database_cluster" "postgres_database_msk" {
   name              = "Postgres Database"
   type              = "postgres18"
   preset_id         = 1173
@@ -34,7 +34,7 @@ resource "twc_database_cluster" "postgres_database" {
 }
 
 resource "twc_database_backup_schedule" "postgres_database" {
-  cluster_id        = twc_database_cluster.postgres_database.id
+  cluster_id        = twc_database_cluster.postgres_database_msk.id
   enabled           = true
   interval          = "day"
   copy_count        = 7

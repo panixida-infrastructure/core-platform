@@ -25,9 +25,9 @@ output "timeweb_inventory" {
     }
 
     postgres_database = {
-      id       = twc_database_cluster.postgres_database.id
-      networks = twc_database_cluster.postgres_database.networks
-      port     = twc_database_cluster.postgres_database.port
+      id       = twc_database_cluster.postgres_database_msk.id
+      networks = twc_database_cluster.postgres_database_msk.networks
+      port     = twc_database_cluster.postgres_database_msk.port
     }
 
     postgres_database_legacy = {
