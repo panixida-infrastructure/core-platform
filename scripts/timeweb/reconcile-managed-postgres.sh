@@ -176,7 +176,7 @@ secret_or_generate() {
     return
   fi
 
-  openssl rand -base64 32 | tr -d '\n'
+  openssl rand -hex 24 | tr -d '\n'
 }
 
 database_table_count() {
