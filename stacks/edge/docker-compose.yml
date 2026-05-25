@@ -17,6 +17,7 @@ services:
       - --set-xauthrequest=true
       - --pass-access-token=true
       - --pass-authorization-header=true
+      - --skip-provider-button=true
       - --upstream=static://202
     networks:
       - edge
@@ -30,7 +31,9 @@ services:
       - traefik.http.middlewares.sso-auth.forwardauth.address=http://oauth2-proxy:4180/oauth2/auth
       - traefik.http.middlewares.sso-auth.forwardauth.trustForwardHeader=true
       - traefik.http.middlewares.sso-auth.forwardauth.authResponseHeaders=X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Preferred-Username,Authorization
-      - traefik.http.middlewares.sso-signin.errors.status=401
+      - traefik.http.middlewares.sso-signin.errors.status=401-403
+      - traefik.http.middlewares.sso-signin.errors.statusRewrites.401=302
+      - traefik.http.middlewares.sso-signin.errors.statusRewrites.403=302
       - traefik.http.middlewares.sso-signin.errors.service=oauth2-proxy
       - traefik.http.middlewares.sso-signin.errors.query=/oauth2/sign_in?rd={url}
       - traefik.http.middlewares.sso.chain.middlewares=sso-signin,sso-auth
