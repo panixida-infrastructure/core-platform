@@ -49,7 +49,6 @@ secret/core-platform/observability
 secret/core-platform/openbao
 secret/core-platform/sonarqube
 secret/core-platform/ssh/infrastructure
-secret/core-platform/ssh/tacticalheroes-dev
 secret/core-platform/sso
 secret/core-platform/timeweb
 secret/core-platform/wireguard
@@ -68,9 +67,6 @@ OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD
 The bootstrap playbook reads non-secret SSH and WireGuard parameters from GitHub repository variables:
 
 ```text
-SERVER_HOST
-SERVER_USER
-SERVER_SSH_PORT
 SERVER_GH_USER
 CODEXVPN_SSH_PUBLIC_KEY
 ROOT_SSH_PUBLIC_KEY
@@ -84,6 +80,24 @@ WIREGUARD_PERSISTENT_KEEPALIVE
 WireGuard private and preshared keys must stay in GitHub Secrets until OpenBao is initialized and CI can authenticate to it.
 
 `SERVER_GH_PAT` is used only by the Ansible bootstrap workflow to install and authenticate GitHub CLI on the infrastructure server for `root` and the operator user.
+
+The deployment workflows read `SERVER_HOST`, `SERVER_USER`, and `SERVER_SSH_PORT` from organization variables, not repository variables.
+
+Managed PostgreSQL connection settings are stored in OpenBao with the service secrets:
+
+```text
+KEYCLOAK_DB_HOST
+KEYCLOAK_DB_PORT
+KEYCLOAK_DB_NAME
+SONAR_DB_HOST
+SONAR_DB_PORT
+SONAR_DB_NAME
+GRAFANA_DB_HOST
+GRAFANA_DB_PORT
+GRAFANA_DB_NAME
+GRAFANA_DB_USERNAME
+GRAFANA_DB_PASSWORD
+```
 
 ## SSO
 

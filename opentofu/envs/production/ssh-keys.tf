@@ -1,21 +1,3 @@
-resource "twc_ssh_key" "oldstrategyforge_273273" {
-  name       = "OldStrategyForge"
-  body       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICylT7W82gnw79fHJhilqzaKosHlIkGzTFgoYvBsMn4X OldStrategyForge"
-  is_default = true
-
-  lifecycle {
-    prevent_destroy = true
-
-    postcondition {
-      condition = contains(
-        [for server in self.used_by : server.name],
-        "TacticalHeroes.Dev"
-      )
-      error_message = "OldStrategyForge SSH key must be attached to TacticalHeroes.Dev in Timeweb."
-    }
-  }
-}
-
 removed {
   from = twc_ssh_key.oldstrategyforge_245799
 

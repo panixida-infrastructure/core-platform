@@ -19,9 +19,6 @@ jobs:
       SERVER_HOST: ${{ vars.SERVER_HOST }}
       SERVER_USER: ${{ vars.SERVER_USER }}
       SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
-      TACTICALHEROES_DEV_HOST: ${{ vars.TACTICALHEROES_DEV_HOST }}
-      TACTICALHEROES_DEV_USER: ${{ vars.TACTICALHEROES_DEV_USER }}
-      TACTICALHEROES_DEV_SSH_PORT: ${{ vars.TACTICALHEROES_DEV_SSH_PORT }}
       CODEXVPN_SSH_PUBLIC_KEY: ${{ vars.CODEXVPN_SSH_PUBLIC_KEY }}
       ROOT_SSH_PUBLIC_KEY: ${{ vars.ROOT_SSH_PUBLIC_KEY }}
       WIREGUARD_ADDRESS: ${{ vars.WIREGUARD_ADDRESS }}
@@ -90,35 +87,20 @@ jobs:
       - name: Configure SSH
         env:
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
-          TACTICALHEROES_DEV_SSH_PRIVATE_KEY: ${{ steps.openbao.outputs.TACTICALHEROES_DEV_SSH_PRIVATE_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${SERVER_HOST:-}" ] || [ -z "${SERVER_USER:-}" ] || [ -z "${SERVER_SSH_PORT:-}" ] || [ -z "${SERVER_SSH_PRIVATE_KEY:-}" ]; then
             echo "::error::SERVER_HOST, SERVER_USER, SERVER_SSH_PORT and SERVER_SSH_PRIVATE_KEY are required"
             exit 1
           fi
-          if [ -z "${TACTICALHEROES_DEV_SSH_PRIVATE_KEY:-}" ]; then
-            echo "::error::TACTICALHEROES_DEV_SSH_PRIVATE_KEY is required"
-            exit 1
-          fi
-
-          TACTICALHEROES_DEV_HOST="${TACTICALHEROES_DEV_HOST:-80.90.187.254}"
-          TACTICALHEROES_DEV_USER="${TACTICALHEROES_DEV_USER:-root}"
-          TACTICALHEROES_DEV_SSH_PORT="${TACTICALHEROES_DEV_SSH_PORT:-22}"
 
           install -m 0700 -d ~/.ssh
           printf '%s\n' "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/infrastructure_ed25519
-          printf '%s\n' "$TACTICALHEROES_DEV_SSH_PRIVATE_KEY" > ~/.ssh/tacticalheroes_dev_ed25519
-          chmod 0600 ~/.ssh/infrastructure_ed25519 ~/.ssh/tacticalheroes_dev_ed25519
+          chmod 0600 ~/.ssh/infrastructure_ed25519
           {
             echo "INFRASTRUCTURE_SSH_PRIVATE_KEY_FILE=$HOME/.ssh/infrastructure_ed25519"
-            echo "TACTICALHEROES_DEV_SSH_PRIVATE_KEY_FILE=$HOME/.ssh/tacticalheroes_dev_ed25519"
-            echo "TACTICALHEROES_DEV_HOST=$TACTICALHEROES_DEV_HOST"
-            echo "TACTICALHEROES_DEV_USER=$TACTICALHEROES_DEV_USER"
-            echo "TACTICALHEROES_DEV_SSH_PORT=$TACTICALHEROES_DEV_SSH_PORT"
           } >> "$GITHUB_ENV"
           ssh-keyscan -p "$SERVER_SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
-          ssh-keyscan -p "$TACTICALHEROES_DEV_SSH_PORT" "$TACTICALHEROES_DEV_HOST" >> ~/.ssh/known_hosts
 
       - name: Check Ansible bootstrap inputs
         run: |

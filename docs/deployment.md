@@ -105,9 +105,28 @@ The `Ansible Bootstrap` workflow runs two playbooks:
 
 SSH keys are host-specific:
 
-- `SERVER_SSH_PRIVATE_KEY` is used only for `infrastructure`.
-- `TACTICALHEROES_DEV_SSH_PRIVATE_KEY` is used only for `TacticalHeroes.Dev`.
+- `SERVER_SSH_PRIVATE_KEY` is used for `infrastructure`.
 
 The managed agents stack installs `node_exporter`, `cAdvisor`, `vmagent`, and `vlagent` on every managed server. Metrics are remote-written to VictoriaMetrics and logs are remote-written to VictoriaLogs.
 
 The central observability vmagent also scrapes the Timeweb DBaaS public exporter for the managed PostgreSQL cluster. Exporter credentials are stored in OpenBao under `secret/core-platform/observability` and are injected only into the Ansible bootstrap workflow.
+
+## Managed PostgreSQL
+
+OpenTofu creates the MSK-1 managed PostgreSQL cluster and private network. The manual `Managed PostgreSQL` workflow reconciles logical databases, users, automatic backups, and OpenBao connection settings.
+
+The platform uses the managed cluster for:
+
+```text
+keycloak
+sonar
+grafana
+```
+
+The workflow writes service connection settings to:
+
+```text
+secret/core-platform/identity
+secret/core-platform/sonarqube
+secret/core-platform/observability
+```

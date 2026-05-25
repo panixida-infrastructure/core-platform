@@ -1,0 +1,67 @@
+name: Managed PostgreSQL
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type reconcile-managed-postgres to reconcile the MSK managed PostgreSQL cluster
+        required: true
+        type: string
+      migrate_legacy_databases:
+        description: Migrate existing managed PostgreSQL databases from SPB to MSK
+        required: true
+        type: boolean
+        default: false
+      force_restore:
+        description: Allow restoring into non-empty target databases
+        required: true
+        type: boolean
+        default: false
+      deploy_stacks:
+        description: Dispatch identity, observability, and sonarqube deploys after reconcile
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: read
+  id-token: write
+
+concurrency:
+  group: managed-postgres-production
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "reconcile-managed-postgres" ]; then
+            echo "::error::Confirmation must be exactly reconcile-managed-postgres"
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Reconcile managed PostgreSQL
+        env:
+          TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
+          MIGRATE_LEGACY_DATABASES: ${{ inputs.migrate_legacy_databases }}
+          FORCE_RESTORE: ${{ inputs.force_restore }}
+        run: bash scripts/timeweb/reconcile-managed-postgres.sh
+
+      - name: Dispatch dependent deploys
+        if: inputs.deploy_stacks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=identity
+          gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=observability
+          gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=sonarqube

@@ -55,7 +55,6 @@ case "${1:-}" in
     emit_secret SERVER_GH_PAT core-platform/github SERVER_GH_PAT
     emit_secret WIREGUARD_PRIVATE_KEY core-platform/wireguard WIREGUARD_PRIVATE_KEY
     emit_secret WIREGUARD_PRESHARED_KEY core-platform/wireguard WIREGUARD_PRESHARED_KEY
-    emit_secret TACTICALHEROES_DEV_SSH_PRIVATE_KEY core-platform/ssh/tacticalheroes-dev TACTICALHEROES_DEV_SSH_PRIVATE_KEY
     emit_secret OBSERVABILITY_VM_REMOTE_WRITE_USERNAME core-platform/observability OBSERVABILITY_VM_REMOTE_WRITE_USERNAME
     emit_secret OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD core-platform/observability OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD
     emit_secret OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID core-platform/observability OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID
@@ -67,6 +66,9 @@ case "${1:-}" in
     emit_secret OAUTH2_PROXY_COOKIE_SECRET core-platform/sso OAUTH2_PROXY_COOKIE_SECRET
     ;;
   identity)
+    emit_secret KEYCLOAK_DB_HOST core-platform/identity KEYCLOAK_DB_HOST
+    emit_secret KEYCLOAK_DB_PORT core-platform/identity KEYCLOAK_DB_PORT
+    emit_secret KEYCLOAK_DB_NAME core-platform/identity KEYCLOAK_DB_NAME
     emit_secret KEYCLOAK_DB_USERNAME core-platform/identity KEYCLOAK_DB_USERNAME
     emit_secret KEYCLOAK_DB_PASSWORD core-platform/identity KEYCLOAK_DB_PASSWORD
     emit_secret KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME core-platform/identity KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME
@@ -90,6 +92,11 @@ case "${1:-}" in
     emit_secret KOMODO_OIDC_CLIENT_SECRET core-platform/komodo KOMODO_OIDC_CLIENT_SECRET
     ;;
   observability)
+    emit_secret GRAFANA_DB_HOST core-platform/observability GRAFANA_DB_HOST
+    emit_secret GRAFANA_DB_PORT core-platform/observability GRAFANA_DB_PORT
+    emit_secret GRAFANA_DB_NAME core-platform/observability GRAFANA_DB_NAME
+    emit_secret GRAFANA_DB_USERNAME core-platform/observability GRAFANA_DB_USERNAME
+    emit_secret GRAFANA_DB_PASSWORD core-platform/observability GRAFANA_DB_PASSWORD
     emit_secret GRAFANA_ADMIN_USER core-platform/observability GRAFANA_ADMIN_USER
     emit_secret GRAFANA_ADMIN_PASSWORD core-platform/observability GRAFANA_ADMIN_PASSWORD
     emit_secret GRAFANA_OIDC_CLIENT_SECRET core-platform/observability GRAFANA_OIDC_CLIENT_SECRET
@@ -97,6 +104,9 @@ case "${1:-}" in
     emit_secret OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD core-platform/observability OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD
     ;;
   sonarqube)
+    emit_secret SONAR_DB_HOST core-platform/sonarqube SONAR_DB_HOST
+    emit_secret SONAR_DB_PORT core-platform/sonarqube SONAR_DB_PORT
+    emit_secret SONAR_DB_NAME core-platform/sonarqube SONAR_DB_NAME
     emit_secret SONAR_DB_USERNAME core-platform/sonarqube SONAR_DB_USERNAME
     emit_secret SONAR_DB_PASSWORD core-platform/sonarqube SONAR_DB_PASSWORD
     emit_secret SONAR_ADMIN_PASSWORD core-platform/sonarqube SONAR_ADMIN_PASSWORD

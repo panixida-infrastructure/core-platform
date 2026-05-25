@@ -17,10 +17,11 @@ The sanitized inventory is stored in `inventory/timeweb/inventory.public.json`. 
 OpenTofu currently models these existing Timeweb resources:
 
 - Projects.
-- Two cloud servers.
-- One managed Postgres database cluster through `twc_database_cluster`.
-- Two SSH public keys.
-- Three floating IPs.
+- One cloud server.
+- The legacy SPB managed Postgres cluster and the new MSK managed Postgres cluster through `twc_database_cluster`.
+- One SSH public key.
+- Two floating IPs.
+- The MSK private network for infrastructure services.
 - The Timeweb S3 bucket used for state, as a data source.
 
 The first state import is run through the manual `OpenTofu Import Existing Infra` workflow. It uses `tofu import` commands and then shows drift with `tofu plan`; it does not run `tofu apply`.
@@ -44,7 +45,7 @@ Do not add database passwords or server root passwords to GitHub unless a workfl
 These resources were discovered but are not yet managed as OpenTofu resources:
 
 - Domains and mailboxes: provider resources are not currently modeled in this repository.
-- Database users: the current cluster import does not require the discovered database login/password.
+- Database users: service users are reconciled by the `Managed PostgreSQL` workflow because passwords must stay in OpenBao, not OpenTofu state.
 - The S3 state bucket as a resource: it is used by the backend and referenced as a data source first.
 - Server system disks as separate `twc_server_disk` resources: the provider resource is documented for additional disks, while system disks are already visible as read-only server attributes.
 

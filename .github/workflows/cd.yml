@@ -84,9 +84,9 @@ jobs:
           env-file: |
             TZ=Europe/Moscow
             KEYCLOAK_HOST=identity.panixida.ru
-            KEYCLOAK_DB_HOST=89.191.229.210
-            KEYCLOAK_DB_PORT=5432
-            KEYCLOAK_DB_NAME=keycloak
+            KEYCLOAK_DB_HOST=${{ steps.openbao.outputs.KEYCLOAK_DB_HOST }}
+            KEYCLOAK_DB_PORT=${{ steps.openbao.outputs.KEYCLOAK_DB_PORT }}
+            KEYCLOAK_DB_NAME=${{ steps.openbao.outputs.KEYCLOAK_DB_NAME }}
             KEYCLOAK_DB_USERNAME=${{ steps.openbao.outputs.KEYCLOAK_DB_USERNAME }}
             KEYCLOAK_DB_PASSWORD=${{ steps.openbao.outputs.KEYCLOAK_DB_PASSWORD }}
             KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME=${{ steps.openbao.outputs.KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME }}
@@ -228,6 +228,11 @@ jobs:
             LOGS_HOST=logs.panixida.ru
             TRACES_HOST=traces.panixida.ru
             ALERTS_HOST=alerts.panixida.ru
+            GRAFANA_DB_HOST=${{ steps.openbao.outputs.GRAFANA_DB_HOST }}
+            GRAFANA_DB_PORT=${{ steps.openbao.outputs.GRAFANA_DB_PORT }}
+            GRAFANA_DB_NAME=${{ steps.openbao.outputs.GRAFANA_DB_NAME }}
+            GRAFANA_DB_USERNAME=${{ steps.openbao.outputs.GRAFANA_DB_USERNAME }}
+            GRAFANA_DB_PASSWORD=${{ steps.openbao.outputs.GRAFANA_DB_PASSWORD }}
             GRAFANA_ADMIN_USER=${{ steps.openbao.outputs.GRAFANA_ADMIN_USER }}
             GRAFANA_ADMIN_PASSWORD=${{ steps.openbao.outputs.GRAFANA_ADMIN_PASSWORD }}
             GRAFANA_OIDC_CLIENT_SECRET=${{ steps.openbao.outputs.GRAFANA_OIDC_CLIENT_SECRET }}
@@ -261,6 +266,9 @@ jobs:
           env-file: |
             TZ=Europe/Moscow
             SONAR_HOST=sonar.panixida.ru
+            SONAR_DB_HOST=${{ steps.openbao.outputs.SONAR_DB_HOST }}
+            SONAR_DB_PORT=${{ steps.openbao.outputs.SONAR_DB_PORT }}
+            SONAR_DB_NAME=${{ steps.openbao.outputs.SONAR_DB_NAME }}
             SONAR_DB_USERNAME=${{ steps.openbao.outputs.SONAR_DB_USERNAME }}
             SONAR_DB_PASSWORD=${{ steps.openbao.outputs.SONAR_DB_PASSWORD }}
 

@@ -13,23 +13,7 @@ resource "twc_floating_ip" "infrastructure_ipv4" {
   }
 }
 
-resource "twc_floating_ip" "tacticalheroes_dev_ipv4" {
-  availability_zone = "spb-3"
-  ddos_guard        = false
-  comment           = ""
-  ptr               = "1378593-ck97193.tw1.ru"
-
-  resource {
-    type = "server"
-    id   = "3761019"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "twc_floating_ip" "postgres_database_ipv4" {
+resource "twc_floating_ip" "postgres_database_ipv4_legacy" {
   availability_zone = "spb-3"
   ddos_guard        = false
   comment           = ""
@@ -42,4 +26,9 @@ resource "twc_floating_ip" "postgres_database_ipv4" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+moved {
+  from = twc_floating_ip.postgres_database_ipv4
+  to   = twc_floating_ip.postgres_database_ipv4_legacy
 }

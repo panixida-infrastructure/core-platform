@@ -2,10 +2,8 @@ services:
   sonarqube:
     image: sonarqube:community
     restart: unless-stopped
-    depends_on:
-      - postgres
     environment:
-      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+      SONAR_JDBC_URL: jdbc:postgresql://${SONAR_DB_HOST}:${SONAR_DB_PORT}/${SONAR_DB_NAME}?sslmode=require
       SONAR_JDBC_USERNAME: ${SONAR_DB_USERNAME}
       SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD}
     volumes:
@@ -25,20 +23,7 @@ services:
       - traefik.http.routers.sonarqube.middlewares=sso@docker
       - traefik.http.services.sonarqube.loadbalancer.server.port=9000
 
-  postgres:
-    image: postgres:17-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: sonar
-      POSTGRES_USER: ${SONAR_DB_USERNAME}
-      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - internal
-
 volumes:
-  postgres_data:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:

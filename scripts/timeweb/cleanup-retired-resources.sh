@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+timeweb_api="${TIMEWEB_API:-https://api.timeweb.cloud}"
+
+require_env() {
+  local name="$1"
+  if [ -z "${!name:-}" ]; then
+    echo "::error::${name} is required"
+    exit 1
+  fi
+}
+
+twc() {
+  local method="$1"
+  local path="$2"
+  local body="${3:-}"
+  local status
+  local response
+
+  response="$(mktemp)"
+  if [ -n "$body" ]; then
+    status="$(curl -sS \
+      -o "$response" \
+      -w '%{http_code}' \
+      -X "$method" \
+      -H "Authorization: Bearer ${TIMEWEB_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "$body" \
+      "${timeweb_api}${path}")"
+  else
+    status="$(curl -sS \
+      -o "$response" \
+      -w '%{http_code}' \
+      -X "$method" \
+      -H "Authorization: Bearer ${TIMEWEB_TOKEN}" \
+      -H "Content-Type: application/json" \
+      "${timeweb_api}${path}")"
+  fi
+
+  if [ "$status" = "404" ]; then
+    rm -f "$response"
+    return 44
+  fi
+
+  if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+    cat "$response" >&2
+    rm -f "$response"
+    return 1
+  fi
+
+  cat "$response"
+  rm -f "$response"
+}
+
+delete_dns_records_for_subdomain() {
+  local fqdn="$1"
+  local subdomain="$2"
+  local records
+
+  records="$(twc GET "/api/v1/domains/${fqdn}/dns-records?limit=200" || true)"
+  if [ -z "$records" ]; then
+    return
+  fi
+
+  jq -r --arg subdomain "$subdomain" \
+    '.dns_records[]? | select((.subdomain // "") == $subdomain) | .id' \
+    <<<"$records" \
+    | while IFS= read -r record_id; do
+      [ -z "$record_id" ] && continue
+      echo "Deleting DNS record ${record_id} for ${subdomain}.${fqdn}"
+      twc DELETE "/api/v1/domains/${fqdn}/dns-records/${record_id}" >/dev/null || true
+    done
+}
+
+require_env TIMEWEB_TOKEN
+
+echo "Enabling panixida.ru autoprolong"
+twc PATCH "/api/v1/domains/panixida.ru" '{"is_autoprolong_enabled":true}' >/dev/null
+
+echo "Deleting portainer.panixida.ru DNS records and subdomain"
+delete_dns_records_for_subdomain panixida.ru portainer
+twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer.panixida.ru" >/dev/null || true
+
+echo "Deleting tacticalheroesdev.ru domain"
+twc DELETE "/api/v1/domains/tacticalheroesdev.ru" >/dev/null || true
+
+if [ "${DELETE_LEGACY_SPB_NETWORK:-false}" = "true" ]; then
+  legacy_network_id="${LEGACY_SPB_NETWORK_ID:-network-f6c0d7e22f5f4d2d8e8df421aa68935d}"
+  echo "Deleting legacy SPB network ${legacy_network_id}"
+  twc DELETE "/api/v1/vpcs/${legacy_network_id}" >/dev/null || true
+fi
+
+echo "Retired Timeweb resources cleanup completed"

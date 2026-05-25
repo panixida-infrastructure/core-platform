@@ -29,6 +29,18 @@ path "secret/data/core-platform/*" {
 path "secret/metadata/core-platform/*" {
   capabilities = ["read", "list"]
 }
+
+path "secret/data/core-platform/identity" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/data/core-platform/observability" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/data/core-platform/sonarqube" {
+  capabilities = ["create", "read", "update"]
+}
 EOF
 
 if ! bao auth list -format=json | grep -q '"oidc/"'; then

@@ -1,0 +1,40 @@
+name: Timeweb Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type cleanup-retired-timeweb to remove retired Timeweb resources
+        required: true
+        type: string
+      delete_legacy_spb_network:
+        description: Delete the legacy SPB private network after the old DB cluster is gone
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: timeweb-cleanup-production
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "cleanup-retired-timeweb" ]; then
+            echo "::error::Confirmation must be exactly cleanup-retired-timeweb"
+            exit 1
+          fi
+
+      - name: Cleanup Timeweb resources
+        env:
+          TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
+          DELETE_LEGACY_SPB_NETWORK: ${{ inputs.delete_legacy_spb_network }}
+        run: bash scripts/timeweb/cleanup-retired-resources.sh

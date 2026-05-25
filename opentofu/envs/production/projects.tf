@@ -15,12 +15,3 @@ resource "twc_project" "infrastructure" {
     prevent_destroy = true
   }
 }
-
-resource "twc_project" "tactical_heroes" {
-  name        = "tactical-heroes"
-  description = ""
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
