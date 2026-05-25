@@ -34,6 +34,13 @@
         state: present
         manage_dir: true
 
+    - name: Remove non-host root SSH keys
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ item }}"
+        state: absent
+      loop: "{{ root_ssh_absent_public_keys | default([]) }}"
+
     - name: Ensure observability agent folder
       ansible.builtin.file:
         path: "{{ observability_agent_folder }}"
