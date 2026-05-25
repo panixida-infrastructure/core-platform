@@ -45,6 +45,46 @@ path "secret/data/core-platform/sonarqube" {
 path "secret/data/core-platform/applications" {
   capabilities = ["create", "read", "update"]
 }
+
+path "sys/mounts" {
+  capabilities = ["read", "list"]
+}
+
+path "sys/mounts/secret" {
+  capabilities = ["create", "read", "update", "sudo"]
+}
+
+path "sys/auth" {
+  capabilities = ["read", "list"]
+}
+
+path "sys/auth/oidc" {
+  capabilities = ["create", "read", "update", "sudo"]
+}
+
+path "sys/auth/jwt" {
+  capabilities = ["create", "read", "update", "sudo"]
+}
+
+path "auth/oidc/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "auth/jwt/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "sys/policies/acl" {
+  capabilities = ["read", "list"]
+}
+
+path "sys/policies/acl/platform-admin" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "sys/policies/acl/github-actions" {
+  capabilities = ["create", "read", "update"]
+}
 EOF
 
 if ! bao auth list -format=json | grep -q '"oidc/"'; then

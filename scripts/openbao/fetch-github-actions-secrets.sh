@@ -74,6 +74,9 @@ case "${1:-}" in
     emit_secret KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME core-platform/identity KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME
     emit_secret KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD core-platform/identity KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD
     ;;
+  secrets)
+    emit_secret OPENBAO_OIDC_CLIENT_SECRET core-platform/openbao OPENBAO_OIDC_CLIENT_SECRET
+    ;;
   identity-sso)
     emit_secret KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME core-platform/identity KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME
     emit_secret KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD core-platform/identity KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD
@@ -112,7 +115,7 @@ case "${1:-}" in
     emit_secret SONAR_ADMIN_PASSWORD core-platform/sonarqube SONAR_ADMIN_PASSWORD
     ;;
   *)
-    echo "Usage: $0 {bootstrap|edge|identity|identity-sso|komodo|observability|sonarqube}" >&2
+    echo "Usage: $0 {bootstrap|edge|identity|identity-sso|secrets|komodo|observability|sonarqube}" >&2
     exit 2
     ;;
 esac

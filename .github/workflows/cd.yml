@@ -100,6 +100,8 @@ jobs:
     if: inputs.stack == 'secrets'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+
       - uses: PANiXiDA-Infrastructure/ci-cd/.github/actions/ssh-docker-compose-deploy@main
         with:
           server-user: ${{ vars.SERVER_USER }}
@@ -146,6 +148,50 @@ jobs:
 
           cat /tmp/openbao-health.json
           exit 1
+
+      - name: Fetch OpenBao config secrets
+        id: openbao
+        run: bash scripts/openbao/fetch-github-actions-secrets.sh secrets
+
+      - name: Login to OpenBao with GitHub OIDC
+        env:
+          OPENBAO_ADDR: https://secrets.panixida.ru
+          OPENBAO_ROLE: core-platform-github-actions
+          OPENBAO_AUDIENCE: https://github.com/panixida-infrastructure/core-platform
+        run: |
+          set -euo pipefail
+          encoded_audience="$(jq -rn --arg value "$OPENBAO_AUDIENCE" '$value|@uri')"
+          oidc_response="$(curl -fsS \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${encoded_audience}")"
+          jwt="$(jq -r '.value' <<<"$oidc_response")"
+          payload="$(jq -nc --arg role "$OPENBAO_ROLE" --arg jwt "$jwt" '{role: $role, jwt: $jwt}')"
+          token="$(curl -fsS \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "$payload" \
+            "${OPENBAO_ADDR}/v1/auth/jwt/login" | jq -r '.auth.client_token')"
+          echo "::add-mask::$token"
+          {
+            echo 'OPENBAO_TOKEN<<EOF'
+            echo "$token"
+            echo EOF
+          } >> "$GITHUB_ENV"
+
+      - name: Configure OpenBao auth and policies
+        env:
+          OPENBAO_ADDR: https://secrets.panixida.ru
+          OPENBAO_OIDC_CLIENT_SECRET: ${{ steps.openbao.outputs.OPENBAO_OIDC_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e BAO_ADDR="$OPENBAO_ADDR" \
+            -e BAO_TOKEN="$OPENBAO_TOKEN" \
+            -e OPENBAO_OIDC_CLIENT_SECRET="$OPENBAO_OIDC_CLIENT_SECRET" \
+            -e KEYCLOAK_REALM=panixida \
+            -v "$PWD/scripts/openbao:/scripts/openbao:ro" \
+            openbao/openbao:2.5.4 \
+            sh /scripts/openbao/configure.sh
 
   komodo:
     if: inputs.stack == 'komodo'

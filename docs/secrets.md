@@ -39,6 +39,8 @@ Initial setup should be done once:
 7. Migrate known local secrets into OpenBao KV.
 ```
 
+After that bootstrap, the `Deploy` workflow for the `secrets` stack re-applies OpenBao OIDC, JWT auth, and policies idempotently through GitHub Actions.
+
 Current OpenBao secret paths:
 
 ```text
