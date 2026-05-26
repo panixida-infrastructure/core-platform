@@ -92,6 +92,12 @@ spec:
               subPath: logs
           resources:
             {{- toYaml .Values.sonarqube.resources | nindent 12 }}
+      {{- if not .Values.sonarqube.persistence.enabled }}
+      volumes:
+        - name: sonarqube-data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.sonarqube.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: sonarqube-data
@@ -102,6 +108,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.sonarqube.storageSize }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service

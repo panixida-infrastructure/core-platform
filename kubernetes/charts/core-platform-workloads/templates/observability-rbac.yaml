@@ -18,6 +18,7 @@ rules:
     resources:
       - nodes
       - nodes/proxy
+      - namespaces
       - services
       - endpoints
       - pods

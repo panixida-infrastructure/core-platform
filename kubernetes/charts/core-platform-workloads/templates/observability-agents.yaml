@@ -201,6 +201,11 @@ spec:
         - name: config
           configMap:
             name: alertmanager
+        {{- if not .Values.observability.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+  {{- if .Values.observability.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -211,6 +216,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.observability.storage.alertmanager }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service

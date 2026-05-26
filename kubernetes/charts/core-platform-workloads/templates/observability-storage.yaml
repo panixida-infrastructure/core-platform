@@ -38,6 +38,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+      {{- if not .Values.observability.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.observability.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -48,6 +54,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.observability.storage.victoriametrics }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -106,6 +113,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+      {{- if not .Values.observability.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.observability.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -116,6 +129,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.observability.storage.victorialogs }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -169,6 +183,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+      {{- if not .Values.observability.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.observability.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -179,6 +199,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.observability.storage.victoriatraces }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: Service

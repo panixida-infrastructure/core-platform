@@ -22,6 +22,11 @@ on:
         required: true
         type: boolean
         default: false
+      recreate_target_users:
+        description: Space-separated target DB users to recreate with OpenBao passwords
+        required: false
+        type: string
+        default: ""
 
 permissions:
   actions: write
@@ -69,7 +74,7 @@ jobs:
           SERVER_USER: ${{ vars.SERVER_USER }}
           SERVER_SSH_PORT: ${{ vars.SERVER_SSH_PORT }}
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
-          RECREATE_TARGET_DB_USERS: ${{ inputs.migrate_legacy_databases && 'dotnet_template_user keycloak_user' || '' }}
+          RECREATE_TARGET_DB_USERS: ${{ inputs.recreate_target_users != '' && inputs.recreate_target_users || (inputs.migrate_legacy_databases && 'dotnet_template_user keycloak_user' || '') }}
         run: bash scripts/timeweb/reconcile-managed-postgres.sh
 
       - name: Dispatch dependent deploys

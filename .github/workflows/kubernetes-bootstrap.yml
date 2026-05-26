@@ -12,6 +12,11 @@ on:
         required: true
         type: boolean
         default: true
+      install_timeweb_addons:
+        description: Install required Timeweb Kubernetes addons
+        required: true
+        type: boolean
+        default: true
       apply_gitops_root:
         description: Apply the Argo CD root application from this repository
         required: true
@@ -86,6 +91,51 @@ jobs:
           chmod 600 "$KUBECONFIG"
           kubectl version --client=true
           kubectl get nodes -o wide
+
+      - name: Install Timeweb Kubernetes addons
+        if: inputs.install_timeweb_addons
+        working-directory: opentofu/envs/production
+        run: |
+          set -euo pipefail
+          cluster_id="$(tofu output -json timeweb_inventory | jq -r '.kubernetes.id')"
+          if [ -z "$cluster_id" ] || [ "$cluster_id" = "null" ]; then
+            echo "::error::Kubernetes cluster id is missing from OpenTofu output"
+            exit 1
+          fi
+
+          install_addon() {
+            local addon="$1"
+            local response
+            local status
+
+            response="$(mktemp)"
+            status="$(curl -sS \
+              -o "$response" \
+              -w '%{http_code}' \
+              -X POST \
+              -H "Authorization: Bearer ${TF_VAR_twc_token}" \
+              -H "Content-Type: application/json" \
+              "https://api.timeweb.cloud/api/v1/k8s/clusters/${cluster_id}/addons/${addon}" || true)"
+
+            if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
+              rm -f "$response"
+              echo "Timeweb addon ${addon} is requested"
+              return
+            fi
+
+            if grep -Eiq 'already|exists|installed' "$response"; then
+              rm -f "$response"
+              echo "Timeweb addon ${addon} is already installed"
+              return
+            fi
+
+            cat "$response"
+            rm -f "$response"
+            echo "::error::Failed to install Timeweb addon ${addon}, status=${status}"
+            exit 1
+          }
+
+          install_addon network-drives-csi
 
       - name: Install Kubernetes controllers
         if: inputs.install_controllers
