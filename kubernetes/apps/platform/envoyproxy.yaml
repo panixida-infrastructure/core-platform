@@ -15,7 +15,7 @@ spec:
             metadata:
               annotations:
                 k8s.timeweb.cloud/attached-loadbalancer-ssl: "true"
-                k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "*.panixida.ru"
+                k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "argocd.panixida.ru"
             spec:
               ports:
                 - name: https-443
