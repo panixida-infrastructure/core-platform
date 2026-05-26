@@ -8,6 +8,7 @@ spec:
     type: Kubernetes
     kubernetes:
       envoyService:
+        externalTrafficPolicy: Cluster
         patch:
           type: StrategicMerge
           value:
