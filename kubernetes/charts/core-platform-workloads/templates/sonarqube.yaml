@@ -12,6 +12,10 @@ spec:
   serviceName: sonarqube
   {{- end }}
   replicas: 1
+  {{- if not .Values.sonarqube.persistence.enabled }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: sonarqube
