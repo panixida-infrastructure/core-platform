@@ -60,6 +60,8 @@ output "timeweb_inventory" {
       traces   = "traces.panixida.ru"
       alerts   = "alerts.panixida.ru"
       sonar    = "sonar.panixida.ru"
+      argocd   = "argocd.panixida.ru"
+      headlamp = "headlamp.panixida.ru"
     }
   }
 }

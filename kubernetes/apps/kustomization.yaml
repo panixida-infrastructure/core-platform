@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - platform/namespaces.yaml
   - platform/gateway.yaml
+  - platform/certificates.yaml
+  - platform/routes.yaml

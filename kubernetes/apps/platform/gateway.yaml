@@ -20,3 +20,25 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: argocd-https
+      protocol: HTTPS
+      port: 443
+      hostname: "argocd.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: argocd-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: headlamp-https
+      protocol: HTTPS
+      port: 443
+      hostname: "headlamp.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: headlamp-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All

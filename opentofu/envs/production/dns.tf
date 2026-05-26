@@ -78,3 +78,17 @@ resource "twc_dns_rr" "sonar" {
   type    = "A"
   value   = var.platform_public_ipv4
 }
+
+resource "twc_dns_rr" "argocd" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "argocd"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}
+
+resource "twc_dns_rr" "headlamp" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "headlamp"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}

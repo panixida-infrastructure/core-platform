@@ -13,7 +13,7 @@ alerts.panixida.ru     Alertmanager
 sonar.panixida.ru      SonarQube
 ```
 
-New Kubernetes UI endpoints:
+New Kubernetes UI endpoints point to the Envoy Gateway LoadBalancer IPv4 in `kubernetes_gateway_public_ipv4`:
 
 ```text
 argocd.panixida.ru     Argo CD
@@ -30,4 +30,4 @@ auth.panixida.ru
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. Before final cutover, update `platform_public_ipv4` to the Envoy Gateway LoadBalancer IPv4 and remove retired records in the same plan.
 
-TLS certificates should be issued through cert-manager or Timeweb LoadBalancer SSL settings for the Envoy Gateway entrypoint.
+TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener.

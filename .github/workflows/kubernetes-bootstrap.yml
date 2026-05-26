@@ -101,6 +101,7 @@ jobs:
             --namespace cert-manager \
             --create-namespace \
             --set crds.enabled=true \
+            --set config.enableGatewayAPI=true \
             --wait \
             --timeout 10m
 
@@ -124,6 +125,7 @@ jobs:
             --namespace argocd \
             --create-namespace \
             --set server.service.type=ClusterIP \
+            --set-string configs.params.server\\.insecure=true \
             --wait \
             --timeout 15m
 
@@ -136,6 +138,8 @@ jobs:
             --timeout 10m
 
           kubectl wait --timeout=5m -n envoy-gateway-system deployment/envoy-gateway --for=condition=Available
+          kubectl rollout restart deployment cert-manager -n cert-manager
+          kubectl rollout status deployment cert-manager -n cert-manager --timeout=5m
 
       - name: Apply retained network drive PV
         if: inputs.apply_retained_disk_pv

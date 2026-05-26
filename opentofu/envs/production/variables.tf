@@ -29,6 +29,12 @@ variable "platform_public_ipv4" {
   default     = "81.200.158.9"
 }
 
+variable "kubernetes_gateway_public_ipv4" {
+  description = "Public IPv4 address of the Envoy Gateway LoadBalancer for Kubernetes UI DNS records."
+  type        = string
+  default     = "186.246.9.205"
+}
+
 variable "k8s_version" {
   description = "Managed Kubernetes version for the core platform cluster."
   type        = string
