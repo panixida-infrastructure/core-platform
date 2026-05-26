@@ -79,7 +79,7 @@ apply_secret() {
           namespace: $namespace
         },
         type: "Opaque",
-        stringData: reduce $keys[] as $key ({}; .[$key] = required($key))
+        stringData: (reduce $keys[] as $key ({}; .[$key] = required($key)))
       }' >"$manifest"
 
   kubectl apply -f "$manifest" >/dev/null
