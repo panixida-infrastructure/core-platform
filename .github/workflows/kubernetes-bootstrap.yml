@@ -92,51 +92,6 @@ jobs:
           kubectl version --client=true
           kubectl get nodes -o wide
 
-      - name: Install Timeweb Kubernetes addons
-        if: inputs.install_timeweb_addons
-        working-directory: opentofu/envs/production
-        run: |
-          set -euo pipefail
-          cluster_id="$(tofu output -json timeweb_inventory | jq -r '.kubernetes.id')"
-          if [ -z "$cluster_id" ] || [ "$cluster_id" = "null" ]; then
-            echo "::error::Kubernetes cluster id is missing from OpenTofu output"
-            exit 1
-          fi
-
-          install_addon() {
-            local addon="$1"
-            local response
-            local status
-
-            response="$(mktemp)"
-            status="$(curl -sS \
-              -o "$response" \
-              -w '%{http_code}' \
-              -X POST \
-              -H "Authorization: Bearer ${TF_VAR_twc_token}" \
-              -H "Content-Type: application/json" \
-              "https://api.timeweb.cloud/api/v1/k8s/clusters/${cluster_id}/addons/${addon}" || true)"
-
-            if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
-              rm -f "$response"
-              echo "Timeweb addon ${addon} is requested"
-              return
-            fi
-
-            if grep -Eiq 'already|exists|installed' "$response"; then
-              rm -f "$response"
-              echo "Timeweb addon ${addon} is already installed"
-              return
-            fi
-
-            cat "$response"
-            rm -f "$response"
-            echo "::error::Failed to install Timeweb addon ${addon}, status=${status}"
-            exit 1
-          }
-
-          install_addon network-drives-csi
-
       - name: Install Kubernetes controllers
         if: inputs.install_controllers
         run: |
@@ -191,6 +146,130 @@ jobs:
           kubectl rollout restart deployment cert-manager -n cert-manager
           kubectl rollout status deployment cert-manager -n cert-manager --timeout=5m
 
+      - name: Apply Argo CD root application
+        if: inputs.apply_gitops_root
+        run: |
+          kubectl apply -f kubernetes/bootstrap/argocd-root.yaml
+          kubectl -n argocd annotate applications.argoproj.io core-platform argocd.argoproj.io/refresh=hard --overwrite
+          for _ in $(seq 1 60); do
+            sync_status="$(kubectl -n argocd get application core-platform -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+            operation_phase="$(kubectl -n argocd get application core-platform -o jsonpath='{.status.operationState.phase}' 2>/dev/null || true)"
+            if [ "$sync_status" = "Synced" ] && [ "$operation_phase" != "Running" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          kubectl -n argocd get application core-platform -o yaml || true
+          echo "::error::core-platform root application did not finish syncing"
+          exit 1
+
+      - name: Install Timeweb Kubernetes addons
+        if: inputs.install_timeweb_addons
+        working-directory: opentofu/envs/production
+        run: |
+          set -euo pipefail
+          cluster_id="$(tofu output -json timeweb_inventory | jq -r '.kubernetes.id')"
+          if [ -z "$cluster_id" ] || [ "$cluster_id" = "null" ]; then
+            echo "::error::Kubernetes cluster id is missing from OpenTofu output"
+            exit 1
+          fi
+
+          if kubectl -n argocd get application platform-workloads >/dev/null 2>&1; then
+            kubectl -n argocd annotate application platform-workloads argocd.argoproj.io/refresh=hard --overwrite || true
+            for _ in $(seq 1 60); do
+              sync_status="$(kubectl -n argocd get application platform-workloads -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+              operation_phase="$(kubectl -n argocd get application platform-workloads -o jsonpath='{.status.operationState.phase}' 2>/dev/null || true)"
+              if [ "$sync_status" = "Synced" ] && [ "$operation_phase" != "Running" ]; then
+                break
+              fi
+              sleep 10
+            done
+
+            sync_status="$(kubectl -n argocd get application platform-workloads -o jsonpath='{.status.sync.status}' 2>/dev/null || true)"
+            operation_phase="$(kubectl -n argocd get application platform-workloads -o jsonpath='{.status.operationState.phase}' 2>/dev/null || true)"
+            if [ "$sync_status" != "Synced" ] || [ "$operation_phase" = "Running" ]; then
+              kubectl -n argocd get application platform-workloads -o yaml || true
+              echo "::error::platform-workloads must be synced before installing the Timeweb CSI driver"
+              exit 1
+            fi
+          fi
+
+          stale_statefulsets=0
+          for workload in \
+            observability/victoriametrics \
+            observability/victorialogs \
+            observability/victoriatraces \
+            observability/alertmanager \
+            quality/sonarqube; do
+            namespace="${workload%/*}"
+            name="${workload#*/}"
+            if kubectl get statefulset -n "$namespace" "$name" >/dev/null 2>&1; then
+              echo "::error::Stale StatefulSet ${workload} still exists. Refusing to install CSI before Argo prunes it."
+              stale_statefulsets=1
+            fi
+          done
+          if [ "$stale_statefulsets" -ne 0 ]; then
+            exit 1
+          fi
+
+          delete_pending_pvc() {
+            local namespace="$1"
+            local name="$2"
+            local phase
+            local volume_name
+
+            phase="$(kubectl get pvc -n "$namespace" "$name" -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+            volume_name="$(kubectl get pvc -n "$namespace" "$name" -o jsonpath='{.spec.volumeName}' 2>/dev/null || true)"
+            if [ "$phase" = "Pending" ] && [ -z "$volume_name" ]; then
+              kubectl delete pvc -n "$namespace" "$name"
+            fi
+          }
+
+          delete_pending_pvc observability data-victoriametrics-0
+          delete_pending_pvc observability data-victorialogs-0
+          delete_pending_pvc observability data-victoriatraces-0
+          delete_pending_pvc observability data-alertmanager-0
+          delete_pending_pvc quality sonarqube-data-sonarqube-0
+
+          values_file="$(mktemp)"
+          trap 'rm -f "$values_file"' EXIT
+          umask 077
+          cat > "$values_file" <<EOF
+          TW_API_SECRET: "${TF_VAR_twc_token}"
+          TW_CLUSTER_ID: "${cluster_id}"
+          provisionerName: network-drives.csi.timeweb.cloud
+          image:
+            repository: cr-internal.twcstorage.ru/network-drives-csi/driver
+            tag: 2
+            pullPolicy: Always
+          node:
+            logLevel: info
+            logJson: true
+          controller:
+            replicas: 1
+            nodeSelector: {}
+            tolerations: []
+          rbac:
+            createRoles: true
+            createServiceAccounts: true
+          metrics:
+            podMonitor:
+              enabled: false
+              port: metrics
+              path: /metrics
+              interval: 60s
+          EOF
+
+          helm upgrade --install csi-tw-helm oci://cr-internal.twcstorage.ru/network-drives-csi/csi-driver-timeweb-cloud \
+            -f "$values_file" \
+            --namespace csi-driver-timeweb-cloud \
+            --create-namespace \
+            --wait \
+            --timeout 10m
+
+          kubectl get csidriver network-drives.csi.timeweb.cloud
+          kubectl get storageclass
+
       - name: Apply retained network drive PV
         if: inputs.apply_retained_disk_pv
         working-directory: opentofu/envs/production
@@ -210,9 +289,3 @@ jobs:
           export CORE_PLATFORM_NETWORK_DRIVE_ID
           export CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI
           envsubst < ../../../kubernetes/bootstrap/core-platform-network-drive.tpl.yaml | kubectl apply -f -
-
-      - name: Apply Argo CD root application
-        if: inputs.apply_gitops_root
-        run: |
-          kubectl apply -f kubernetes/bootstrap/argocd-root.yaml
-          kubectl -n argocd annotate applications.argoproj.io core-platform argocd.argoproj.io/refresh=hard --overwrite

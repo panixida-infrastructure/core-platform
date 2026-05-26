@@ -94,7 +94,7 @@ nvme.network-drives.csi.timeweb.cloud
 hdd.network-drives.csi.timeweb.cloud
 ```
 
-The OpenTofu-managed `core-platform-nvme` disk is declared as a retained static PV/PVC by the Kubernetes bootstrap workflow. It is not attached to the old VM server. The CSI driver itself must be installed in the cluster before pods can mount the volume.
+The OpenTofu-managed `core-platform-nvme` disk is declared as a retained static PV/PVC by the Kubernetes bootstrap workflow. It is not attached to the old VM server. The bootstrap workflow installs the Timeweb CSI driver with Helm after the GitOps workloads are synced and stale pending PVCs from the first migration attempt are removed.
 
 ## Cutover rules
 

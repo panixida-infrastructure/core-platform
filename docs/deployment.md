@@ -145,6 +145,6 @@ The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBa
 
 The `platform-workloads` Argo CD application deploys the Kubernetes versions of Keycloak, OpenBao, Grafana, SonarQube, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmagent, vlagent, vmalert, Alertmanager, blackbox_exporter, and OpenTelemetry Collector.
 
-The `Kubernetes Bootstrap` workflow also requests the Timeweb `network-drives-csi` addon. Workloads keep persistence disabled by default during migration to avoid creating additional paid network drives accidentally. Enable chart persistence only after the retained disk/PVC cutover is planned.
+The `Kubernetes Bootstrap` workflow installs the Timeweb network drive CSI driver with the official Helm chart after Argo CD has synced `platform-workloads`. Workloads keep persistence disabled by default during migration to avoid creating additional paid network drives accidentally. Enable chart persistence only after the retained disk/PVC cutover is planned.
 
 Public DNS cutover for the old platform domains is separate from deploying the workloads. Keep the old Docker Compose stack running until Kubernetes pods are healthy, OpenBao is initialized/unsealed with migrated data, and the Timeweb LoadBalancer serves Envoy/cert-manager certificates correctly.

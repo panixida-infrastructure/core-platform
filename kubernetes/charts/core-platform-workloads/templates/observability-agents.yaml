@@ -161,7 +161,7 @@ spec:
             name: vmalert-rules
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: {{ ternary "StatefulSet" "Deployment" .Values.observability.persistence.enabled }}
 metadata:
   name: alertmanager
   namespace: {{ .Values.observability.namespace }}
@@ -169,7 +169,9 @@ metadata:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: alertmanager
 spec:
+  {{- if .Values.observability.persistence.enabled }}
   serviceName: alertmanager
+  {{- end }}
   replicas: 1
   selector:
     matchLabels:

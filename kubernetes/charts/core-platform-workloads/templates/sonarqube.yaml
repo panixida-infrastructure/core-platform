@@ -1,6 +1,6 @@
 {{- if .Values.sonarqube.enabled }}
 apiVersion: apps/v1
-kind: StatefulSet
+kind: {{ ternary "StatefulSet" "Deployment" .Values.sonarqube.persistence.enabled }}
 metadata:
   name: sonarqube
   namespace: {{ .Values.sonarqube.namespace }}
@@ -8,7 +8,9 @@ metadata:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: sonarqube
 spec:
+  {{- if .Values.sonarqube.persistence.enabled }}
   serviceName: sonarqube
+  {{- end }}
   replicas: 1
   selector:
     matchLabels:
