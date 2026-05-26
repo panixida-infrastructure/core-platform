@@ -30,4 +30,4 @@ auth.panixida.ru
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. Before final cutover, update `platform_public_ipv4` to the Envoy Gateway LoadBalancer IPv4 and remove retired records in the same plan.
 
-TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. The Timeweb LoadBalancer service is patched through EnvoyProxy with Timeweb SSL annotations for the public wildcard certificate and forwards HTTPS traffic to Envoy Gateway.
+TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. The Timeweb LoadBalancer service is patched through EnvoyProxy to keep the public `443` port first and pass TCP traffic through to Envoy Gateway, where TLS is terminated.

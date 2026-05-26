@@ -12,18 +12,11 @@ spec:
         patch:
           type: StrategicMerge
           value:
-            metadata:
-              labels:
-                k8s.timeweb.cloud/attached-loadbalancer-ssl: "true"
-                k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "argocd.panixida.ru"
-              annotations:
-                k8s.timeweb.cloud/attached-loadbalancer-ssl: "true"
-                k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "argocd.panixida.ru"
             spec:
               ports:
                 - name: https-443
                   port: 443
-                  appProtocol: k8s.timeweb.cloud/proto-https
+                  appProtocol: k8s.timeweb.cloud/proto-tcp
                 - name: http-80
                   port: 80
                   appProtocol: k8s.timeweb.cloud/proto-tcp
