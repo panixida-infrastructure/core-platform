@@ -60,14 +60,9 @@ spec:
           args:
             - |
               export PGPASSWORD="$KEYCLOAK_DB_PASSWORD"
-              psql "host=$KEYCLOAK_DB_HOST port=$KEYCLOAK_DB_PORT dbname=$KEYCLOAK_DB_NAME user=$KEYCLOAK_DB_USERNAME sslmode=require" <<'SQL'
-              do $$
-              begin
-                if to_regclass('public.jgroups_ping') is not null then
-                  delete from public.jgroups_ping;
-                end if;
-              end $$;
-              SQL
+              psql "host=$KEYCLOAK_DB_HOST port=$KEYCLOAK_DB_PORT dbname=$KEYCLOAK_DB_NAME user=$KEYCLOAK_DB_USERNAME sslmode=require" \
+                -v ON_ERROR_STOP=1 \
+                -c "delete from public.jgroups_ping;"
       {{- end }}
       containers:
         - name: keycloak
