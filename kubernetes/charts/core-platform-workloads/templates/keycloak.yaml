@@ -1,7 +1,8 @@
 {{- if .Values.keycloak.enabled }}
 {{- $keycloakCacheType := default "local" .Values.keycloak.cache.type }}
 {{- $keycloakCacheStack := default "" .Values.keycloak.cache.stack }}
-{{- $jgroupsCleanupEnabled := and .Values.keycloak.jgroupsCleanup.enabled (eq $keycloakCacheType "ispn") (eq (int .Values.keycloak.replicas) 1) }}
+{{- $singleReplica := eq (int .Values.keycloak.replicas) 1 }}
+{{- $jgroupsCleanupEnabled := and .Values.keycloak.jgroupsCleanup.enabled (eq $keycloakCacheType "ispn") $singleReplica }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,7 +13,7 @@ metadata:
     app.kubernetes.io/name: keycloak
 spec:
   replicas: {{ .Values.keycloak.replicas }}
-  {{- if $jgroupsCleanupEnabled }}
+  {{- if $singleReplica }}
   strategy:
     type: Recreate
   {{- end }}
