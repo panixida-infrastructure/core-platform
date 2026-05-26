@@ -19,4 +19,4 @@ spec:
                   appProtocol: k8s.timeweb.cloud/proto-tcp
                 - name: https-443
                   port: 443
-                  appProtocol: k8s.timeweb.cloud/proto-tcp
+                  appProtocol: k8s.timeweb.cloud/proto-tcp-ssl
