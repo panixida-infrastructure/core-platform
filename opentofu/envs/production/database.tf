@@ -21,4 +21,8 @@ resource "twc_database_backup_schedule" "postgres_database" {
   interval          = "day"
   copy_count        = 7
   creation_start_at = "2026-05-25T00:00:00.000Z"
+
+  lifecycle {
+    ignore_changes = [creation_start_at]
+  }
 }
