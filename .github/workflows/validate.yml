@@ -43,6 +43,26 @@ jobs:
       - name: Validate
         run: tofu validate
 
+  kubernetes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Kubernetes tooling
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
+          sudo install -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Render Kubernetes manifests
+        run: |
+          set -euo pipefail
+          kubectl kustomize kubernetes/apps >/tmp/core-platform-apps.yaml
+          helm lint kubernetes/charts/core-platform-workloads
+          helm template platform-workloads kubernetes/charts/core-platform-workloads >/tmp/core-platform-workloads.yaml
+
   ansible:
     runs-on: ubuntu-latest
     steps:

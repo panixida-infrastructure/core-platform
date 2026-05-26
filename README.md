@@ -81,6 +81,7 @@ Manual workflows:
 - `OpenTofu Plan` runs an authoritative plan against the S3-backed state.
 - `OpenTofu Apply` applies the current production configuration after an explicit confirmation string.
 - `Kubernetes Bootstrap` installs the first Kubernetes controllers and applies the Argo CD root app.
+- `Kubernetes Secrets Sync` copies OpenBao-backed runtime secrets into Kubernetes `Secret` objects for the migrated workloads.
 - `Ansible Bootstrap` applies server bootstrap through SSH.
 
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.

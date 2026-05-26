@@ -1,0 +1,200 @@
+{{- if .Values.observability.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: victoriametrics
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victoriametrics
+spec:
+  serviceName: victoriametrics
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: victoriametrics
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: victoriametrics
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: victoriametrics
+          image: {{ .Values.observability.images.victoriametrics | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -storageDataPath=/storage
+            - -retentionPeriod=30d
+            - -httpAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
+            - -httpAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
+          envFrom:
+            - secretRef:
+                name: {{ .Values.observability.secretName }}
+          ports:
+            - name: http
+              containerPort: 8428
+          volumeMounts:
+            - name: data
+              mountPath: /storage
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.observability.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.observability.storage.victoriametrics }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victoriametrics
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victoriametrics
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: victoriametrics
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: http
+      port: 8428
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: victorialogs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victorialogs
+spec:
+  serviceName: victorialogs
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: victorialogs
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: victorialogs
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: victorialogs
+          image: {{ .Values.observability.images.victorialogs | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -storageDataPath=/storage
+            - -retentionPeriod=14d
+            - -httpAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
+            - -httpAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
+          envFrom:
+            - secretRef:
+                name: {{ .Values.observability.secretName }}
+          ports:
+            - name: http
+              containerPort: 9428
+          volumeMounts:
+            - name: data
+              mountPath: /storage
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.observability.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.observability.storage.victorialogs }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victorialogs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victorialogs
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: victorialogs
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: http
+      port: 9428
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: victoriatraces
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victoriatraces
+spec:
+  serviceName: victoriatraces
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: victoriatraces
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: victoriatraces
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: victoriatraces
+          image: {{ .Values.observability.images.victoriatraces | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -storageDataPath=/storage
+            - -retentionPeriod=14d
+          ports:
+            - name: http
+              containerPort: 10428
+          volumeMounts:
+            - name: data
+              mountPath: /storage
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.observability.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.observability.storage.victoriatraces }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victoriatraces
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: victoriatraces
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: victoriatraces
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: http
+      port: 10428
+      targetPort: http
+{{- end }}

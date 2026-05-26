@@ -1,0 +1,113 @@
+{{- if .Values.openbao.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  namespace: {{ .Values.openbao.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: openbao
+spec:
+  replicas: {{ .Values.openbao.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openbao
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openbao
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: openbao
+          image: {{ .Values.openbao.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              cat > /tmp/openbao.hcl <<EOF
+              ui = true
+              disable_mlock = true
+              api_addr = "https://${OPENBAO_HOST}"
+              cluster_addr = "http://127.0.0.1:8201"
+
+              listener "tcp" {
+                address = "0.0.0.0:8200"
+                tls_disable = true
+              }
+
+              storage "postgresql" {
+                connection_url = "postgresql://${OPENBAO_DB_USERNAME}:${OPENBAO_DB_PASSWORD}@${OPENBAO_DB_HOST}:${OPENBAO_DB_PORT}/${OPENBAO_DB_NAME}?sslmode=require"
+                table = "openbao_kv_store"
+                ha_enabled = "true"
+                ha_table = "openbao_ha_locks"
+              }
+              EOF
+
+              exec bao server -config=/tmp/openbao.hcl
+          envFrom:
+            - secretRef:
+                name: {{ .Values.openbao.secretName }}
+          env:
+            - name: OPENBAO_HOST
+              value: {{ .Values.openbao.host | quote }}
+          ports:
+            - name: http
+              containerPort: 8200
+            - name: cluster
+              containerPort: 8201
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.openbao.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+  namespace: {{ .Values.openbao.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: openbao
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: openbao
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: http
+      port: 8200
+      targetPort: http
+    - name: cluster
+      port: 8201
+      targetPort: cluster
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openbao
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.openbao.host }}
+  rules:
+    - backendRefs:
+        - name: openbao
+          port: 8200
+{{- end }}

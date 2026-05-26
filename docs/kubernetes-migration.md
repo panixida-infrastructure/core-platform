@@ -48,7 +48,23 @@ Argo CD
 Headlamp
 ```
 
-After Argo CD is available, workload deployment should be pull-based from this repository. Docker Compose deployments and Ansible server bootstrap stay only as a temporary migration path until all services have been moved.
+After Argo CD is available, workload deployment is pull-based from this repository. The root Argo CD application applies the shared platform resources and creates the `platform-workloads` child application from the local Helm chart at:
+
+```text
+kubernetes/charts/core-platform-workloads
+```
+
+Docker Compose deployments and Ansible server bootstrap stay only as a temporary migration path until all services have been moved.
+
+Kubernetes workload secrets are not stored in Git. Run the manual `Kubernetes Secrets Sync` workflow before or immediately after enabling the workload chart. It reads OpenBao through GitHub Actions OIDC and applies only Kubernetes `Secret` objects for:
+
+```text
+identity/keycloak-secrets
+secrets/openbao-secrets
+observability/grafana-secrets
+observability/observability-secrets
+quality/sonarqube-secrets
+```
 
 Planned workload replacements:
 
@@ -64,6 +80,10 @@ Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
 OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The PostgreSQL backend is production-ready and HA-capable, but the current file-backed OpenBao data must be exported/imported before switching traffic.
+
+The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. It still has to be initialized, unsealed, and populated from the old file-backed OpenBao before `secrets.panixida.ru` is cut over.
+
+The workload chart currently exposes migrated UIs through the shared HTTP listener only. HTTPS cutover for the old platform domains should be done after the Timeweb LoadBalancer TLS passthrough issue is resolved and DNS is intentionally repointed to the Kubernetes LoadBalancer IP.
 
 ## Storage
 

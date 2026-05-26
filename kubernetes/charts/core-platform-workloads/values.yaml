@@ -1,0 +1,89 @@
+global:
+  imagePullPolicy: IfNotPresent
+  gateway:
+    name: core-platform
+    namespace: envoy-gateway-system
+    httpSectionName: http
+
+keycloak:
+  enabled: true
+  namespace: identity
+  host: identity.panixida.ru
+  image: quay.io/keycloak/keycloak:26.6.2
+  secretName: keycloak-secrets
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+openbao:
+  enabled: true
+  namespace: secrets
+  host: secrets.panixida.ru
+  image: openbao/openbao:2.5.4
+  secretName: openbao-secrets
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+grafana:
+  enabled: true
+  namespace: observability
+  host: grafana.panixida.ru
+  image: grafana/grafana-oss:13.0.1
+  secretName: grafana-secrets
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
+
+sonarqube:
+  enabled: true
+  namespace: quality
+  host: sonar.panixida.ru
+  image: sonarqube:community
+  secretName: sonarqube-secrets
+  storageClassName: nvme.network-drives.csi.timeweb.cloud
+  storageSize: 10Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 768Mi
+    limits:
+      memory: 2Gi
+
+observability:
+  enabled: true
+  namespace: observability
+  secretName: observability-secrets
+  storageClassName: nvme.network-drives.csi.timeweb.cloud
+  hosts:
+    metrics: metrics.panixida.ru
+    logs: logs.panixida.ru
+    traces: traces.panixida.ru
+    alerts: alerts.panixida.ru
+  images:
+    victoriametrics: victoriametrics/victoria-metrics:v1.143.0
+    victorialogs: victoriametrics/victoria-logs:v1.50.0
+    victoriatraces: victoriametrics/victoria-traces:v0.9.0
+    vmagent: victoriametrics/vmagent:v1.143.0
+    vlagent: victoriametrics/vlagent:v1.50.0
+    vmalert: victoriametrics/vmalert:v1.143.0
+    alertmanager: prom/alertmanager:v0.32.1
+    blackboxExporter: prom/blackbox-exporter:v0.28.0
+    otelCollector: otel/opentelemetry-collector-contrib:0.142.0
+  storage:
+    victoriametrics: 20Gi
+    victorialogs: 10Gi
+    victoriatraces: 10Gi
+    alertmanager: 2Gi

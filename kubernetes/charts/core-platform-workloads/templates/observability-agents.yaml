@@ -1,0 +1,232 @@
+{{- if .Values.observability.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmagent
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vmagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vmagent
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vmagent
+        app.kubernetes.io/part-of: core-platform
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8429"
+    spec:
+      serviceAccountName: observability-agent
+      containers:
+        - name: vmagent
+          image: {{ .Values.observability.images.vmagent | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -promscrape.config=/etc/vmagent/scrape.yml
+            - -remoteWrite.url=http://victoriametrics.observability.svc.cluster.local:8428/api/v1/write
+            - -remoteWrite.basicAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
+            - -remoteWrite.basicAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
+            - -remoteWrite.tmpDataPath=/vmagentdata
+          envFrom:
+            - secretRef:
+                name: {{ .Values.observability.secretName }}
+          ports:
+            - name: http
+              containerPort: 8429
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vmagent
+              readOnly: true
+            - name: tmp
+              mountPath: /vmagentdata
+      volumes:
+        - name: config
+          configMap:
+            name: vmagent-scrape
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vlagent
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vlagent
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vlagent
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vlagent
+        app.kubernetes.io/part-of: core-platform
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9429"
+    spec:
+      serviceAccountName: observability-agent
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: vlagent
+          image: {{ .Values.observability.images.vlagent | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -kubernetesCollector
+            - -remoteWrite.url=http://victorialogs.observability.svc.cluster.local:9428/insert/native
+            - -remoteWrite.basicAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
+            - -remoteWrite.basicAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
+            - -remoteWrite.tmpDataPath=/vlagentdata
+          envFrom:
+            - secretRef:
+                name: {{ .Values.observability.secretName }}
+          ports:
+            - name: http
+              containerPort: 9429
+          volumeMounts:
+            - name: containers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: pods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: varlib
+              mountPath: /var/lib
+              readOnly: true
+            - name: tmp
+              mountPath: /vlagentdata
+      volumes:
+        - name: containers
+          hostPath:
+            path: /var/log/containers
+        - name: pods
+          hostPath:
+            path: /var/log/pods
+        - name: varlib
+          hostPath:
+            path: /var/lib
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmalert
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vmalert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vmalert
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vmalert
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: vmalert
+          image: {{ .Values.observability.images.vmalert | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -rule=/etc/vmalert/rules.yml
+            - -datasource.url=http://victoriametrics.observability.svc.cluster.local:8428
+            - -datasource.basicAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
+            - -datasource.basicAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
+            - -notifier.url=http://alertmanager.observability.svc.cluster.local:9093
+          envFrom:
+            - secretRef:
+                name: {{ .Values.observability.secretName }}
+          volumeMounts:
+            - name: rules
+              mountPath: /etc/vmalert
+              readOnly: true
+      volumes:
+        - name: rules
+          configMap:
+            name: vmalert-rules
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: alertmanager
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: alertmanager
+spec:
+  serviceName: alertmanager
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alertmanager
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: alertmanager
+          image: {{ .Values.observability.images.alertmanager | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - --config.file=/etc/alertmanager/alertmanager.yml
+            - --storage.path=/alertmanager
+          ports:
+            - name: http
+              containerPort: 9093
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+              readOnly: true
+            - name: data
+              mountPath: /alertmanager
+      volumes:
+        - name: config
+          configMap:
+            name: alertmanager
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.observability.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.observability.storage.alertmanager }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: alertmanager
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: http
+      port: 9093
+      targetPort: http
+{{- end }}

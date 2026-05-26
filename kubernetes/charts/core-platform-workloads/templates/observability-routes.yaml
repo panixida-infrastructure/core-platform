@@ -1,0 +1,69 @@
+{{- if .Values.observability.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: victoriametrics
+  namespace: {{ .Values.observability.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.observability.hosts.metrics }}
+  rules:
+    - backendRefs:
+        - name: victoriametrics
+          port: 8428
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: victorialogs
+  namespace: {{ .Values.observability.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.observability.hosts.logs }}
+  rules:
+    - backendRefs:
+        - name: victorialogs
+          port: 9428
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: victoriatraces
+  namespace: {{ .Values.observability.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.observability.hosts.traces }}
+  rules:
+    - backendRefs:
+        - name: victoriatraces
+          port: 10428
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: alertmanager
+  namespace: {{ .Values.observability.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.observability.hosts.alerts }}
+  rules:
+    - backendRefs:
+        - name: alertmanager
+          port: 9093
+{{- end }}

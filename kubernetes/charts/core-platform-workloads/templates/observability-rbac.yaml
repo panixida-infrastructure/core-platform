@@ -1,0 +1,47 @@
+{{- if .Values.observability.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: observability-agent
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: core-platform-observability-agent
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: core-platform-observability-agent
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: core-platform-observability-agent
+subjects:
+  - kind: ServiceAccount
+    name: observability-agent
+    namespace: {{ .Values.observability.namespace }}
+{{- end }}

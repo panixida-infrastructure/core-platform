@@ -140,3 +140,9 @@ secret/core-platform/openbao
 OpenTofu creates the Timeweb Managed Kubernetes cluster, the default worker node group, and the retained MSK-1 NVMe network drive. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, and applies the Argo CD root application.
 
 The intended steady state is GitOps pull from this repository through Argo CD. The existing SSH/Docker Compose workflows remain only for migration until service data is moved from the `infrastructure` server.
+
+The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
+
+The `platform-workloads` Argo CD application deploys the Kubernetes versions of Keycloak, OpenBao, Grafana, SonarQube, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmagent, vlagent, vmalert, Alertmanager, blackbox_exporter, and OpenTelemetry Collector.
+
+Public DNS cutover for the old platform domains is separate from deploying the workloads. Keep the old Docker Compose stack running until Kubernetes pods are healthy, OpenBao is initialized/unsealed with migrated data, and the Timeweb LoadBalancer serves Envoy/cert-manager certificates correctly.
