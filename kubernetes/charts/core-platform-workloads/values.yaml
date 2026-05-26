@@ -69,9 +69,9 @@ sonarqube:
   resources:
     requests:
       cpu: 500m
-      memory: 768Mi
+      memory: 1400Mi
     limits:
-      memory: 2Gi
+      memory: 1792Mi
 
 observability:
   enabled: true
