@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - platform/namespaces.yaml
+  - platform/envoyproxy.yaml
   - platform/gateway.yaml
   - platform/certificates.yaml
   - platform/routes.yaml
