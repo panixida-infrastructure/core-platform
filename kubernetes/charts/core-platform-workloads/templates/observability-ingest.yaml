@@ -35,6 +35,8 @@ spec:
             - name: config
               mountPath: /etc/blackbox_exporter
               readOnly: true
+          resources:
+            {{- toYaml .Values.observability.resources.blackboxExporter | nindent 12 }}
       volumes:
         - name: config
           configMap:
@@ -93,6 +95,8 @@ spec:
             - name: config
               mountPath: /etc/otelcol
               readOnly: true
+          resources:
+            {{- toYaml .Values.observability.resources.otelCollector | nindent 12 }}
       volumes:
         - name: config
           configMap:

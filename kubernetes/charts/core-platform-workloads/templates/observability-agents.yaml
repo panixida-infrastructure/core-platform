@@ -45,6 +45,8 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /vmagentdata
+          resources:
+            {{- toYaml .Values.observability.resources.vmagent | nindent 12 }}
       volumes:
         - name: config
           configMap:
@@ -105,6 +107,8 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /vlagentdata
+          resources:
+            {{- toYaml .Values.observability.resources.vlagent | nindent 12 }}
       volumes:
         - name: containers
           hostPath:
@@ -155,6 +159,8 @@ spec:
             - name: rules
               mountPath: /etc/vmalert
               readOnly: true
+          resources:
+            {{- toYaml .Values.observability.resources.vmalert | nindent 12 }}
       volumes:
         - name: rules
           configMap:
@@ -199,6 +205,8 @@ spec:
               readOnly: true
             - name: data
               mountPath: /alertmanager
+          resources:
+            {{- toYaml .Values.observability.resources.alertmanager | nindent 12 }}
       volumes:
         - name: config
           configMap:

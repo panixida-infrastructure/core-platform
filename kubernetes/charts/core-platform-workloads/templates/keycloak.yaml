@@ -1,4 +1,7 @@
 {{- if .Values.keycloak.enabled }}
+{{- $keycloakCacheType := default "local" .Values.keycloak.cache.type }}
+{{- $keycloakCacheStack := default "" .Values.keycloak.cache.stack }}
+{{- $jgroupsCleanupEnabled := and .Values.keycloak.jgroupsCleanup.enabled (eq $keycloakCacheType "ispn") (eq (int .Values.keycloak.replicas) 1) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +12,7 @@ metadata:
     app.kubernetes.io/name: keycloak
 spec:
   replicas: {{ .Values.keycloak.replicas }}
-  {{- if and .Values.keycloak.jgroupsCleanup.enabled (eq (int .Values.keycloak.replicas) 1) }}
+  {{- if $jgroupsCleanupEnabled }}
   strategy:
     type: Recreate
   {{- end }}
@@ -23,7 +26,7 @@ spec:
         app.kubernetes.io/name: keycloak
         app.kubernetes.io/part-of: core-platform
     spec:
-      {{- if and .Values.keycloak.jgroupsCleanup.enabled (eq (int .Values.keycloak.replicas) 1) }}
+      {{- if $jgroupsCleanupEnabled }}
       initContainers:
         - name: jgroups-cleanup
           image: postgres:17-alpine
@@ -115,9 +118,11 @@ spec:
             - name: KC_PROXY_HEADERS
               value: xforwarded
             - name: KC_CACHE
-              value: ispn
+              value: {{ $keycloakCacheType | quote }}
+            {{- if and (eq $keycloakCacheType "ispn") $keycloakCacheStack }}
             - name: KC_CACHE_STACK
-              value: jdbc-ping
+              value: {{ $keycloakCacheStack | quote }}
+            {{- end }}
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_METRICS_ENABLED

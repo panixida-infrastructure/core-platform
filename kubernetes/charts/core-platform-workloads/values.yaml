@@ -12,8 +12,11 @@ keycloak:
   image: quay.io/keycloak/keycloak:26.6.2
   secretName: keycloak-secrets
   replicas: 1
+  cache:
+    type: local
+    stack: ""
   jgroupsCleanup:
-    enabled: true
+    enabled: false
   resources:
     requests:
       cpu: 100m
@@ -93,3 +96,58 @@ observability:
     victorialogs: 10Gi
     victoriatraces: 10Gi
     alertmanager: 2Gi
+  resources:
+    victoriametrics:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 768Mi
+    victorialogs:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    victoriatraces:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    vmagent:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    vlagent:
+      requests:
+        cpu: 50m
+        memory: 96Mi
+      limits:
+        memory: 256Mi
+    vmalert:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    alertmanager:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    blackboxExporter:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    otelCollector:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi

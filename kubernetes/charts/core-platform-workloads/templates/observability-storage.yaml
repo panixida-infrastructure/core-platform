@@ -40,6 +40,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+          resources:
+            {{- toYaml .Values.observability.resources.victoriametrics | nindent 12 }}
       {{- if not .Values.observability.persistence.enabled }}
       volumes:
         - name: data
@@ -117,6 +119,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+          resources:
+            {{- toYaml .Values.observability.resources.victorialogs | nindent 12 }}
       {{- if not .Values.observability.persistence.enabled }}
       volumes:
         - name: data
@@ -189,6 +193,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /storage
+          resources:
+            {{- toYaml .Values.observability.resources.victoriatraces | nindent 12 }}
       {{- if not .Values.observability.persistence.enabled }}
       volumes:
         - name: data

@@ -23,7 +23,7 @@ Cluster defaults:
 Kubernetes version: v1.35.4+k0s.0
 Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
-Worker autoscaling: 2-4 nodes
+Worker autoscaling: 4-6 nodes
 CNI:                cilium
 Built-in ingress:   disabled
 ```
@@ -78,6 +78,8 @@ Grafana       -> Kubernetes workload with managed PostgreSQL
 SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
+
+During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
 OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The PostgreSQL backend is production-ready and HA-capable, but the current file-backed OpenBao data must be exported/imported before switching traffic.
 
