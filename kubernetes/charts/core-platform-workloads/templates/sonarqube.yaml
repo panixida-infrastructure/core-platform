@@ -65,9 +65,22 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.sonarqube.secretName }}
                   key: SONAR_DB_PASSWORD
+            - name: SONAR_WEB_JAVAOPTS
+              value: {{ .Values.sonarqube.javaOpts.web | quote }}
+            - name: SONAR_CE_JAVAOPTS
+              value: {{ .Values.sonarqube.javaOpts.ce | quote }}
+            - name: SONAR_SEARCH_JAVAOPTS
+              value: {{ .Values.sonarqube.javaOpts.search | quote }}
           ports:
             - name: http
               containerPort: 9000
+          startupProbe:
+            httpGet:
+              path: /api/system/status
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /api/system/status

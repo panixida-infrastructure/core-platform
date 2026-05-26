@@ -58,6 +58,10 @@ sonarqube:
   host: sonar.panixida.ru
   image: sonarqube:community
   secretName: sonarqube-secrets
+  javaOpts:
+    web: -Xms128m -Xmx384m
+    ce: -Xms128m -Xmx384m
+    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
   persistence:
     enabled: false
   storageClassName: nvme.network-drives.csi.timeweb.cloud
