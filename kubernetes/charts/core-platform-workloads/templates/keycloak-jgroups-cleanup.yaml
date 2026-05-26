@@ -1,0 +1,59 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-jgroups-cleanup
+  namespace: {{ .Values.keycloak.namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: psql
+          image: postgres:17-alpine
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: KEYCLOAK_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_DB_HOST
+            - name: KEYCLOAK_DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_DB_PORT
+            - name: KEYCLOAK_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_DB_NAME
+            - name: KEYCLOAK_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_DB_USERNAME
+            - name: KEYCLOAK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_DB_PASSWORD
+          command:
+            - sh
+            - -ec
+          args:
+            - |
+              export PGPASSWORD="$KEYCLOAK_DB_PASSWORD"
+              psql "host=$KEYCLOAK_DB_HOST port=$KEYCLOAK_DB_PORT dbname=$KEYCLOAK_DB_NAME user=$KEYCLOAK_DB_USERNAME sslmode=require" <<'SQL'
+              do $$
+              begin
+                if to_regclass('public.jgroups_ping') is not null then
+                  delete from public.jgroups_ping where name not like 'keycloak-%';
+                end if;
+              end $$;
+              SQL
+{{- end }}

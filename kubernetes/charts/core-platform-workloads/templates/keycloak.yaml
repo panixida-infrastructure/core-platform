@@ -69,6 +69,10 @@ spec:
               value: "true"
             - name: KC_PROXY_HEADERS
               value: xforwarded
+            - name: KC_CACHE
+              value: ispn
+            - name: KC_CACHE_STACK
+              value: jdbc-ping
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_METRICS_ENABLED
