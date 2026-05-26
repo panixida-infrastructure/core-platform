@@ -13,6 +13,9 @@ spec:
           type: StrategicMerge
           value:
             metadata:
+              labels:
+                k8s.timeweb.cloud/attached-loadbalancer-ssl: "true"
+                k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "argocd.panixida.ru"
               annotations:
                 k8s.timeweb.cloud/attached-loadbalancer-ssl: "true"
                 k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "argocd.panixida.ru"
