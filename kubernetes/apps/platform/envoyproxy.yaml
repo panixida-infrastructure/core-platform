@@ -18,9 +18,9 @@ spec:
                 k8s.timeweb.cloud/attached-loadbalancer-ssl-fqdn: "*.panixida.ru"
             spec:
               ports:
-                - name: http-80
-                  port: 80
-                  appProtocol: k8s.timeweb.cloud/proto-tcp
                 - name: https-443
                   port: 443
                   appProtocol: k8s.timeweb.cloud/proto-https
+                - name: http-80
+                  port: 80
+                  appProtocol: k8s.timeweb.cloud/proto-tcp

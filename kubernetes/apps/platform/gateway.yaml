@@ -18,13 +18,6 @@ metadata:
 spec:
   gatewayClassName: envoy
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      hostname: "*.panixida.ru"
-      allowedRoutes:
-        namespaces:
-          from: All
     - name: argocd-https
       protocol: HTTPS
       port: 443
@@ -33,6 +26,13 @@ spec:
         mode: Terminate
         certificateRefs:
           - name: argocd-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: "*.panixida.ru"
       allowedRoutes:
         namespaces:
           from: All
