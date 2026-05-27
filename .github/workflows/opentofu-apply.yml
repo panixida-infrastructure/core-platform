@@ -7,6 +7,11 @@ on:
         description: Type apply-production to apply the current production OpenTofu configuration
         required: true
         type: string
+      skip_refresh:
+        description: Skip state refresh when the Timeweb API has a read-only provider incident
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -72,7 +77,12 @@ jobs:
         run: tofu state rm twc_ssh_key.oldstrategyforge_245799 || true
 
       - name: Plan
-        run: tofu plan -input=false -no-color -out=production.tfplan
+        run: |
+          plan_args=(-input=false -no-color -out=production.tfplan)
+          if [ "${{ inputs.skip_refresh }}" = "true" ]; then
+            plan_args+=(-refresh=false)
+          fi
+          tofu plan "${plan_args[@]}"
 
       - name: Apply
         run: tofu apply -input=false -auto-approve production.tfplan
