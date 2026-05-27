@@ -41,6 +41,14 @@ data:
         | head -n1
     }
 
+    delete_client() {
+      client_id="$1"
+      uuid="$(client_uuid "$client_id")"
+      if [ -n "$uuid" ]; then
+        "$kc" delete "clients/$uuid" -r "$realm" >/dev/null
+      fi
+    }
+
     mapper_uuid() {
       "$kc" get "clients/$1/protocol-mappers/models" -r "$realm" --fields id,name --format csv \
         | tr -d '"' \
@@ -92,6 +100,11 @@ data:
 
     ensure_group platform-admins
     ensure_group platform-viewers
+
+    delete_client komodo
+    delete_client panixida-edge
+    delete_client traefik
+    delete_client portainer
 
     cat >/tmp/argocd-client.json <<'EOF'
     {
