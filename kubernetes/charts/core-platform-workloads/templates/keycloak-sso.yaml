@@ -44,7 +44,12 @@ data:
     mapper_uuid() {
       "$kc" get "clients/$1/protocol-mappers/models" -r "$realm" --fields id,name --format csv \
         | tr -d '"' \
-        | awk -F, '$2 == "groups" { print $1; exit }'
+        | while IFS=, read -r mapper_id mapper_name; do
+            if [ "$mapper_name" = "groups" ]; then
+              printf '%s\n' "$mapper_id"
+              break
+            fi
+          done
     }
 
     ensure_groups_mapper() {
