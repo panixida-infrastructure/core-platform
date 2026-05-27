@@ -138,7 +138,7 @@ observability:
     vlagent:
       requests:
         cpu: 50m
-        memory: 32Mi
+        memory: 8Mi
       limits:
         memory: 128Mi
     vmalert:
