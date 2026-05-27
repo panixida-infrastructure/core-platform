@@ -79,6 +79,8 @@ SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
+SonarQube migration is intentionally paused. The managed PostgreSQL database and user can stay reconciled, but the Kubernetes workload is disabled until the cluster has enough stable capacity for Elasticsearch.
+
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
 OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The PostgreSQL backend is production-ready and HA-capable, but the current file-backed OpenBao data must be exported/imported before switching traffic.
@@ -106,7 +108,7 @@ Do not remove the `infrastructure` server until all of these are true:
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
 3. DNS records are intentionally repointed to that IP.
-4. Keycloak, OpenBao, Grafana, SonarQube, and observability UIs are reachable through Envoy Gateway.
+4. Keycloak, OpenBao, Grafana, and observability UIs are reachable through Envoy Gateway. SonarQube is excluded while its migration is paused.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```

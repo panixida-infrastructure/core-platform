@@ -143,7 +143,7 @@ The intended steady state is GitOps pull from this repository through Argo CD. T
 
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 
-The `platform-workloads` Argo CD application deploys the Kubernetes versions of Keycloak, OpenBao, Grafana, SonarQube, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmagent, vlagent, vmalert, Alertmanager, blackbox_exporter, and OpenTelemetry Collector.
+The `platform-workloads` Argo CD application deploys the Kubernetes versions of Keycloak, OpenBao, Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmagent, vlagent, vmalert, Alertmanager, blackbox_exporter, and OpenTelemetry Collector. SonarQube remains disabled during the current migration phase.
 
 The `Kubernetes Bootstrap` workflow installs the Timeweb network drive CSI driver with the official Helm chart after Argo CD has synced `platform-workloads`. Workloads keep persistence disabled by default during migration to avoid creating additional paid network drives accidentally. Enable chart persistence only after the retained disk/PVC cutover is planned.
 

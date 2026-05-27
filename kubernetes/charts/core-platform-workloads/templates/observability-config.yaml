@@ -75,16 +75,9 @@ data:
           module: [http_2xx]
         static_configs:
           - targets:
-              - https://argocd.panixida.ru
-              - https://headlamp.panixida.ru
-              - https://identity.panixida.ru
-              - https://secrets.panixida.ru
-              - https://grafana.panixida.ru
-              - https://metrics.panixida.ru
-              - https://logs.panixida.ru
-              - https://traces.panixida.ru
-              - https://alerts.panixida.ru
-              - https://sonar.panixida.ru
+              {{- range .Values.observability.blackboxTargets }}
+              - {{ . | quote }}
+              {{- end }}
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target

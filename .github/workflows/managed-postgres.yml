@@ -18,7 +18,7 @@ on:
         type: boolean
         default: false
       deploy_stacks:
-        description: Dispatch identity, observability, and sonarqube deploys after reconcile
+        description: Dispatch identity and observability deploys after reconcile
         required: true
         type: boolean
         default: false
@@ -84,4 +84,3 @@ jobs:
         run: |
           gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=identity
           gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=observability
-          gh workflow run Deploy --repo "$GITHUB_REPOSITORY" -f stack=sonarqube
