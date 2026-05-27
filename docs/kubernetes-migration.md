@@ -110,7 +110,7 @@ The `infrastructure` server can stay destroyed when all of these remain true:
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
 3. DNS records point to that IP.
-4. Keycloak, OpenBao, Grafana, and observability UIs are reachable through Envoy Gateway. SonarQube is excluded while its migration is paused.
+4. Keycloak, OpenBao, Grafana, Argo CD, and Headlamp are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana. SonarQube is excluded while its migration is paused.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```
