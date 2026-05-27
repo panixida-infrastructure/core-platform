@@ -47,9 +47,4 @@ import_or_replace() {
 
 import_or_replace twc_project.infrastructure 1152653
 
-import_if_missing twc_server.infrastructure 8034806
-
-import_if_missing twc_ssh_key.infrastructure_605568 605568
-
-import_if_missing twc_floating_ip.infrastructure_ipv4 4d2c3cc1-3172-4fdd-a78b-7bada0d65a41
 import_or_replace twc_floating_ip.postgres_database_ipv4_msk fc66efd9-a4a1-4983-bbd4-40fdaa70c46f

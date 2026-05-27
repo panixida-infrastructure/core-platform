@@ -62,22 +62,3 @@ jobs:
           kubectl kustomize kubernetes/apps >/tmp/core-platform-apps.yaml
           helm lint kubernetes/charts/core-platform-workloads
           helm template platform-workloads kubernetes/charts/core-platform-workloads >/tmp/core-platform-workloads.yaml
-
-  ansible:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install Ansible tooling
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install "ansible-core<2.17" "ansible-lint<25"
-          ansible-galaxy collection install -r ansible/requirements.yml
-
-      - name: Syntax check
-        run: |
-          ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/bootstrap.yml --syntax-check
-          ansible-playbook -i ansible/inventories/production/hosts.yml ansible/playbooks/managed-agents.yml --syntax-check
-
-      - name: Lint
-        run: ansible-lint ansible/playbooks

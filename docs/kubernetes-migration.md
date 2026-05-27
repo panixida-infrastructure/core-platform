@@ -15,7 +15,7 @@ postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```
 
-The first apply must not delete the existing `infrastructure` server. It remains the source of local Docker volumes until service data is migrated and Kubernetes UIs are verified.
+The legacy `infrastructure` server is retired after the DNS cutover. It is no longer part of the desired OpenTofu state.
 
 Cluster defaults:
 
@@ -54,7 +54,7 @@ After Argo CD is available, workload deployment is pull-based from this reposito
 kubernetes/charts/core-platform-workloads
 ```
 
-Docker Compose deployments and Ansible server bootstrap stay only as a temporary migration path until all services have been moved.
+Docker Compose deployments and Ansible server bootstrap have been removed from the desired state. Workload deployment is pull-based through Argo CD.
 
 Kubernetes workload secrets are not stored in Git. Run the manual `Kubernetes Secrets Sync` workflow before or immediately after enabling the workload chart. It reads OpenBao through GitHub Actions OIDC and applies only Kubernetes `Secret` objects for:
 
@@ -85,9 +85,9 @@ During migration Keycloak runs as a single replica with `KC_CACHE=local`. This a
 
 OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The Kubernetes OpenBao instance has been initialized and unsealed on the PostgreSQL backend, and current KV data has been copied from the legacy file-backed OpenBao before switching traffic.
 
-The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. Keep bootstrap material outside Git and do not cut `secrets.panixida.ru` over until the Timeweb LoadBalancer TLS issue is resolved.
+The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. Keep bootstrap material outside Git.
 
-The workload chart currently exposes migrated UIs through the shared HTTP listener only. HTTPS cutover for the old platform domains should be done after the Timeweb LoadBalancer TLS passthrough issue is resolved and DNS is intentionally repointed to the Kubernetes LoadBalancer IP.
+The workload chart exposes migrated UIs through the shared HTTP listener and per-host HTTPS listeners. The Timeweb LoadBalancer TLS issue is tracked separately; it does not block HTTP cutover or Kubernetes-side certificate issuance.
 
 ## Storage
 
@@ -102,15 +102,13 @@ The OpenTofu-managed `core-platform-nvme` disk is declared as a retained static 
 
 ## Cutover rules
 
-Do not remove the `infrastructure` server until all of these are true:
+The `infrastructure` server can stay destroyed when all of these remain true:
 
 ```text
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
-3. DNS records are intentionally repointed to that IP.
+3. DNS records point to that IP.
 4. Keycloak, OpenBao, Grafana, and observability UIs are reachable through Envoy Gateway. SonarQube is excluded while its migration is paused.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```
-
-After the DNS cutover, the old `infrastructure` server is not required for platform UI traffic. It can be destroyed through OpenTofu once the migrated domains pass smoke checks.

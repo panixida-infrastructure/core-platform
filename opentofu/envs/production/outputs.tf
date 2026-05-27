@@ -12,13 +12,6 @@ output "timeweb_inventory" {
       infrastructure = twc_project.infrastructure.id
     }
 
-    servers = {
-      infrastructure = {
-        id        = twc_server.infrastructure.id
-        main_ipv4 = twc_server.infrastructure.main_ipv4
-      }
-    }
-
     networks = {
       core_platform_msk = twc_vpc.infrastructure_msk.id
     }

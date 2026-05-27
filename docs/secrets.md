@@ -29,9 +29,9 @@ TOFU_STATE_SECRET_KEY
 
 Application/service deploy secrets are stored in OpenBao KV v2 and read by GitHub Actions through the repository OIDC token and OpenBao `jwt` auth method.
 
-## Initial OpenBao steps
+## Initial OpenBao Steps
 
-The `secrets` stack starts OpenBao with persistent file storage. It will be sealed on first boot.
+The Kubernetes OpenBao instance uses the managed PostgreSQL backend. It has been initialized and unsealed, and `secret/core-platform/*` KV data has been copied from the legacy file-backed instance.
 
 Initial setup should be done once:
 
@@ -45,24 +45,17 @@ Initial setup should be done once:
 7. Migrate known local secrets into OpenBao KV.
 ```
 
-After that bootstrap, the `Deploy` workflow for the legacy `secrets` stack re-applies OpenBao OIDC, JWT auth, and policies idempotently through GitHub Actions.
-
-The Kubernetes OpenBao instance uses the managed PostgreSQL backend. It has been initialized and unsealed, and the current `secret/core-platform/*` KV data has been copied from the legacy file-backed OpenBao. Public traffic should still stay on the legacy endpoint until the Envoy Gateway LoadBalancer TLS issue is resolved and DNS is cut over intentionally.
-
-Current OpenBao secret paths:
+Active OpenBao secret paths:
 
 ```text
 secret/core-platform/github
 secret/core-platform/applications
 secret/core-platform/identity
-secret/core-platform/komodo
 secret/core-platform/observability
 secret/core-platform/openbao
 secret/core-platform/sonarqube
-secret/core-platform/ssh/infrastructure
 secret/core-platform/sso
 secret/core-platform/timeweb
-secret/core-platform/wireguard
 ```
 
 The managed PostgreSQL DBaaS exporter credentials also live in `secret/core-platform/observability`:
@@ -72,27 +65,6 @@ OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD
 ```
-
-## Bootstrap variables
-
-The bootstrap playbook reads non-secret SSH and WireGuard parameters from GitHub repository variables:
-
-```text
-SERVER_GH_USER
-CODEXVPN_SSH_PUBLIC_KEY
-ROOT_SSH_PUBLIC_KEY
-WIREGUARD_ADDRESS
-WIREGUARD_PEER_PUBLIC_KEY
-WIREGUARD_ENDPOINT
-WIREGUARD_ALLOWED_IPS
-WIREGUARD_PERSISTENT_KEEPALIVE
-```
-
-WireGuard private and preshared keys must stay in GitHub Secrets until OpenBao is initialized and CI can authenticate to it.
-
-`SERVER_GH_PAT` is used only by the Ansible bootstrap workflow to install and authenticate GitHub CLI on the infrastructure server for `root` and the operator user.
-
-The deployment workflows read `SERVER_HOST`, `SERVER_USER`, and `SERVER_SSH_PORT` from organization variables, not repository variables.
 
 Managed PostgreSQL connection settings are stored in OpenBao with the service secrets:
 

@@ -25,4 +25,4 @@ sonar.panixida.ru
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. SonarQube migration is paused, so `sonar.panixida.ru` is intentionally not published.
 
-TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. The Timeweb LoadBalancer service is patched through EnvoyProxy to keep the public `443` port first and pass TCP traffic through to Envoy Gateway, where TLS is terminated.
+TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. Kubernetes-side Envoy and cert-manager are configured for HTTPS; the remaining Timeweb LoadBalancer TLS behavior is tracked with Timeweb support and can be fixed without moving DNS back to the retired server.
