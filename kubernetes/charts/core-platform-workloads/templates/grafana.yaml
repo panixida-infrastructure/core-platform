@@ -191,6 +191,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.grafana }}
   hostnames:
     - {{ .Values.grafana.host }}
   rules:

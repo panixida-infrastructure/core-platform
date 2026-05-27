@@ -104,6 +104,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.secrets }}
   hostnames:
     - {{ .Values.openbao.host }}
   rules:

@@ -36,6 +36,83 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: identity-https
+      protocol: HTTPS
+      port: 443
+      hostname: "identity.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: identity-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: secrets-https
+      protocol: HTTPS
+      port: 443
+      hostname: "secrets.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: secrets-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: grafana-https
+      protocol: HTTPS
+      port: 443
+      hostname: "grafana.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: grafana-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: metrics-https
+      protocol: HTTPS
+      port: 443
+      hostname: "metrics.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: metrics-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: logs-https
+      protocol: HTTPS
+      port: 443
+      hostname: "logs.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: logs-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: traces-https
+      protocol: HTTPS
+      port: 443
+      hostname: "traces.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: traces-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: alerts-https
+      protocol: HTTPS
+      port: 443
+      hostname: "alerts.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: alerts-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: headlamp-https
       protocol: HTTPS
       port: 443

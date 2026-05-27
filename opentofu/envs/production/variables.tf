@@ -23,12 +23,6 @@ variable "location" {
   default     = "ru-3"
 }
 
-variable "platform_public_ipv4" {
-  description = "Public IPv4 address for platform UI DNS records."
-  type        = string
-  default     = "81.200.158.9"
-}
-
 variable "kubernetes_gateway_public_ipv4" {
   description = "Public IPv4 address of the Envoy Gateway LoadBalancer for Kubernetes UI DNS records."
   type        = string

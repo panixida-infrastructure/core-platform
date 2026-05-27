@@ -4,6 +4,14 @@ global:
     name: core-platform
     namespace: envoy-gateway-system
     httpSectionName: http
+    httpsSectionNames:
+      identity: identity-https
+      secrets: secrets-https
+      grafana: grafana-https
+      metrics: metrics-https
+      logs: logs-https
+      traces: traces-https
+      alerts: alerts-https
 
 keycloak:
   enabled: true

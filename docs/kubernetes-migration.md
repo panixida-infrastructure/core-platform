@@ -112,3 +112,5 @@ Do not remove the `infrastructure` server until all of these are true:
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```
+
+After the DNS cutover, the old `infrastructure` server is not required for platform UI traffic. It can be destroyed through OpenTofu once the migrated domains pass smoke checks.

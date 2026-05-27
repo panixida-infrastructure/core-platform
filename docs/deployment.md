@@ -38,7 +38,9 @@ TOFU_STATE_ACCESS_KEY
 TOFU_STATE_SECRET_KEY
 ```
 
-## Server bootstrap
+## Legacy server bootstrap
+
+The old `infrastructure` server and Docker Compose path are retained only as a rollback/migration artifact until the Kubernetes cutover is verified. Do not deploy new platform state there.
 
 Server package/bootstrap changes go through the manual `Ansible Bootstrap` workflow. It runs `ansible/playbooks/bootstrap.yml` over SSH using organization SSH variables and the organization `SERVER_SSH_PRIVATE_KEY` secret. Runtime bootstrap secrets are read from OpenBao through GitHub Actions OIDC.
 
@@ -80,20 +82,18 @@ Use one folder under `/opt/core-platform` per platform area:
 
 Each stack gets its own compose file under `stacks/<stack>/docker-compose.yml` and should be deployed independently.
 
-Current UI domains:
+Kubernetes UI domains:
 
 ```text
-traefik.panixida.ru
 identity.panixida.ru
 secrets.panixida.ru
-komodo.panixida.ru
-auth.panixida.ru
 grafana.panixida.ru
 metrics.panixida.ru
 logs.panixida.ru
 traces.panixida.ru
 alerts.panixida.ru
-sonar.panixida.ru
+argocd.panixida.ru
+headlamp.panixida.ru
 ```
 
 ## Managed server agents
@@ -147,4 +147,4 @@ The `platform-workloads` Argo CD application deploys the Kubernetes versions of 
 
 The `Kubernetes Bootstrap` workflow installs the Timeweb network drive CSI driver with the official Helm chart after Argo CD has synced `platform-workloads`. Workloads keep persistence disabled by default during migration to avoid creating additional paid network drives accidentally. Enable chart persistence only after the retained disk/PVC cutover is planned.
 
-Public DNS cutover for the old platform domains is separate from deploying the workloads. Keep the old Docker Compose stack running until Kubernetes pods are healthy, OpenBao is initialized/unsealed with migrated data, and the Timeweb LoadBalancer serves Envoy/cert-manager certificates correctly.
+Public DNS for migrated platform domains points to the Kubernetes Envoy Gateway LoadBalancer. The old Docker Compose stack can be removed after UI smoke checks pass and there is no need to retain the paused SonarQube instance.

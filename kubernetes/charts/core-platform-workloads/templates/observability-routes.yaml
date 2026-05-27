@@ -9,6 +9,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.metrics }}
   hostnames:
     - {{ .Values.observability.hosts.metrics }}
   rules:
@@ -26,6 +29,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.logs }}
   hostnames:
     - {{ .Values.observability.hosts.logs }}
   rules:
@@ -43,6 +49,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.traces }}
   hostnames:
     - {{ .Values.observability.hosts.traces }}
   rules:
@@ -60,6 +69,9 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.alerts }}
   hostnames:
     - {{ .Values.observability.hosts.alerts }}
   rules:
