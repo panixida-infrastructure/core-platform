@@ -45,10 +45,6 @@ output "timeweb_inventory" {
       identity = "identity.panixida.ru"
       secrets  = "secrets.panixida.ru"
       grafana  = "grafana.panixida.ru"
-      metrics  = "metrics.panixida.ru"
-      logs     = "logs.panixida.ru"
-      traces   = "traces.panixida.ru"
-      alerts   = "alerts.panixida.ru"
       argocd   = "argocd.panixida.ru"
       headlamp = "headlamp.panixida.ru"
     }

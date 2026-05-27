@@ -71,12 +71,10 @@ Public DNS for platform domains points to the Kubernetes Envoy Gateway LoadBalan
 identity.panixida.ru
 secrets.panixida.ru
 grafana.panixida.ru
-metrics.panixida.ru
-logs.panixida.ru
-traces.panixida.ru
-alerts.panixida.ru
 argocd.panixida.ru
 headlamp.panixida.ru
 ```
+
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector.
 
 SonarQube remains disabled during the current migration phase. Its managed PostgreSQL database/user may stay reconciled, but `sonar.panixida.ru` is intentionally not published until the workload is re-enabled.

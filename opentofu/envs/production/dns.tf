@@ -23,34 +23,6 @@ resource "twc_dns_rr" "grafana" {
   value   = var.kubernetes_gateway_public_ipv4
 }
 
-resource "twc_dns_rr" "metrics" {
-  zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "metrics"
-  type    = "A"
-  value   = var.kubernetes_gateway_public_ipv4
-}
-
-resource "twc_dns_rr" "logs" {
-  zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "logs"
-  type    = "A"
-  value   = var.kubernetes_gateway_public_ipv4
-}
-
-resource "twc_dns_rr" "traces" {
-  zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "traces"
-  type    = "A"
-  value   = var.kubernetes_gateway_public_ipv4
-}
-
-resource "twc_dns_rr" "alerts" {
-  zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "alerts"
-  type    = "A"
-  value   = var.kubernetes_gateway_public_ipv4
-}
-
 resource "twc_dns_rr" "argocd" {
   zone_id = data.twc_dns_zone.panixida_ru.id
   name    = "argocd"

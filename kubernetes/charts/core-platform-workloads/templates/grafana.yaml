@@ -30,6 +30,11 @@ data:
         basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
         secureJsonData:
           basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
+      - name: VictoriaTraces
+        uid: victoriatraces
+        type: jaeger
+        access: proxy
+        url: http://victoriatraces.observability.svc.cluster.local:10428/select/jaeger
       - name: Alertmanager
         uid: alertmanager
         type: alertmanager
