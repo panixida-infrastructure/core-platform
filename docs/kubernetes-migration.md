@@ -83,9 +83,9 @@ SonarQube migration is intentionally paused. The managed PostgreSQL database and
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
-OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The PostgreSQL backend is production-ready and HA-capable, but the current file-backed OpenBao data must be exported/imported before switching traffic.
+OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The Kubernetes OpenBao instance has been initialized and unsealed on the PostgreSQL backend, and current KV data has been copied from the legacy file-backed OpenBao before switching traffic.
 
-The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. It still has to be initialized, unsealed, and populated from the old file-backed OpenBao before `secrets.panixida.ru` is cut over.
+The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. Keep bootstrap material outside Git and do not cut `secrets.panixida.ru` over until the Timeweb LoadBalancer TLS issue is resolved.
 
 The workload chart currently exposes migrated UIs through the shared HTTP listener only. HTTPS cutover for the old platform domains should be done after the Timeweb LoadBalancer TLS passthrough issue is resolved and DNS is intentionally repointed to the Kubernetes LoadBalancer IP.
 

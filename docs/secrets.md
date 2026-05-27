@@ -12,6 +12,12 @@ The current bootstrap file is stored outside Git:
 C:\Users\mixai\Desktop\Infrastructure\openbao-bootstrap.json
 ```
 
+The Kubernetes PostgreSQL-backed OpenBao bootstrap file is also stored outside Git:
+
+```text
+C:\Users\mixai\Desktop\Infrastructure\openbao-kubernetes-bootstrap.json
+```
+
 This repository keeps only OpenTofu state backend secrets in repository secrets:
 
 ```text
@@ -39,7 +45,9 @@ Initial setup should be done once:
 7. Migrate known local secrets into OpenBao KV.
 ```
 
-After that bootstrap, the `Deploy` workflow for the `secrets` stack re-applies OpenBao OIDC, JWT auth, and policies idempotently through GitHub Actions.
+After that bootstrap, the `Deploy` workflow for the legacy `secrets` stack re-applies OpenBao OIDC, JWT auth, and policies idempotently through GitHub Actions.
+
+The Kubernetes OpenBao instance uses the managed PostgreSQL backend. It has been initialized and unsealed, and the current `secret/core-platform/*` KV data has been copied from the legacy file-backed OpenBao. Public traffic should still stay on the legacy endpoint until the Envoy Gateway LoadBalancer TLS issue is resolved and DNS is cut over intentionally.
 
 Current OpenBao secret paths:
 
@@ -116,4 +124,4 @@ DOTNET_TEMPLATE_DB_PASSWORD
 
 Keycloak is the identity provider. Services with native OIDC support should use Keycloak directly.
 
-Services without native OIDC support should be protected at Traefik with a forward-auth component, such as oauth2-proxy, after the Keycloak realm and clients exist.
+Services without native OIDC support should be protected at the Kubernetes gateway layer after the Keycloak realm and clients exist.
