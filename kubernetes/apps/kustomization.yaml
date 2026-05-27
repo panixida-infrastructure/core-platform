@@ -6,5 +6,7 @@ resources:
   - platform/envoyproxy.yaml
   - platform/gateway.yaml
   - platform/certificates.yaml
+  - platform/internal-gateway-service.yaml
+  - platform/coredns-internal-platform.yaml
   - platform/oidc-rbac.yaml
   - platform/routes.yaml

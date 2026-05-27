@@ -67,6 +67,8 @@ The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBa
 
 Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, and OpenBao.
 
+While the Timeweb LoadBalancer TLS issue is open, in-cluster DNS rewrites `identity.panixida.ru` to the internal Envoy Gateway service. This keeps OIDC discovery on the public issuer URL while avoiding the broken public LB certificate for Kubernetes workloads.
+
 Public DNS for platform domains points to the Kubernetes Envoy Gateway LoadBalancer:
 
 ```text
