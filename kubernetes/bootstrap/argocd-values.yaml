@@ -11,7 +11,7 @@ configs:
       name: Keycloak
       issuer: https://identity.panixida.ru/realms/panixida
       clientID: argocd
-      requestedScopes: ["openid", "profile", "email", "groups"]
+      requestedScopes: ["openid", "profile", "email"]
       enablePKCEAuthentication: true
   rbac:
     policy.default: role:readonly

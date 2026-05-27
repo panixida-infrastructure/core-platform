@@ -54,7 +54,9 @@ data:
         | tr -d '"' \
         | while IFS=, read -r mapper_id mapper_name; do
             if [ "$mapper_name" = "groups" ]; then
-              printf '%s\n' "$mapper_id"
+              if [ -n "$mapper_id" ] && [ "$mapper_id" != "null" ]; then
+                printf '%s\n' "$mapper_id"
+              fi
               break
             fi
           done
@@ -63,7 +65,24 @@ data:
     ensure_groups_mapper() {
       uuid="$1"
       mapper_id="$(mapper_uuid "$uuid")"
-      cat >/tmp/groups-mapper.json <<'EOF'
+      if [ -n "$mapper_id" ]; then
+        cat >/tmp/groups-mapper.json <<EOF
+    {
+      "id": "$mapper_id",
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "config": {
+        "claim.name": "groups",
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+    EOF
+      else
+        cat >/tmp/groups-mapper.json <<'EOF'
     {
       "name": "groups",
       "protocol": "openid-connect",
@@ -77,6 +96,7 @@ data:
       }
     }
     EOF
+      fi
       if [ -n "$mapper_id" ]; then
         "$kc" update "clients/$uuid/protocol-mappers/models/$mapper_id" -r "$realm" -f /tmp/groups-mapper.json >/dev/null
       else

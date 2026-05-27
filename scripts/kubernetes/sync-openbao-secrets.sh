@@ -180,7 +180,7 @@ headlamp_oidc_secret="$(jq -n \
       OIDC_CLIENT_ID: "kubernetes",
       OIDC_CLIENT_SECRET: required("HEADLAMP_OIDC_CLIENT_SECRET"),
       OIDC_ISSUER_URL: "https://identity.panixida.ru/realms/panixida",
-      OIDC_SCOPES: "openid profile email groups"
+      OIDC_SCOPES: "profile email"
     }')"
 apply_secret_json headlamp headlamp-oidc "$headlamp_oidc_secret"
 

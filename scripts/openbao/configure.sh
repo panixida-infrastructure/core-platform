@@ -115,7 +115,7 @@ cat >/tmp/openbao-platform-admin-role.json <<'EOF'
   },
   "policies": ["platform-admin"],
   "ttl": "8h",
-  "oidc_scopes": ["openid", "profile", "email", "groups"],
+  "oidc_scopes": ["openid", "profile", "email"],
   "allowed_redirect_uris": [
     "https://secrets.panixida.ru/ui/vault/auth/oidc/oidc/callback",
     "http://localhost:8250/oidc/callback"
