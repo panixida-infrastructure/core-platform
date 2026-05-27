@@ -65,6 +65,8 @@ kubernetes/charts/core-platform-workloads
 
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 
+Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, and OpenBao.
+
 Public DNS for platform domains points to the Kubernetes Envoy Gateway LoadBalancer:
 
 ```text

@@ -1,0 +1,15 @@
+service:
+  type: ClusterIP
+
+config:
+  oidc:
+    secret:
+      create: false
+      name: headlamp-oidc
+    externalSecret:
+      enabled: true
+      name: headlamp-oidc
+      hasScopes: true
+
+clusterRoleBinding:
+  create: false

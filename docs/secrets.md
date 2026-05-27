@@ -97,3 +97,11 @@ DOTNET_TEMPLATE_DB_PASSWORD
 Keycloak is the identity provider. Services with native OIDC support should use Keycloak directly.
 
 Services without native OIDC support should be protected at the Kubernetes gateway layer after the Keycloak realm and clients exist.
+
+The `secret/core-platform/sso` path contains shared SSO bootstrap secrets that are not service-specific:
+
+```text
+HEADLAMP_OIDC_CLIENT_SECRET
+```
+
+`Kubernetes Secrets Sync` maps this value into `headlamp/headlamp-oidc` and `identity/keycloak-sso-client-secrets`. The Keycloak client id for Kubernetes API and Headlamp is `kubernetes`.

@@ -129,16 +129,23 @@ jobs:
             --version 9.3.7 \
             --namespace argocd \
             --create-namespace \
-            --set server.service.type=ClusterIP \
-            --set-string configs.params.server\\.insecure=true \
+            -f kubernetes/bootstrap/argocd-values.yaml \
             --wait \
             --timeout 15m
 
-          helm upgrade --install headlamp headlamp/headlamp \
-            --version 0.38.0 \
-            --namespace headlamp \
-            --create-namespace \
-            --set service.type=ClusterIP \
+          headlamp_args=(
+            upgrade --install headlamp headlamp/headlamp
+            --version 0.38.0
+            --namespace headlamp
+            --create-namespace
+          )
+          if kubectl -n headlamp get secret headlamp-oidc >/dev/null 2>&1; then
+            headlamp_args+=(-f kubernetes/bootstrap/headlamp-values.yaml)
+          else
+            headlamp_args+=(--set service.type=ClusterIP)
+            echo "headlamp-oidc secret is not present yet; installing Headlamp without OIDC values"
+          fi
+          helm "${headlamp_args[@]}" \
             --wait \
             --timeout 10m
 

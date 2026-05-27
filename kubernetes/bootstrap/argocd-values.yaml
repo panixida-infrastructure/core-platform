@@ -1,0 +1,22 @@
+server:
+  service:
+    type: ClusterIP
+
+configs:
+  params:
+    server.insecure: true
+  cm:
+    url: https://argocd.panixida.ru
+    oidc.config: |
+      name: Keycloak
+      issuer: https://identity.panixida.ru/realms/panixida
+      clientID: argocd
+      requestedScopes: ["openid", "profile", "email", "groups"]
+      enablePKCEAuthentication: true
+  rbac:
+    policy.default: role:readonly
+    scopes: '[groups]'
+    policy.csv: |
+      g, platform-admins, role:admin
+      g, /platform-admins, role:admin
+      g, oidc:platform-admins, role:admin

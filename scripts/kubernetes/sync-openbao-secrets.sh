@@ -87,7 +87,34 @@ apply_secret() {
   echo "Synced Kubernetes secret ${namespace}/${name}"
 }
 
-for namespace in identity secrets observability quality; do
+apply_secret_json() {
+  local namespace="$1"
+  local name="$2"
+  local data="$3"
+  local manifest
+
+  manifest="$(mktemp)"
+  jq -n \
+    --arg namespace "$namespace" \
+    --arg name "$name" \
+    --argjson data "$data" \
+    '{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: $name,
+        namespace: $namespace
+      },
+      type: "Opaque",
+      stringData: $data
+    }' >"$manifest"
+
+  kubectl apply -f "$manifest" >/dev/null
+  rm -f "$manifest"
+  echo "Synced Kubernetes secret ${namespace}/${name}"
+}
+
+for namespace in identity secrets observability quality headlamp; do
   kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 done
 
@@ -97,6 +124,7 @@ identity_secret="$(bao_read "$openbao_token" core-platform/identity)"
 openbao_secret="$(bao_read "$openbao_token" core-platform/openbao)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
+sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
   KEYCLOAK_DB_HOST \
@@ -138,3 +166,38 @@ apply_secret quality sonarqube-secrets "$sonarqube_secret" \
   SONAR_DB_USERNAME \
   SONAR_DB_PASSWORD \
   SONAR_ADMIN_PASSWORD
+
+headlamp_oidc_secret="$(jq -n \
+  --argjson sso "$sso_secret" \
+  '
+    def required($key):
+      if (($sso[$key] // "") | tostring | length) > 0 then
+        $sso[$key] | tostring
+      else
+        error("missing required secret key " + $key)
+      end;
+    {
+      OIDC_CLIENT_ID: "kubernetes",
+      OIDC_CLIENT_SECRET: required("HEADLAMP_OIDC_CLIENT_SECRET"),
+      OIDC_ISSUER_URL: "https://identity.panixida.ru/realms/panixida",
+      OIDC_SCOPES: "openid profile email groups"
+    }')"
+apply_secret_json headlamp headlamp-oidc "$headlamp_oidc_secret"
+
+keycloak_sso_client_secret="$(jq -n \
+  --argjson openbao "$openbao_secret" \
+  --argjson observability "$observability_secret" \
+  --argjson sso "$sso_secret" \
+  '
+    def required($source; $key):
+      if (($source[$key] // "") | tostring | length) > 0 then
+        $source[$key] | tostring
+      else
+        error("missing required secret key " + $key)
+      end;
+    {
+      GRAFANA_OIDC_CLIENT_SECRET: required($observability; "GRAFANA_OIDC_CLIENT_SECRET"),
+      OPENBAO_OIDC_CLIENT_SECRET: required($openbao; "OPENBAO_OIDC_CLIENT_SECRET"),
+      KUBERNETES_OIDC_CLIENT_SECRET: required($sso; "HEADLAMP_OIDC_CLIENT_SECRET")
+    }')"
+apply_secret_json identity keycloak-sso-client-secrets "$keycloak_sso_client_secret"

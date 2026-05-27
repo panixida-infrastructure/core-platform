@@ -46,6 +46,10 @@ path "secret/data/core-platform/openbao" {
   capabilities = ["create", "read", "update"]
 }
 
+path "secret/data/core-platform/sso" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "secret/data/core-platform/applications" {
   capabilities = ["create", "read", "update"]
 }
@@ -101,13 +105,26 @@ bao write auth/oidc/config \
   oidc_client_secret="$OPENBAO_OIDC_CLIENT_SECRET" \
   default_role=platform-admin
 
-bao write auth/oidc/role/platform-admin \
-  user_claim=preferred_username \
-  policies=platform-admin \
-  ttl=8h \
-  oidc_scopes=openid,profile,email \
-  allowed_redirect_uris=https://secrets.panixida.ru/ui/vault/auth/oidc/oidc/callback \
-  allowed_redirect_uris=http://localhost:8250/oidc/callback
+cat >/tmp/openbao-platform-admin-role.json <<'EOF'
+{
+  "role_type": "oidc",
+  "user_claim": "preferred_username",
+  "groups_claim": "groups",
+  "bound_claims": {
+    "groups": ["platform-admins"]
+  },
+  "policies": ["platform-admin"],
+  "ttl": "8h",
+  "oidc_scopes": ["openid", "profile", "email", "groups"],
+  "allowed_redirect_uris": [
+    "https://secrets.panixida.ru/ui/vault/auth/oidc/oidc/callback",
+    "http://localhost:8250/oidc/callback"
+  ]
+}
+EOF
+
+bao write auth/oidc/role/platform-admin @/tmp/openbao-platform-admin-role.json
+rm -f /tmp/openbao-platform-admin-role.json
 
 if ! bao auth list -format=json | grep -q '"jwt/"'; then
   bao auth enable jwt

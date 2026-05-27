@@ -5,6 +5,7 @@ timeweb_api="${TIMEWEB_API:-https://api.timeweb.cloud}"
 retired_floating_ip_ids="${RETIRED_FLOATING_IP_IDS:-0be69046-72d8-4351-b812-99cdada61745 0c8f6e70-f35e-4739-94b2-801dcf2c646a 496a8dcc-e706-4796-b9a2-578d4063a459 8f61d71c-21f3-40e7-af2a-1e762ecb9448 926efd13-f45e-4b2f-89d3-66aee502a685 a69fc138-6002-4ade-aab2-21603ace6d50 dae55c1e-300b-4883-ac44-177b4d5e198b}"
 retired_storage_bucket_ids="${RETIRED_STORAGE_BUCKET_IDS:-344103}"
 current_storage_bucket_name="${CURRENT_STORAGE_BUCKET_NAME:-panixida-storage}"
+retired_panixida_subdomains="${RETIRED_PANIXIDA_SUBDOMAINS:-alerts auth komodo logs metrics traces traefik portainer}"
 
 require_env() {
   local name="$1"
@@ -82,6 +83,29 @@ delete_dns_records_for_subdomain() {
     done
 }
 
+delete_domain_subdomain() {
+  local fqdn="$1"
+  local subdomain="$2"
+  local domain
+
+  delete_dns_records_for_subdomain "$fqdn" "$subdomain"
+
+  domain="$(twc GET "/api/v1/domains/${fqdn}" || true)"
+  if [ -n "$domain" ]; then
+    jq -r --arg full "${subdomain}.${fqdn}" \
+      '.domain.subdomains[]? | select(.fqdn == $full) | .id' \
+      <<<"$domain" \
+      | while IFS= read -r subdomain_id; do
+        [ -z "$subdomain_id" ] && continue
+        echo "Deleting Timeweb subdomain ${subdomain}.${fqdn} (${subdomain_id})"
+        twc DELETE "/api/v1/domains/${fqdn}/subdomains/${subdomain_id}" >/dev/null || true
+      done
+  fi
+
+  twc DELETE "/api/v1/domains/${fqdn}/subdomains/${subdomain}" >/dev/null || true
+  twc DELETE "/api/v1/domains/${fqdn}/subdomains/${subdomain}.${fqdn}" >/dev/null || true
+}
+
 delete_unbound_floating_ip() {
   local floating_ip_id="$1"
   local floating_ip
@@ -150,10 +174,10 @@ twc PATCH "/api/v1/domains/panixida.ru" '{"is_autoprolong_enabled":true}' >/dev/
 
 clear_storage_bucket_description "$current_storage_bucket_name"
 
-echo "Deleting portainer.panixida.ru DNS records and subdomain"
-delete_dns_records_for_subdomain panixida.ru portainer
-twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer" >/dev/null || true
-twc DELETE "/api/v1/domains/panixida.ru/subdomains/portainer.panixida.ru" >/dev/null || true
+for subdomain in $retired_panixida_subdomains; do
+  echo "Deleting ${subdomain}.panixida.ru DNS records and Timeweb subdomain"
+  delete_domain_subdomain panixida.ru "$subdomain"
+done
 
 echo "Deleting tacticalheroesdev.ru domain"
 twc DELETE "/api/v1/domains/tacticalheroesdev.ru" >/dev/null || true

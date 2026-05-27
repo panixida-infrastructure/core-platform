@@ -34,7 +34,7 @@ Labels are lightweight key/value metadata attached to nodes. They are used by Ku
 
 Taints repel pods unless pods explicitly tolerate them. No taints are configured initially because this is a single general-purpose node pool and all platform workloads must be schedulable.
 
-The cluster OIDC provider is not configured at creation time. Keycloak is one of the workloads being migrated into the cluster, so cluster-level OIDC has to be added after the Keycloak realm/client exists and its issuer URL is stable.
+The cluster OIDC provider is managed by OpenTofu after Keycloak is reachable at `identity.panixida.ru`. Kubernetes trusts the Keycloak `panixida` realm, uses the `kubernetes` client, maps usernames from `preferred_username`, and maps RBAC groups from `groups`.
 
 ## Phase 2: Move workloads
 
@@ -56,13 +56,17 @@ kubernetes/charts/core-platform-workloads
 
 Docker Compose deployments and Ansible server bootstrap have been removed from the desired state. Workload deployment is pull-based through Argo CD.
 
+Keycloak clients and groups for platform SSO are reconciled by the workload chart through a PostSync job. Argo CD uses the `argocd` public client with PKCE. Grafana and OpenBao use their native OIDC clients. Headlamp uses the `kubernetes` client, which is also the audience configured on the Timeweb Kubernetes OIDC provider.
+
 Kubernetes workload secrets are not stored in Git. Run the manual `Kubernetes Secrets Sync` workflow before or immediately after enabling the workload chart. It reads OpenBao through GitHub Actions OIDC and applies only Kubernetes `Secret` objects for:
 
 ```text
 identity/keycloak-secrets
+identity/keycloak-sso-client-secrets
 secrets/openbao-secrets
 observability/grafana-secrets
 observability/observability-secrets
+headlamp/headlamp-oidc
 quality/sonarqube-secrets
 ```
 

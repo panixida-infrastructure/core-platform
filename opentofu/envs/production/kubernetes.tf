@@ -9,6 +9,14 @@ resource "twc_k8s_cluster" "core_platform" {
   network_id        = twc_vpc.infrastructure_msk.id
   project_id        = twc_project.infrastructure.id
 
+  oidc_provider {
+    name           = "keycloak-panixida"
+    issuer_url     = "https://identity.panixida.ru/realms/panixida"
+    client_id      = "kubernetes"
+    username_claim = "preferred_username"
+    groups_claim   = "groups"
+  }
+
   lifecycle {
     prevent_destroy = true
   }

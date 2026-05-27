@@ -1,0 +1,233 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-sso-config
+  namespace: {{ .Values.keycloak.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: keycloak
+data:
+  configure-sso.sh: |
+    #!/usr/bin/env sh
+    set -eu
+
+    realm="panixida"
+    keycloak_url="http://keycloak.identity.svc.cluster.local:8080"
+    kc="/opt/keycloak/bin/kcadm.sh"
+
+    "$kc" config credentials \
+      --server "$keycloak_url" \
+      --realm master \
+      --user "$KEYCLOAK_ADMIN_USERNAME" \
+      --password "$KEYCLOAK_ADMIN_PASSWORD" >/dev/null
+
+    if ! "$kc" get "realms/${realm}" >/dev/null 2>&1; then
+      "$kc" create realms -s realm="$realm" -s enabled=true >/dev/null
+    fi
+
+    ensure_group() {
+      group_name="$1"
+      if ! "$kc" get groups -r "$realm" --fields name --format csv \
+        | tr -d '"' \
+        | grep -Fx "$group_name" >/dev/null; then
+        "$kc" create groups -r "$realm" -s name="$group_name" >/dev/null
+      fi
+    }
+
+    client_uuid() {
+      "$kc" get clients -r "$realm" -q "clientId=$1" --fields id --format csv \
+        | tr -d '"' \
+        | head -n1
+    }
+
+    mapper_uuid() {
+      "$kc" get "clients/$1/protocol-mappers/models" -r "$realm" --fields id,name --format csv \
+        | tr -d '"' \
+        | awk -F, '$2 == "groups" { print $1; exit }'
+    }
+
+    ensure_groups_mapper() {
+      uuid="$1"
+      mapper_id="$(mapper_uuid "$uuid")"
+      cat >/tmp/groups-mapper.json <<'EOF'
+    {
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "config": {
+        "claim.name": "groups",
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+    EOF
+      if [ -n "$mapper_id" ]; then
+        "$kc" update "clients/$uuid/protocol-mappers/models/$mapper_id" -r "$realm" -f /tmp/groups-mapper.json >/dev/null
+      else
+        "$kc" create "clients/$uuid/protocol-mappers/models" -r "$realm" -f /tmp/groups-mapper.json >/dev/null
+      fi
+      rm -f /tmp/groups-mapper.json
+    }
+
+    upsert_client() {
+      client_id="$1"
+      client_file="$2"
+      uuid="$(client_uuid "$client_id")"
+      if [ -n "$uuid" ]; then
+        "$kc" update "clients/$uuid" -r "$realm" -f "$client_file" >/dev/null
+      else
+        "$kc" create clients -r "$realm" -f "$client_file" >/dev/null
+        uuid="$(client_uuid "$client_id")"
+      fi
+      ensure_groups_mapper "$uuid"
+    }
+
+    ensure_group platform-admins
+    ensure_group platform-viewers
+
+    cat >/tmp/argocd-client.json <<'EOF'
+    {
+      "clientId": "argocd",
+      "name": "Argo CD",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://argocd.panixida.ru/auth/callback"],
+      "webOrigins": ["https://argocd.panixida.ru"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+    EOF
+    upsert_client argocd /tmp/argocd-client.json
+
+    cat >/tmp/kubernetes-client.json <<EOF
+    {
+      "clientId": "kubernetes",
+      "name": "Kubernetes API and Headlamp",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "$KUBERNETES_OIDC_CLIENT_SECRET",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://headlamp.panixida.ru/oidc-callback",
+        "http://localhost:*",
+        "http://127.0.0.1:*"
+      ],
+      "webOrigins": ["https://headlamp.panixida.ru"]
+    }
+    EOF
+    upsert_client kubernetes /tmp/kubernetes-client.json
+
+    cat >/tmp/grafana-client.json <<EOF
+    {
+      "clientId": "grafana",
+      "name": "Grafana",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "$GRAFANA_OIDC_CLIENT_SECRET",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["https://grafana.panixida.ru/login/generic_oauth"],
+      "webOrigins": ["https://grafana.panixida.ru"]
+    }
+    EOF
+    upsert_client grafana /tmp/grafana-client.json
+
+    cat >/tmp/openbao-client.json <<EOF
+    {
+      "clientId": "openbao",
+      "name": "OpenBao",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "$OPENBAO_OIDC_CLIENT_SECRET",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://secrets.panixida.ru/ui/vault/auth/oidc/oidc/callback",
+        "http://localhost:8250/oidc/callback"
+      ],
+      "webOrigins": ["https://secrets.panixida.ru"]
+    }
+    EOF
+    upsert_client openbao /tmp/openbao-client.json
+
+    rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-sso-configure
+  namespace: {{ .Values.keycloak.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: keycloak
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: keycloak-sso-configure
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: keycloak-sso-configure
+          image: {{ .Values.keycloak.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - /config/configure-sso.sh
+          env:
+            - name: KEYCLOAK_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secretName }}
+                  key: KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD
+            - name: GRAFANA_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-sso-client-secrets
+                  key: GRAFANA_OIDC_CLIENT_SECRET
+            - name: OPENBAO_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-sso-client-secrets
+                  key: OPENBAO_OIDC_CLIENT_SECRET
+            - name: KUBERNETES_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-sso-client-secrets
+                  key: KUBERNETES_OIDC_CLIENT_SECRET
+          volumeMounts:
+            - name: keycloak-sso-config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: keycloak-sso-config
+          configMap:
+            name: keycloak-sso-config
+            defaultMode: 0555
+{{- end }}
