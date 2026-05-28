@@ -25,6 +25,6 @@ alerts.panixida.ru
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. SonarQube migration is paused, so `sonar.panixida.ru` is intentionally not published.
 
-TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. Kubernetes-side Envoy and cert-manager are configured for HTTPS; the remaining Timeweb LoadBalancer TLS behavior is tracked with Timeweb support and can be fixed without moving DNS back to the retired server.
+TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. The Timeweb LoadBalancer is configured as TCP passthrough, so public HTTPS traffic reaches Envoy Gateway and uses the cert-manager certificates.
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are internal ClusterIP services. Their public routes and DNS records are intentionally absent; operators should use Grafana for dashboards, logs, traces, and alert visibility.
