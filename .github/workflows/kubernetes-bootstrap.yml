@@ -8,7 +8,12 @@ on:
         required: true
         type: string
       install_controllers:
-        description: Install or upgrade Kubernetes controllers with Helm
+        description: Install or upgrade core Kubernetes controllers with Helm
+        required: true
+        type: boolean
+        default: true
+      install_platform_ui:
+        description: Install or upgrade Argo CD and Headlamp with Helm
         required: true
         type: boolean
         default: true
@@ -96,9 +101,7 @@ jobs:
         if: inputs.install_controllers
         run: |
           set -euo pipefail
-          helm repo add argo https://argoproj.github.io/argo-helm
           helm repo add external-secrets https://charts.external-secrets.io
-          helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
           helm repo update
 
           helm upgrade --install cert-manager oci://quay.io/jetstack/charts/cert-manager \
@@ -125,6 +128,18 @@ jobs:
             --wait \
             --timeout 10m
 
+          kubectl wait --timeout=5m -n envoy-gateway-system deployment/envoy-gateway --for=condition=Available
+          kubectl rollout restart deployment cert-manager -n cert-manager
+          kubectl rollout status deployment cert-manager -n cert-manager --timeout=5m
+
+      - name: Install GitOps UI
+        if: inputs.install_platform_ui
+        run: |
+          set -euo pipefail
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+          helm repo update
+
           helm upgrade --install argo-cd argo/argo-cd \
             --version 9.3.7 \
             --namespace argocd \
@@ -148,10 +163,6 @@ jobs:
           helm "${headlamp_args[@]}" \
             --wait \
             --timeout 10m
-
-          kubectl wait --timeout=5m -n envoy-gateway-system deployment/envoy-gateway --for=condition=Available
-          kubectl rollout restart deployment cert-manager -n cert-manager
-          kubectl rollout status deployment cert-manager -n cert-manager --timeout=5m
 
       - name: Apply Argo CD root application
         if: inputs.apply_gitops_root

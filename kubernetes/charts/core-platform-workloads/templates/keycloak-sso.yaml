@@ -45,7 +45,7 @@ data:
       client_id="$1"
       uuid="$(client_uuid "$client_id")"
       if [ -n "$uuid" ]; then
-        "$kc" delete "clients/$uuid" -r "$realm" >/dev/null
+        "$kc" delete -r "$realm" "clients/$uuid" >/dev/null
       fi
     }
 
