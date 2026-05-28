@@ -10,7 +10,6 @@ OpenTofu owns cloud resources:
 core-platform-network       Timeweb VPC in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
 core-platform-default       Default worker node group
-core-platform-nvme          Retained NVMe network drive in MSK-1
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```
@@ -104,7 +103,7 @@ nvme.network-drives.csi.timeweb.cloud
 hdd.network-drives.csi.timeweb.cloud
 ```
 
-The OpenTofu-managed `core-platform-nvme` disk is declared as a retained static PV/PVC by the Kubernetes bootstrap workflow. It is not attached to the old VM server. The bootstrap workflow installs the Timeweb CSI driver with Helm after the GitOps workloads are synced and stale pending PVCs from the first migration attempt are removed.
+Persistent platform workloads use per-workload Timeweb NVMe PVCs provisioned dynamically by the Kubernetes CSI driver. The bootstrap workflow installs the Timeweb CSI driver with Helm after the GitOps workloads are synced and stale pending PVCs from the first migration attempt are removed.
 
 ## Cutover rules
 

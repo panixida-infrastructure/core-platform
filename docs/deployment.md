@@ -21,7 +21,6 @@ The manual `OpenTofu Apply` workflow reconciles Timeweb resources from `opentofu
 core-platform-network       Timeweb VPC in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
 core-platform-default       Default worker node group
-core-platform-nvme          Retained NVMe network drive in MSK-1
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 panixida.ru DNS records     Platform UI records pointing to Envoy Gateway
@@ -55,7 +54,7 @@ secret/core-platform/applications
 
 ## Managed Kubernetes
 
-OpenTofu creates the Timeweb Managed Kubernetes cluster, the default worker node group, and the retained MSK-1 NVMe network drive. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, installs the Timeweb CSI driver, and applies the retained network drive PV/PVC.
+OpenTofu creates the Timeweb Managed Kubernetes cluster and the default worker node group. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.
 
 GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo CD application deploys the Helm chart at:
 

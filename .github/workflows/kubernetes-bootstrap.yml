@@ -27,11 +27,6 @@ on:
         required: true
         type: boolean
         default: true
-      apply_retained_disk_pv:
-        description: Create a retained PV/PVC for the OpenTofu-managed MSK-1 network drive
-        required: true
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -295,23 +290,3 @@ jobs:
 
           kubectl get csidriver network-drives.csi.timeweb.cloud
           kubectl get storageclass
-
-      - name: Apply retained network drive PV
-        if: inputs.apply_retained_disk_pv
-        working-directory: opentofu/envs/production
-        run: |
-          set -euo pipefail
-          CORE_PLATFORM_NETWORK_DRIVE_ID="$(tofu output -json timeweb_inventory | jq -r '.network_drives.core_platform_nvme.id')"
-          if [ -z "$CORE_PLATFORM_NETWORK_DRIVE_ID" ] || [ "$CORE_PLATFORM_NETWORK_DRIVE_ID" = "null" ]; then
-            echo "::error::core-platform NVMe network drive id is missing from OpenTofu output"
-            exit 1
-          fi
-          CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB="$(tofu output -json timeweb_inventory | jq -r '.network_drives.core_platform_nvme.size_gb')"
-          if [ -z "$CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB" ] || [ "$CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB" = "null" ]; then
-            echo "::error::core-platform NVMe network drive size is missing from OpenTofu output"
-            exit 1
-          fi
-          CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI="${CORE_PLATFORM_NETWORK_DRIVE_SIZE_GB}Gi"
-          export CORE_PLATFORM_NETWORK_DRIVE_ID
-          export CORE_PLATFORM_NETWORK_DRIVE_SIZE_GI
-          envsubst < ../../../kubernetes/bootstrap/core-platform-network-drive.tpl.yaml | kubectl apply -f -

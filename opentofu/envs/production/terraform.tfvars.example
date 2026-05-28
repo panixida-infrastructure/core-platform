@@ -10,9 +10,6 @@ k8s_worker_node_count = 4
 k8s_worker_min_size   = 4
 k8s_worker_max_size   = 6
 
-network_drive_preset_id = 3739
-network_drive_size_gb   = 50
-
 tags = {
   managed_by = "opentofu"
   owner      = "panixida-infrastructure"

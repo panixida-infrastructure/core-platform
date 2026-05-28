@@ -24,15 +24,6 @@ output "timeweb_inventory" {
       default_node_group_id = twc_k8s_node_group.core_platform_default.id
     }
 
-    network_drives = {
-      core_platform_nvme = {
-        id                 = twc_network_drive.core_platform_nvme.id
-        availability_zone  = "msk-1"
-        size_gb            = var.network_drive_size_gb
-        storage_class_name = "nvme.network-drives.csi.timeweb.cloud"
-      }
-    }
-
     postgres_database = {
       id       = twc_database_cluster.postgres_database_msk.id
       networks = twc_database_cluster.postgres_database_msk.networks

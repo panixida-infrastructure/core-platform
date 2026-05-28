@@ -71,18 +71,6 @@ variable "k8s_worker_max_size" {
   default     = 6
 }
 
-variable "network_drive_preset_id" {
-  description = "Timeweb network drive preset id. 3739 is NVMe in MSK-1."
-  type        = number
-  default     = 3739
-}
-
-variable "network_drive_size_gb" {
-  description = "Core platform retained NVMe network drive size in GB."
-  type        = number
-  default     = 50
-}
-
 variable "tags" {
   description = "Common metadata tags for modules that support tags."
   type        = map(string)
