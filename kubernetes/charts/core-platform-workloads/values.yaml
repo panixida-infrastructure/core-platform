@@ -16,6 +16,10 @@ keycloak:
   image: quay.io/keycloak/keycloak:26.6.2
   secretName: keycloak-secrets
   replicas: 1
+  sso:
+    adminUsers:
+      - admin
+    viewerUsers: []
   cache:
     type: local
     stack: ""

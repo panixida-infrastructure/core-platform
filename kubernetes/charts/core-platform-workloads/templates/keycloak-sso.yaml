@@ -35,6 +35,79 @@ data:
       fi
     }
 
+    group_uuid() {
+      group_name="$1"
+      "$kc" get groups -r "$realm" --fields id,name --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r group_id current_group_name; do
+            if [ "$current_group_name" = "$group_name" ]; then
+              printf '%s\n' "$group_id"
+              break
+            fi
+          done
+    }
+
+    user_uuid() {
+      user_ref="$1"
+      user_id="$("$kc" get users -r "$realm" -q "username=$user_ref" --fields id,username --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r current_user_id current_username; do
+            if [ "$current_username" = "$user_ref" ]; then
+              printf '%s\n' "$current_user_id"
+              break
+            fi
+          done)"
+      if [ -n "$user_id" ]; then
+        printf '%s\n' "$user_id"
+        return
+      fi
+
+      "$kc" get users -r "$realm" -q "email=$user_ref" --fields id,email --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r current_user_id current_email; do
+            if [ "$current_email" = "$user_ref" ]; then
+              printf '%s\n' "$current_user_id"
+              break
+            fi
+          done
+    }
+
+    user_has_group() {
+      user_id="$1"
+      group_name="$2"
+      "$kc" get "users/$user_id/groups" -r "$realm" --fields name,path --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r current_group_name current_group_path; do
+            if [ "$current_group_name" = "$group_name" ] || [ "$current_group_path" = "/$group_name" ]; then
+              printf 'yes\n'
+              break
+            fi
+          done
+    }
+
+    ensure_user_group() {
+      user_ref="$1"
+      group_name="$2"
+      user_id="$(user_uuid "$user_ref")"
+      group_id="$(group_uuid "$group_name")"
+
+      if [ -z "$user_id" ]; then
+        echo "Keycloak user '$user_ref' was not found in realm '$realm'; skipping $group_name membership" >&2
+        return
+      fi
+
+      if [ -z "$group_id" ]; then
+        echo "Keycloak group '$group_name' was not found in realm '$realm'" >&2
+        exit 1
+      fi
+
+      if [ "$(user_has_group "$user_id" "$group_name")" = "yes" ]; then
+        return
+      fi
+
+      "$kc" update "users/$user_id/groups/$group_id" -r "$realm" -n >/dev/null
+    }
+
     client_uuid() {
       "$kc" get clients -r "$realm" -q "clientId=$1" --fields id --format csv \
         | tr -d '"' \
@@ -120,6 +193,14 @@ data:
 
     ensure_group platform-admins
     ensure_group platform-viewers
+
+    for platform_admin_user in ${KEYCLOAK_PLATFORM_ADMIN_USERS:-}; do
+      ensure_user_group "$platform_admin_user" platform-admins
+    done
+
+    for platform_viewer_user in ${KEYCLOAK_PLATFORM_VIEWER_USERS:-}; do
+      ensure_user_group "$platform_viewer_user" platform-viewers
+    done
 
     delete_client komodo
     delete_client panixida-edge
@@ -261,6 +342,10 @@ spec:
                 secretKeyRef:
                   name: keycloak-sso-client-secrets
                   key: KUBERNETES_OIDC_CLIENT_SECRET
+            - name: KEYCLOAK_PLATFORM_ADMIN_USERS
+              value: {{ .Values.keycloak.sso.adminUsers | default (list "admin") | join " " | quote }}
+            - name: KEYCLOAK_PLATFORM_VIEWER_USERS
+              value: {{ .Values.keycloak.sso.viewerUsers | default (list) | join " " | quote }}
           volumeMounts:
             - name: keycloak-sso-config
               mountPath: /config
