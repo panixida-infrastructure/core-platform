@@ -67,10 +67,17 @@ sonarqube:
   host: sonar.panixida.ru
   image: sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
+  nodeSelector:
+    panixida.ru/node-pool: quality
+  tolerations:
+    - key: panixida.ru/dedicated
+      operator: Equal
+      value: quality
+      effect: NoSchedule
   javaOpts:
-    web: -Xms128m -Xmx384m
-    ce: -Xms128m -Xmx384m
-    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
+    web: -Xms256m -Xmx768m
+    ce: -Xms256m -Xmx768m
+    search: -Xms1g -Xmx1g -XX:MaxDirectMemorySize=256m
   persistence:
     enabled: false
   storageClassName: nvme.network-drives.csi.timeweb.cloud
@@ -78,9 +85,9 @@ sonarqube:
   resources:
     requests:
       cpu: 500m
-      memory: 1400Mi
+      memory: 2600Mi
     limits:
-      memory: 1792Mi
+      memory: 3584Mi
 
 observability:
   enabled: true

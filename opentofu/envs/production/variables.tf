@@ -71,6 +71,30 @@ variable "k8s_worker_max_size" {
   default     = 6
 }
 
+variable "k8s_quality_worker_preset_id" {
+  description = "Timeweb Managed Kubernetes worker preset id for quality tools. 1683 is MSK 2 CPU / 4 GB / 60 GB."
+  type        = number
+  default     = 1683
+}
+
+variable "k8s_quality_worker_node_count" {
+  description = "Initial worker node count for the quality node group."
+  type        = number
+  default     = 1
+}
+
+variable "k8s_quality_worker_min_size" {
+  description = "Minimum autoscaling size for the quality node group."
+  type        = number
+  default     = 1
+}
+
+variable "k8s_quality_worker_max_size" {
+  description = "Maximum autoscaling size for the quality node group."
+  type        = number
+  default     = 2
+}
+
 variable "tags" {
   description = "Common metadata tags for modules that support tags."
   type        = map(string)

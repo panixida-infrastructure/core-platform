@@ -10,6 +10,11 @@ k8s_worker_node_count = 4
 k8s_worker_min_size   = 4
 k8s_worker_max_size   = 6
 
+k8s_quality_worker_preset_id  = 1683
+k8s_quality_worker_node_count = 1
+k8s_quality_worker_min_size   = 1
+k8s_quality_worker_max_size   = 2
+
 tags = {
   managed_by = "opentofu"
   owner      = "panixida-infrastructure"

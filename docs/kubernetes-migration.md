@@ -10,6 +10,7 @@ OpenTofu owns cloud resources:
 core-platform-network       Timeweb VPC in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
 core-platform-default       Default worker node group
+core-platform-quality       Dedicated worker node group for quality tools
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```
@@ -23,6 +24,8 @@ Kubernetes version: v1.35.4+k0s.0
 Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
 Worker autoscaling: 4-6 nodes
+Quality preset:     1683, MSK 2 CPU / 4 GB / 60 GB
+Quality autoscaling: 1-2 nodes
 CNI:                cilium
 Built-in ingress:   disabled
 ```
@@ -31,7 +34,9 @@ Worker public IPs are enabled for the first cluster creation because Timeweb req
 
 Labels are lightweight key/value metadata attached to nodes. They are used by Kubernetes scheduling, selectors, and operational grouping. The default node group receives `panixida.ru/node-pool=core-platform`.
 
-Taints repel pods unless pods explicitly tolerate them. No taints are configured initially because this is a single general-purpose node pool and all platform workloads must be schedulable.
+Taints repel pods unless pods explicitly tolerate them. The default node group has no taints because general platform workloads must be schedulable there.
+
+The `core-platform-quality` node group is tainted with `panixida.ru/dedicated=quality:NoSchedule`. SonarQube tolerates this taint and uses `panixida.ru/node-pool=quality` to avoid overloading the small default promo workers.
 
 The cluster OIDC provider is managed by OpenTofu after Keycloak is reachable at `identity.panixida.ru`. Kubernetes trusts the Keycloak `panixida` realm, uses the `kubernetes` client, maps usernames from `preferred_username`, and maps RBAC groups from `groups`.
 

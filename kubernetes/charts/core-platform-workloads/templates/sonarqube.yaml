@@ -26,6 +26,14 @@ spec:
         app.kubernetes.io/name: sonarqube
         app.kubernetes.io/part-of: core-platform
     spec:
+      {{- with .Values.sonarqube.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sonarqube.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
