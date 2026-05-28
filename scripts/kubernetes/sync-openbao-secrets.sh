@@ -116,17 +116,59 @@ apply_secret_json() {
   echo "Synced Kubernetes secret ${namespace}/${name}"
 }
 
-for namespace in identity secrets observability quality headlamp; do
+apply_argocd_repository_secret() {
+  local data="$1"
+  local manifest
+
+  manifest="$(mktemp)"
+  jq -n \
+    --argjson data "$data" \
+    '
+      def required($key):
+        if (($data[$key] // "") | tostring | length) > 0 then
+          $data[$key] | tostring
+        else
+          error("missing required secret key " + $key)
+        end;
+      {
+        apiVersion: "v1",
+        kind: "Secret",
+        metadata: {
+          name: "core-platform-repo",
+          namespace: "argocd",
+          labels: {
+            "argocd.argoproj.io/secret-type": "repository"
+          }
+        },
+        type: "Opaque",
+        stringData: {
+          type: "git",
+          url: "https://github.com/panixida-infrastructure/core-platform.git",
+          username: "x-access-token",
+          password: required("SERVER_GH_PAT")
+        }
+      }' >"$manifest"
+
+  kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
+  kubectl -n argocd annotate secret core-platform-repo kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
+  rm -f "$manifest"
+  echo "Synced Kubernetes secret argocd/core-platform-repo"
+}
+
+for namespace in argocd identity secrets observability quality headlamp; do
   kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 done
 
 openbao_token="$(openbao_login)"
 
+github_secret="$(bao_read "$openbao_token" core-platform/github)"
 identity_secret="$(bao_read "$openbao_token" core-platform/identity)"
 openbao_secret="$(bao_read "$openbao_token" core-platform/openbao)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
+
+apply_argocd_repository_secret "$github_secret"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
   KEYCLOAK_DB_HOST \
