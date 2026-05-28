@@ -86,7 +86,7 @@ observability:
   namespace: observability
   secretName: observability-secrets
   persistence:
-    enabled: false
+    enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud
   blackboxTargets:
     - https://argocd.panixida.ru

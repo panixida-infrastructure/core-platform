@@ -79,6 +79,6 @@ argocd.panixida.ru
 headlamp.panixida.ru
 ```
 
-VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector.
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class.
 
 SonarQube remains disabled during the current migration phase. Its managed PostgreSQL database/user may stay reconciled, but `sonar.panixida.ru` is intentionally not published until the workload is re-enabled.

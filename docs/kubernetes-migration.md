@@ -93,7 +93,7 @@ The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the fir
 
 The workload chart exposes migrated UIs through the shared HTTP listener and per-host HTTPS listeners. The Timeweb LoadBalancer TLS issue is tracked separately; it does not block HTTP cutover or Kubernetes-side certificate issuance.
 
-VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are intentionally not exposed through Gateway routes or public DNS. Grafana uses their internal Kubernetes service DNS names as datasources. The OpenTelemetry Collector is configured only with a traces pipeline that exports OTLP traces to VictoriaTraces; metrics collection remains in vmagent and log collection remains in vlagent.
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are intentionally not exposed through Gateway routes or public DNS. Grafana uses their internal Kubernetes service DNS names as datasources. The OpenTelemetry Collector is configured only with a traces pipeline that exports OTLP traces to VictoriaTraces; metrics collection remains in vmagent and log collection remains in vlagent. These stores use Timeweb NVMe network-drive PVCs because their local TSDB/log/traces data should survive pod and node replacement.
 
 ## Storage
 
