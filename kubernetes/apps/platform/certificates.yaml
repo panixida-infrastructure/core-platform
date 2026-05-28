@@ -81,3 +81,16 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sonar-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: sonar-panixida-ru-tls
+  dnsNames:
+    - sonar.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer

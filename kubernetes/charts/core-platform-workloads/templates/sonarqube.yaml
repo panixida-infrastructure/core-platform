@@ -26,6 +26,9 @@ spec:
         app.kubernetes.io/name: sonarqube
         app.kubernetes.io/part-of: core-platform
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: sysctl
           image: busybox:1.37
@@ -37,6 +40,27 @@ spec:
           securityContext:
             privileged: true
             runAsUser: 0
+        - name: volume-permissions
+          image: busybox:1.37
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              mkdir -p /opt/sonarqube/data /opt/sonarqube/extensions /opt/sonarqube/logs
+              chown -R 1000:0 /opt/sonarqube/data /opt/sonarqube/extensions /opt/sonarqube/logs
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/data
+              subPath: data
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/extensions
+              subPath: extensions
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/logs
+              subPath: logs
       containers:
         - name: sonarqube
           image: {{ .Values.sonarqube.image | quote }}
@@ -75,6 +99,8 @@ spec:
               value: {{ .Values.sonarqube.javaOpts.ce | quote }}
             - name: SONAR_SEARCH_JAVAOPTS
               value: {{ .Values.sonarqube.javaOpts.search | quote }}
+            - name: SONAR_CORE_SERVERBASEURL
+              value: https://{{ .Values.sonarqube.host }}
           ports:
             - name: http
               containerPort: 9000
@@ -150,7 +176,7 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: sonarqube
+  name: sonarqube-http-redirect
   namespace: {{ .Values.sonarqube.namespace }}
 spec:
   parentRefs:
@@ -160,7 +186,160 @@ spec:
   hostnames:
     - {{ .Values.sonarqube.host }}
   rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: sonarqube
+  namespace: {{ .Values.sonarqube.namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: {{ .Values.global.gateway.httpsSectionNames.sonar }}
+  hostnames:
+    - {{ .Values.sonarqube.host }}
+  rules:
     - backendRefs:
         - name: sonarqube
           port: 9000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-configure
+  namespace: {{ .Values.sonarqube.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: sonarqube
+data:
+  configure-sonarqube.sh: |
+    #!/usr/bin/env sh
+    set -eu
+
+    sonar_url="http://sonarqube.quality.svc.cluster.local:9000"
+    public_url="https://{{ .Values.sonarqube.host }}"
+    keycloak_metadata_url="https://{{ .Values.keycloak.host }}/realms/panixida/protocol/saml/descriptor"
+    keycloak_saml_url="https://{{ .Values.keycloak.host }}/realms/panixida/protocol/saml"
+    keycloak_realm_url="https://{{ .Values.keycloak.host }}/realms/panixida"
+
+    for _ in $(seq 1 180); do
+      if curl -fsS "$sonar_url/api/system/status" 2>/dev/null | grep -Eq '"status"[[:space:]]*:[[:space:]]*"(UP|STARTING)"'; then
+        break
+      fi
+      sleep 10
+    done
+
+    for _ in $(seq 1 180); do
+      if curl -fsS "$sonar_url/api/system/status" 2>/dev/null | grep -q '"UP"'; then
+        break
+      fi
+      sleep 10
+    done
+
+    if ! curl -fsS "$sonar_url/api/system/status" 2>/dev/null | grep -q '"UP"'; then
+      echo "SonarQube did not become UP before configuration timeout" >&2
+      exit 1
+    fi
+
+    validate_auth() {
+      curl -fsS -u "$1" "$sonar_url/api/authentication/validate" 2>/dev/null | grep -q '"valid"[[:space:]]*:[[:space:]]*true'
+    }
+
+    auth="admin:${SONAR_ADMIN_PASSWORD}"
+    if validate_auth "$auth"; then
+      :
+    elif validate_auth "admin:admin"; then
+      curl -fsS -u "admin:admin" -X POST "$sonar_url/api/users/change_password" \
+        --data-urlencode "login=admin" \
+        --data-urlencode "previousPassword=admin" \
+        --data-urlencode "password=${SONAR_ADMIN_PASSWORD}" >/dev/null
+    else
+      echo "SonarQube admin credentials are not valid; cannot configure SAML" >&2
+      exit 1
+    fi
+
+    idp_certificate="$(
+      curl -fsS "$keycloak_metadata_url" \
+        | tr -d '\n\r ' \
+        | sed -n 's#.*<ds:X509Certificate>\([^<]*\)</ds:X509Certificate>.*#\1#p'
+    )"
+
+    if [ -z "$idp_certificate" ]; then
+      echo "Keycloak SAML signing certificate was not found in metadata" >&2
+      exit 1
+    fi
+
+    set_setting() {
+      curl -fsS -u "$auth" -X POST "$sonar_url/api/settings/set" \
+        --data-urlencode "key=$1" \
+        --data-urlencode "value=$2" >/dev/null
+    }
+
+    set_setting sonar.core.serverBaseURL "$public_url"
+    set_setting sonar.forceAuthentication true
+    set_setting sonar.auth.saml.enabled true
+    set_setting sonar.auth.saml.applicationId sonarqube
+    set_setting sonar.auth.saml.providerName Keycloak
+    set_setting sonar.auth.saml.providerId "$keycloak_realm_url"
+    set_setting sonar.auth.saml.loginUrl "$keycloak_saml_url"
+    set_setting sonar.auth.saml.certificate.secured "$idp_certificate"
+    set_setting sonar.auth.saml.user.login login
+    set_setting sonar.auth.saml.user.name name
+    set_setting sonar.auth.saml.user.email email
+    set_setting sonar.auth.saml.group.name groups
+    set_setting sonar.auth.saml.signature.enabled false
+
+    echo "SonarQube SAML configuration reconciled"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sonarqube-configure
+  namespace: {{ .Values.sonarqube.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: sonarqube
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+  activeDeadlineSeconds: 2400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sonarqube-configure
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: sonarqube-configure
+          image: curlimages/curl:8.13.0
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - sh
+            - /config/configure-sonarqube.sh
+          env:
+            - name: SONAR_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sonarqube.secretName }}
+                  key: SONAR_ADMIN_PASSWORD
+          volumeMounts:
+            - name: sonarqube-configure
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: sonarqube-configure
+          configMap:
+            name: sonarqube-configure
+            defaultMode: 0555
 {{- end }}

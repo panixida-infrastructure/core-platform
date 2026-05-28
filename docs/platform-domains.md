@@ -8,6 +8,7 @@ secrets.panixida.ru    OpenBao
 grafana.panixida.ru    Grafana
 argocd.panixida.ru     Argo CD
 headlamp.panixida.ru   Headlamp
+sonar.panixida.ru      SonarQube
 ```
 
 Retired platform endpoints:
@@ -16,14 +17,13 @@ Retired platform endpoints:
 traefik.panixida.ru
 komodo.panixida.ru
 auth.panixida.ru
-sonar.panixida.ru
 metrics.panixida.ru
 logs.panixida.ru
 traces.panixida.ru
 alerts.panixida.ru
 ```
 
-The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`. SonarQube migration is paused, so `sonar.panixida.ru` is intentionally not published.
+The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`.
 
 TLS certificates for the Kubernetes UI endpoints are issued by cert-manager through the shared Envoy Gateway HTTP listener. The Timeweb LoadBalancer is configured as TCP passthrough, so public HTTPS traffic reaches Envoy Gateway and uses the cert-manager certificates.
 

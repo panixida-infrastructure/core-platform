@@ -94,7 +94,7 @@ DOTNET_TEMPLATE_DB_PASSWORD
 
 ## SSO
 
-Keycloak is the identity provider. Services with native OIDC support should use Keycloak directly.
+Keycloak is the identity provider. Services with native OIDC support should use Keycloak directly. SonarQube Community Build uses Keycloak through SAML because native OIDC is not a supported SonarQube Community Build authentication method.
 
 Services without native OIDC support should be protected at the Kubernetes gateway layer after the Keycloak realm and clients exist.
 

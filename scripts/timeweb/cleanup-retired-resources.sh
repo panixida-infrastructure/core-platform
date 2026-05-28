@@ -5,7 +5,7 @@ timeweb_api="${TIMEWEB_API:-https://api.timeweb.cloud}"
 retired_floating_ip_ids="${RETIRED_FLOATING_IP_IDS:-0be69046-72d8-4351-b812-99cdada61745 0c8f6e70-f35e-4739-94b2-801dcf2c646a 496a8dcc-e706-4796-b9a2-578d4063a459 8f61d71c-21f3-40e7-af2a-1e762ecb9448 926efd13-f45e-4b2f-89d3-66aee502a685 a69fc138-6002-4ade-aab2-21603ace6d50 dae55c1e-300b-4883-ac44-177b4d5e198b 19520275-e6da-4cd4-91e8-ba571edca73f 43a7152a-74c7-4e48-8805-91c1a529d562 454bcb89-e302-45b0-99c8-22585c10b78f}"
 retired_storage_bucket_ids="${RETIRED_STORAGE_BUCKET_IDS:-344103}"
 current_storage_bucket_name="${CURRENT_STORAGE_BUCKET_NAME:-panixida-storage}"
-retired_panixida_subdomains="${RETIRED_PANIXIDA_SUBDOMAINS:-alerts auth komodo logs metrics traces traefik portainer sonar}"
+retired_panixida_subdomains="${RETIRED_PANIXIDA_SUBDOMAINS:-alerts auth komodo logs metrics traces traefik portainer}"
 
 require_env() {
   local name="$1"

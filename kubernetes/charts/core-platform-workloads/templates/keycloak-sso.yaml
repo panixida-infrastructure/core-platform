@@ -188,7 +188,115 @@ data:
         "$kc" create clients -r "$realm" -f "$client_file" >/dev/null
         uuid="$(client_uuid "$client_id")"
       fi
+    }
+
+    upsert_oidc_client() {
+      client_id="$1"
+      client_file="$2"
+      upsert_client "$client_id" "$client_file"
+      uuid="$(client_uuid "$client_id")"
       ensure_groups_mapper "$uuid"
+    }
+
+    create_saml_sonarqube_client() {
+      delete_client sonarqube
+
+      cat >/tmp/sonarqube-client.json <<'EOF'
+    {
+      "clientId": "sonarqube",
+      "name": "SonarQube",
+      "protocol": "saml",
+      "enabled": true,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "redirectUris": ["https://sonar.panixida.ru/oauth2/callback/saml"],
+      "baseUrl": "https://sonar.panixida.ru",
+      "adminUrl": "https://sonar.panixida.ru",
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.authnstatement": "true",
+        "saml.client.signature": "false",
+        "saml.encrypt": "false",
+        "saml.force.post.binding": "true",
+        "saml.force.name.id.format": "false",
+        "saml.multivalued.roles": "false",
+        "saml.onetimeuse.condition": "false",
+        "saml.server.signature": "true",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml_name_id_format": "username"
+      }
+    }
+    EOF
+
+      "$kc" create clients -r "$realm" -f /tmp/sonarqube-client.json >/dev/null
+      uuid="$(client_uuid sonarqube)"
+
+      cat >/tmp/sonarqube-login-mapper.json <<'EOF'
+    {
+      "name": "Login",
+      "protocol": "saml",
+      "protocolMapper": "saml-user-property-mapper",
+      "config": {
+        "user.attribute": "username",
+        "friendly.name": "login",
+        "attribute.name": "login",
+        "attribute.nameformat": "Basic"
+      }
+    }
+    EOF
+      "$kc" create "clients/$uuid/protocol-mappers/models" -r "$realm" -f /tmp/sonarqube-login-mapper.json >/dev/null
+
+      cat >/tmp/sonarqube-name-mapper.json <<'EOF'
+    {
+      "name": "Name",
+      "protocol": "saml",
+      "protocolMapper": "saml-user-property-mapper",
+      "config": {
+        "user.attribute": "username",
+        "friendly.name": "name",
+        "attribute.name": "name",
+        "attribute.nameformat": "Basic"
+      }
+    }
+    EOF
+      "$kc" create "clients/$uuid/protocol-mappers/models" -r "$realm" -f /tmp/sonarqube-name-mapper.json >/dev/null
+
+      cat >/tmp/sonarqube-email-mapper.json <<'EOF'
+    {
+      "name": "Email",
+      "protocol": "saml",
+      "protocolMapper": "saml-user-property-mapper",
+      "config": {
+        "user.attribute": "email",
+        "friendly.name": "email",
+        "attribute.name": "email",
+        "attribute.nameformat": "Basic"
+      }
+    }
+    EOF
+      "$kc" create "clients/$uuid/protocol-mappers/models" -r "$realm" -f /tmp/sonarqube-email-mapper.json >/dev/null
+
+      cat >/tmp/sonarqube-groups-mapper.json <<'EOF'
+    {
+      "name": "Groups",
+      "protocol": "saml",
+      "protocolMapper": "saml-group-membership-mapper",
+      "config": {
+        "single": "true",
+        "full.path": "false",
+        "friendly.name": "groups",
+        "attribute.name": "groups",
+        "attribute.nameformat": "Basic"
+      }
+    }
+    EOF
+      "$kc" create "clients/$uuid/protocol-mappers/models" -r "$realm" -f /tmp/sonarqube-groups-mapper.json >/dev/null
+
+      rm -f /tmp/sonarqube-client.json \
+        /tmp/sonarqube-login-mapper.json \
+        /tmp/sonarqube-name-mapper.json \
+        /tmp/sonarqube-email-mapper.json \
+        /tmp/sonarqube-groups-mapper.json
     }
 
     ensure_group platform-admins
@@ -223,7 +331,7 @@ data:
       }
     }
     EOF
-    upsert_client argocd /tmp/argocd-client.json
+    upsert_oidc_client argocd /tmp/argocd-client.json
 
     cat >/tmp/kubernetes-client.json <<EOF
     {
@@ -246,7 +354,7 @@ data:
       "webOrigins": ["https://headlamp.panixida.ru"]
     }
     EOF
-    upsert_client kubernetes /tmp/kubernetes-client.json
+    upsert_oidc_client kubernetes /tmp/kubernetes-client.json
 
     cat >/tmp/grafana-client.json <<EOF
     {
@@ -263,7 +371,7 @@ data:
       "webOrigins": ["https://grafana.panixida.ru"]
     }
     EOF
-    upsert_client grafana /tmp/grafana-client.json
+    upsert_oidc_client grafana /tmp/grafana-client.json
 
     cat >/tmp/openbao-client.json <<EOF
     {
@@ -283,7 +391,9 @@ data:
       "webOrigins": ["https://secrets.panixida.ru"]
     }
     EOF
-    upsert_client openbao /tmp/openbao-client.json
+    upsert_oidc_client openbao /tmp/openbao-client.json
+
+    create_saml_sonarqube_client
 
     rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json
 ---

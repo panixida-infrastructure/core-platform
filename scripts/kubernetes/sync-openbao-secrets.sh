@@ -82,7 +82,8 @@ apply_secret() {
         stringData: (reduce $keys[] as $key ({}; .[$key] = required($key)))
       }' >"$manifest"
 
-  kubectl apply -f "$manifest" >/dev/null
+  kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
+  kubectl -n "$namespace" annotate secret "$name" kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
   rm -f "$manifest"
   echo "Synced Kubernetes secret ${namespace}/${name}"
 }
@@ -109,7 +110,8 @@ apply_secret_json() {
       stringData: $data
     }' >"$manifest"
 
-  kubectl apply -f "$manifest" >/dev/null
+  kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
+  kubectl -n "$namespace" annotate secret "$name" kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
   rm -f "$manifest"
   echo "Synced Kubernetes secret ${namespace}/${name}"
 }

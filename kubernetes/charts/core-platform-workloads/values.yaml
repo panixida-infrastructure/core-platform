@@ -8,6 +8,7 @@ global:
       identity: identity-https
       secrets: secrets-https
       grafana: grafana-https
+      sonar: sonar-https
 
 keycloak:
   enabled: true
@@ -61,17 +62,17 @@ grafana:
       memory: 768Mi
 
 sonarqube:
-  enabled: false
+  enabled: true
   namespace: quality
   host: sonar.panixida.ru
-  image: sonarqube:community
+  image: sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
   javaOpts:
     web: -Xms128m -Xmx384m
     ce: -Xms128m -Xmx384m
     search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
   persistence:
-    enabled: false
+    enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud
   storageSize: 10Gi
   resources:
@@ -94,6 +95,7 @@ observability:
     - https://identity.panixida.ru
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru
+    - https://sonar.panixida.ru
   images:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0

@@ -38,6 +38,7 @@ output "timeweb_inventory" {
       grafana  = "grafana.panixida.ru"
       argocd   = "argocd.panixida.ru"
       headlamp = "headlamp.panixida.ru"
+      sonar    = "sonar.panixida.ru"
     }
   }
 }
