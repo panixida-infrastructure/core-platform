@@ -7,8 +7,8 @@ identity.panixida.ru   Keycloak
 secrets.panixida.ru    OpenBao
 grafana.panixida.ru    Grafana
 argocd.panixida.ru     Argo CD
-headlamp.panixida.ru   Headlamp
-sonar.panixida.ru      SonarQube
+k8s.panixida.ru        Headlamp
+sonar.panixida.ru      SonarQube, currently disabled on the free Kubernetes worker preset
 ```
 
 Retired platform endpoints:
@@ -21,6 +21,7 @@ metrics.panixida.ru
 logs.panixida.ru
 traces.panixida.ru
 alerts.panixida.ru
+headlamp.panixida.ru
 ```
 
 The DNS records are managed by OpenTofu in `opentofu/envs/production/dns.tf`.

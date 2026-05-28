@@ -62,7 +62,7 @@ grafana:
       memory: 768Mi
 
 sonarqube:
-  enabled: true
+  enabled: false
   namespace: quality
   host: sonar.panixida.ru
   image: sonarqube:26.5.0.122743-community
@@ -98,11 +98,10 @@ observability:
   storageClassName: nvme.network-drives.csi.timeweb.cloud
   blackboxTargets:
     - https://argocd.panixida.ru
-    - https://headlamp.panixida.ru
+    - https://k8s.panixida.ru
     - https://identity.panixida.ru
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru
-    - https://sonar.panixida.ru
   images:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0

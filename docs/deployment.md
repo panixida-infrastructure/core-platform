@@ -76,10 +76,10 @@ identity.panixida.ru
 secrets.panixida.ru
 grafana.panixida.ru
 argocd.panixida.ru
-headlamp.panixida.ru
+k8s.panixida.ru
 sonar.panixida.ru
 ```
 
-VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class.
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, logs, and traces.
 
-SonarQube runs in Kubernetes with managed PostgreSQL for application data. Its local runtime data, search indexes, extensions, and logs use pod-local storage; the database remains the durable source of truth. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
+SonarQube uses managed PostgreSQL for application data, but the Kubernetes workload is disabled while the cluster stays on the free 2 GB worker preset. Keycloak SSO for SonarQube is kept in code and uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.

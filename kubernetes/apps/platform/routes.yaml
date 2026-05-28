@@ -37,7 +37,7 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: headlamp-http-redirect
+  name: k8s-http-redirect
   namespace: headlamp
 spec:
   parentRefs:
@@ -45,7 +45,7 @@ spec:
       namespace: envoy-gateway-system
       sectionName: http
   hostnames:
-    - headlamp.panixida.ru
+    - k8s.panixida.ru
   rules:
     - filters:
         - type: RequestRedirect
@@ -62,9 +62,9 @@ spec:
   parentRefs:
     - name: core-platform
       namespace: envoy-gateway-system
-      sectionName: headlamp-https
+      sectionName: k8s-https
   hostnames:
-    - headlamp.panixida.ru
+    - k8s.panixida.ru
   rules:
     - backendRefs:
         - name: headlamp

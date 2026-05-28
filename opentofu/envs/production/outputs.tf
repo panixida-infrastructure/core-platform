@@ -38,7 +38,7 @@ output "timeweb_inventory" {
       secrets  = "secrets.panixida.ru"
       grafana  = "grafana.panixida.ru"
       argocd   = "argocd.panixida.ru"
-      headlamp = "headlamp.panixida.ru"
+      k8s      = "k8s.panixida.ru"
       sonar    = "sonar.panixida.ru"
     }
   }

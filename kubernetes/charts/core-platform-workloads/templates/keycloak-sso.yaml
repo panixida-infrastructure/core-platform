@@ -345,13 +345,13 @@ data:
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
-        "https://headlamp.panixida.ru/oidc-callback",
+        "https://k8s.panixida.ru/oidc-callback",
         "http://localhost:8000",
         "http://localhost:18000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:18000"
       ],
-      "webOrigins": ["https://headlamp.panixida.ru"]
+      "webOrigins": ["https://k8s.panixida.ru"]
     }
     EOF
     upsert_oidc_client kubernetes /tmp/kubernetes-client.json

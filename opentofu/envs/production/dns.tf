@@ -30,9 +30,9 @@ resource "twc_dns_rr" "argocd" {
   value   = var.kubernetes_gateway_public_ipv4
 }
 
-resource "twc_dns_rr" "headlamp" {
+resource "twc_dns_rr" "k8s" {
   zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "headlamp"
+  name    = "k8s"
   type    = "A"
   value   = var.kubernetes_gateway_public_ipv4
 }

@@ -179,6 +179,9 @@ spec:
       labels:
         app.kubernetes.io/name: victoriatraces
         app.kubernetes.io/part-of: core-platform
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10428"
     spec:
       containers:
         - name: victoriatraces

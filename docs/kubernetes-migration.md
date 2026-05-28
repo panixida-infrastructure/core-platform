@@ -25,7 +25,7 @@ Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
 Worker autoscaling: 4-6 nodes
 Quality preset:     2951, Promo MSK 2 CPU / 2 GB / 40 GB
-Quality autoscaling: 1-2 nodes
+Quality autoscaling: 1-2 nodes, currently unused while SonarQube is disabled
 CNI:                cilium
 Built-in ingress:   disabled
 ```
@@ -36,7 +36,7 @@ Labels are lightweight key/value metadata attached to nodes. They are used by Ku
 
 Taints repel pods unless pods explicitly tolerate them. The default node group has no taints because general platform workloads must be schedulable there.
 
-The `core-platform-quality` node group is tainted with `panixida.ru/dedicated=quality:NoSchedule`. SonarQube tolerates this taint and uses `panixida.ru/node-pool=quality` to avoid overloading the small default promo workers.
+The `core-platform-quality` node group is tainted with `panixida.ru/dedicated=quality:NoSchedule`. SonarQube is currently disabled on the free Kubernetes worker preset; when re-enabled, it tolerates this taint and uses `panixida.ru/node-pool=quality` to avoid overloading the default promo workers.
 
 The cluster OIDC provider is managed by OpenTofu after Keycloak is reachable at `identity.panixida.ru`. Kubernetes trusts the Keycloak `panixida` realm, uses the `kubernetes` client, maps usernames from `preferred_username`, and maps RBAC groups from `groups`.
 
@@ -87,7 +87,7 @@ SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
-SonarQube runs as a Kubernetes workload with a managed PostgreSQL database. Local runtime data, search indexes, extensions, and logs are pod-local; PostgreSQL remains the durable source of truth.
+SonarQube has Kubernetes manifests and a managed PostgreSQL database, but the workload is currently disabled because the free 2 GB worker preset is too constrained for a reliable SonarQube deployment.
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
@@ -97,7 +97,7 @@ The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the fir
 
 The workload chart exposes migrated UIs through the shared HTTP listener and per-host HTTPS listeners. The Timeweb LoadBalancer is configured as TCP passthrough, so public HTTPS traffic reaches Envoy Gateway and uses the cert-manager certificates.
 
-VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are intentionally not exposed through Gateway routes or public DNS. Grafana uses their internal Kubernetes service DNS names as datasources. The OpenTelemetry Collector is configured only with a traces pipeline that exports OTLP traces to VictoriaTraces; metrics collection remains in vmagent and log collection remains in vlagent. These stores use Timeweb NVMe network-drive PVCs because their local TSDB/log/traces data should survive pod and node replacement.
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are intentionally not exposed through Gateway routes or public DNS. Grafana uses their internal Kubernetes service DNS names as datasources and provisions dashboards from Git for endpoint health, Kubernetes resource usage, observability pipeline health, logs, and traces. The OpenTelemetry Collector is configured only with a traces pipeline that exports OTLP traces to VictoriaTraces; metrics collection remains in vmagent and log collection remains in vlagent. These stores use Timeweb NVMe network-drive PVCs because their local TSDB/log/traces data should survive pod and node replacement.
 
 ## Storage
 
@@ -118,7 +118,7 @@ The `infrastructure` server can stay destroyed when all of these remain true:
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
 3. DNS records point to that IP.
-4. Keycloak, OpenBao, Grafana, Argo CD, Headlamp, and SonarQube are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana.
+4. Keycloak, OpenBao, Grafana, Argo CD, and Headlamp are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana. SonarQube is intentionally disabled until the cluster has a larger worker preset.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```

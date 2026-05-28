@@ -69,14 +69,14 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: headlamp-https
+    - name: k8s-https
       protocol: HTTPS
       port: 443
-      hostname: "headlamp.panixida.ru"
+      hostname: "k8s.panixida.ru"
       tls:
         mode: Terminate
         certificateRefs:
-          - name: headlamp-panixida-ru-tls
+          - name: k8s-panixida-ru-tls
       allowedRoutes:
         namespaces:
           from: All
