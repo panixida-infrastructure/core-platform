@@ -24,7 +24,7 @@ Kubernetes version: v1.35.4+k0s.0
 Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
 Worker autoscaling: 4-6 nodes
-Quality preset:     1683, MSK 2 CPU / 4 GB / 60 GB
+Quality config:     MSK configurator 59, 2 CPU / 4 GB / 60 GB
 Quality autoscaling: 1-2 nodes
 CNI:                cilium
 Built-in ingress:   disabled

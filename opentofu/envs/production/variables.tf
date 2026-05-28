@@ -71,10 +71,28 @@ variable "k8s_worker_max_size" {
   default     = 6
 }
 
-variable "k8s_quality_worker_preset_id" {
-  description = "Timeweb Managed Kubernetes worker preset id for quality tools. 1683 is MSK 2 CPU / 4 GB / 60 GB."
+variable "k8s_quality_worker_configurator_id" {
+  description = "Timeweb Managed Kubernetes configurator id for quality workers. 59 is the MSK general NVMe configurator."
   type        = number
-  default     = 1683
+  default     = 59
+}
+
+variable "k8s_quality_worker_cpu" {
+  description = "CPU count for each quality worker node."
+  type        = number
+  default     = 2
+}
+
+variable "k8s_quality_worker_ram_mb" {
+  description = "RAM size in MB for each quality worker node."
+  type        = number
+  default     = 4096
+}
+
+variable "k8s_quality_worker_disk_mb" {
+  description = "Disk size in MB for each quality worker node."
+  type        = number
+  default     = 61440
 }
 
 variable "k8s_quality_worker_node_count" {
