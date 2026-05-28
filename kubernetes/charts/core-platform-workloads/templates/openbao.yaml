@@ -97,13 +97,29 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: openbao
+  name: openbao-http-redirect
   namespace: {{ .Values.openbao.namespace }}
 spec:
   parentRefs:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpSectionName }}
+  hostnames:
+    - {{ .Values.openbao.host }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openbao
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  parentRefs:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: {{ .Values.global.gateway.httpsSectionNames.secrets }}
