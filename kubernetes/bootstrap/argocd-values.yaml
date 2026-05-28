@@ -2,6 +2,9 @@ server:
   service:
     type: ClusterIP
 
+dex:
+  enabled: false
+
 configs:
   params:
     server.insecure: true
