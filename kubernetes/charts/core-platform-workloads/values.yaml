@@ -72,7 +72,7 @@ sonarqube:
     ce: -Xms128m -Xmx384m
     search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
   persistence:
-    enabled: true
+    enabled: false
   storageClassName: nvme.network-drives.csi.timeweb.cloud
   storageSize: 10Gi
   resources:

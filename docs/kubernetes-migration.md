@@ -82,7 +82,7 @@ SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
-SonarQube runs as a Kubernetes StatefulSet with a managed PostgreSQL database and a Timeweb NVMe network-drive PVC for local runtime data, extensions, and logs.
+SonarQube runs as a Kubernetes workload with a managed PostgreSQL database. Local runtime data, search indexes, extensions, and logs are pod-local; PostgreSQL remains the durable source of truth.
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 

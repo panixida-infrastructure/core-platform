@@ -81,4 +81,4 @@ sonar.panixida.ru
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class.
 
-SonarQube runs in Kubernetes with managed PostgreSQL for application data and a Timeweb NVMe network-drive PVC for local runtime data, extensions, and logs. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
+SonarQube runs in Kubernetes with managed PostgreSQL for application data. Its local runtime data, search indexes, extensions, and logs use pod-local storage; the database remains the durable source of truth. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
