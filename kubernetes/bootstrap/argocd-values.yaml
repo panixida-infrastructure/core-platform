@@ -5,6 +5,7 @@ server:
 configs:
   params:
     server.insecure: true
+    reposerver.git.request.timeout: 60s
   cm:
     url: https://argocd.panixida.ru
     oidc.config: |

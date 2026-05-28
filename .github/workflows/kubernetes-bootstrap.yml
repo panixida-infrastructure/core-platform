@@ -147,6 +147,10 @@ jobs:
             -f kubernetes/bootstrap/argocd-values.yaml \
             --wait \
             --timeout 15m
+          kubectl -n argocd rollout restart deployment/argo-cd-argocd-repo-server deployment/argo-cd-argocd-server statefulset/argo-cd-argocd-application-controller
+          kubectl -n argocd rollout status deployment/argo-cd-argocd-repo-server --timeout=5m
+          kubectl -n argocd rollout status deployment/argo-cd-argocd-server --timeout=5m
+          kubectl -n argocd rollout status statefulset/argo-cd-argocd-application-controller --timeout=5m
 
           headlamp_args=(
             upgrade --install headlamp headlamp/headlamp
