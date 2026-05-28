@@ -75,9 +75,9 @@ sonarqube:
       value: quality
       effect: NoSchedule
   javaOpts:
-    web: -Xms256m -Xmx768m
-    ce: -Xms256m -Xmx768m
-    search: -Xms1g -Xmx1g -XX:MaxDirectMemorySize=256m
+    web: -Xms128m -Xmx384m
+    ce: -Xms128m -Xmx384m
+    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
   persistence:
     enabled: false
   storageClassName: nvme.network-drives.csi.timeweb.cloud
@@ -85,9 +85,9 @@ sonarqube:
   resources:
     requests:
       cpu: 500m
-      memory: 2600Mi
+      memory: 1400Mi
     limits:
-      memory: 3584Mi
+      memory: 1792Mi
 
 observability:
   enabled: true

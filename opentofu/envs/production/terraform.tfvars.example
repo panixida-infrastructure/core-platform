@@ -10,10 +10,7 @@ k8s_worker_node_count = 4
 k8s_worker_min_size   = 4
 k8s_worker_max_size   = 6
 
-k8s_quality_worker_configurator_id = 59
-k8s_quality_worker_cpu             = 2
-k8s_quality_worker_ram_mb          = 4096
-k8s_quality_worker_disk_mb         = 61440
+k8s_quality_worker_preset_id  = 2951
 k8s_quality_worker_node_count = 1
 k8s_quality_worker_min_size   = 1
 k8s_quality_worker_max_size   = 2
