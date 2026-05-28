@@ -163,6 +163,10 @@ jobs:
           helm "${headlamp_args[@]}" \
             --wait \
             --timeout 10m
+          if kubectl -n headlamp get secret headlamp-oidc >/dev/null 2>&1; then
+            kubectl -n headlamp rollout restart deployment/headlamp
+            kubectl -n headlamp rollout status deployment/headlamp --timeout=5m
+          fi
 
       - name: Apply Argo CD root application
         if: inputs.apply_gitops_root
