@@ -127,6 +127,8 @@ data:
               severity: warning
             annotations:
               summary: Kubernetes node metrics are unavailable.
+              description: Node exporter metrics for one Kubernetes node have been unavailable for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: PlatformEndpointDown
             expr: probe_success{job="blackbox-platform",instance=~"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru"} == 0
             for: 5m
@@ -134,6 +136,8 @@ data:
               severity: warning
             annotations:
               summary: Platform endpoint is not reachable.
+              description: One public platform endpoint has failed blackbox checks for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: KubernetesNodeHighCpu
             expr: 100 * sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{id="/"}[5m])) / sum by (kubernetes_io_hostname) (machine_cpu_cores) > 85
             for: 10m
@@ -141,6 +145,8 @@ data:
               severity: warning
             annotations:
               summary: Kubernetes node CPU usage is high.
+              description: Node CPU usage has stayed above 85 percent for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
           - alert: KubernetesNodeHighMemory
             expr: 100 * sum by (kubernetes_io_hostname) (container_memory_working_set_bytes{id="/"}) / sum by (kubernetes_io_hostname) (machine_memory_bytes) > 90
             for: 10m
@@ -148,6 +154,8 @@ data:
               severity: warning
             annotations:
               summary: Kubernetes node memory usage is high.
+              description: Node memory usage has stayed above 90 percent for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -171,6 +179,7 @@ data:
             annotations:
               summary: Error-like Kubernetes logs were detected.
               description: VictoriaLogs found error-like log entries during the last evaluation window.
+              logs_url: https://grafana.panixida.ru/d/logs-and-traces/logs-and-traces
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -182,6 +191,8 @@ metadata:
     app.kubernetes.io/name: alertmanager
 data:
   alertmanager.yml: |
+    templates:
+      - /etc/alertmanager/telegram.tmpl
     route:
       receiver: telegram
       group_by: ["alertname", "severity", "instance", "kubernetes_io_hostname"]
@@ -194,8 +205,41 @@ data:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
             http_config:
               proxy_url: http://telegram-egress.observability.svc.cluster.local:8888
+  telegram.tmpl: |
+    {{ "{{" }} define "telegram.panixida.message" {{ "}}" -}}
+    {{ "{{" }}- if gt (len .Alerts.Firing) 0 {{ "}}" -}}
+    🔥 <b>Alerts Firing</b> 🔥
+    {{ "{{" }}- else {{ "}}" -}}
+    ✅ <b>Alerts Resolved</b> ✅
+    {{ "{{" }}- end {{ "}}" }}
+
+    {{ "{{" }}- range .Alerts {{ "}}" }}
+    ---
+    {{ "{{" }}- if eq .Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} .Labels.alertname {{ "}}" }}</b>
+    {{ "{{" }}- with .Labels.severity {{ "}}" }}
+    {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with .Annotations.summary {{ "}}" }}
+    📝 {{ "{{" }} . {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with .Annotations.description {{ "}}" }}
+    📄 {{ "{{" }} . {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with .Labels.instance {{ "}}" }}
+    📍 <code>{{ "{{" }} . {{ "}}" }}</code>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with .Labels.kubernetes_io_hostname {{ "}}" }}
+    🖥 <code>{{ "{{" }} . {{ "}}" }}</code>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- if or .Annotations.dashboard_url .Annotations.logs_url {{ "}}" }}
+    🛠 {{ "{{" }} with .Annotations.dashboard_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Grafana</a>{{ "{{" }} end {{ "}}" }}{{ "{{" }} if and .Annotations.dashboard_url .Annotations.logs_url {{ "}}" }} | {{ "{{" }} end {{ "}}" }}{{ "{{" }} with .Annotations.logs_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Logs</a>{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
 ---
 apiVersion: v1
 kind: ConfigMap
