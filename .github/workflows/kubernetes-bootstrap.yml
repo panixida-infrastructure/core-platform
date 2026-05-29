@@ -288,5 +288,9 @@ jobs:
             --wait \
             --timeout 10m
 
+          kubectl -n csi-driver-timeweb-cloud set image daemonset/csi-driver-timeweb-cloud-node \
+            node-driver-registrar=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
+          kubectl -n csi-driver-timeweb-cloud rollout status daemonset/csi-driver-timeweb-cloud-node --timeout=10m
+
           kubectl get csidriver network-drives.csi.timeweb.cloud
           kubectl get storageclass
