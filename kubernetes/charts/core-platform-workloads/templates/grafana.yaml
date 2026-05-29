@@ -162,7 +162,7 @@ data:
           "pluginVersion": "13.0.1",
           "targets": [
             {
-              "expr": "avg by (instance) (probe_success{job=\"blackbox-platform\"})",
+              "expr": "avg by (instance) (probe_success{job=\"blackbox-platform\",platform_endpoint=\"true\"})",
               "legendFormat": "{{`{{instance}}`}}",
               "refId": "A"
             }
@@ -218,7 +218,7 @@ data:
           },
           "targets": [
             {
-              "expr": "min by (instance) ((probe_ssl_earliest_cert_expiry{job=\"blackbox-platform\"} - time()) / 86400)",
+              "expr": "min by (instance) ((probe_ssl_earliest_cert_expiry{job=\"blackbox-platform\",platform_endpoint=\"true\"} - time()) / 86400)",
               "legendFormat": "{{`{{instance}}`}}",
               "refId": "A"
             }
@@ -578,7 +578,7 @@ data:
           },
           "targets": [
             {
-              "expr": "avg by (instance) (probe_duration_seconds{job=\"blackbox-platform\"})",
+              "expr": "avg by (instance) (probe_duration_seconds{job=\"blackbox-platform\",platform_endpoint=\"true\"})",
               "legendFormat": "{{`{{instance}}`}}",
               "refId": "A"
             }

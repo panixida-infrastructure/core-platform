@@ -83,6 +83,8 @@ data:
             target_label: __param_target
           - source_labels: [__param_target]
             target_label: instance
+          - target_label: platform_endpoint
+            replacement: "true"
           - target_label: __address__
             replacement: blackbox-exporter.observability.svc.cluster.local:9115
 ---
@@ -126,7 +128,7 @@ data:
             annotations:
               summary: Kubernetes node metrics are unavailable.
           - alert: PlatformEndpointDown
-            expr: probe_success{job="blackbox-platform"} == 0
+            expr: probe_success{job="blackbox-platform",platform_endpoint="true"} == 0
             for: 5m
             labels:
               severity: warning
