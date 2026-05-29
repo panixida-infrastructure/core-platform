@@ -1,0 +1,70 @@
+name: Timeweb CSI Repair
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type repair-timeweb-csi to patch the Timeweb CSI node sidecars
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: timeweb-csi-repair-production
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: /tmp/core-platform.kubeconfig
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "repair-timeweb-csi" ]; then
+            echo "::error::Confirmation must be exactly repair-timeweb-csi"
+            exit 1
+          fi
+
+      - name: Install CLI tools
+        run: |
+          set -euo pipefail
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+            | sudo gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+          sudo chmod a+r /etc/apt/keyrings/opentofu-repo.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" \
+            | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y tofu
+          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
+          sudo install -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Write kubeconfig from OpenTofu state
+        working-directory: opentofu/envs/production
+        run: |
+          set -euo pipefail
+          tofu init -input=false
+          tofu output -raw core_platform_kubeconfig > "$KUBECONFIG"
+          chmod 600 "$KUBECONFIG"
+          kubectl get nodes -o wide
+
+      - name: Patch Timeweb CSI registrar image
+        run: |
+          set -euo pipefail
+          kubectl -n csi-driver-timeweb-cloud set image daemonset/csi-driver-timeweb-cloud-node \
+            node-driver-registrar=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
+          kubectl -n csi-driver-timeweb-cloud rollout status daemonset/csi-driver-timeweb-cloud-node --timeout=15m
+          kubectl -n csi-driver-timeweb-cloud get pods -o wide
+          kubectl get csidriver network-drives.csi.timeweb.cloud
