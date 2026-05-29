@@ -234,6 +234,15 @@ spec:
         app.kubernetes.io/name: telegram-egress
         app.kubernetes.io/part-of: core-platform
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - worker-192.168.10.6
       containers:
         - name: gluetun
           image: {{ .Values.observability.images.gluetun | quote }}
