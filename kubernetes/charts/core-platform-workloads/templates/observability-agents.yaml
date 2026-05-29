@@ -144,6 +144,15 @@ spec:
       annotations:
         checksum/observability-config: {{ include (print $.Template.BasePath "/observability-config.yaml") . | sha256sum }}
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - worker-192.168.10.6
       containers:
         - name: vmalert
           image: {{ .Values.observability.images.vmalert | quote }}
@@ -190,6 +199,15 @@ spec:
       annotations:
         checksum/observability-config: {{ include (print $.Template.BasePath "/observability-config.yaml") . | sha256sum }}
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - worker-192.168.10.6
       containers:
         - name: vmalert
           image: {{ .Values.observability.images.vmalert | quote }}
