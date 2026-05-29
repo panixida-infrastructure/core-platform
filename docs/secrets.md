@@ -64,6 +64,7 @@ The managed PostgreSQL DBaaS exporter credentials also live in `secret/core-plat
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD
+OBSERVABILITY_TELEGRAM_BOT_TOKEN
 ```
 
 Managed PostgreSQL connection settings are stored in OpenBao with the service secrets:

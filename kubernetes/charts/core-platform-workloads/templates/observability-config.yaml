@@ -134,6 +134,43 @@ data:
               severity: warning
             annotations:
               summary: Platform endpoint is not reachable.
+          - alert: KubernetesNodeHighCpu
+            expr: 100 * sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{id="/"}[5m])) / sum by (kubernetes_io_hostname) (machine_cpu_cores) > 85
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Kubernetes node CPU usage is high.
+          - alert: KubernetesNodeHighMemory
+            expr: 100 * sum by (kubernetes_io_hostname) (container_memory_working_set_bytes{id="/"}) / sum by (kubernetes_io_hostname) (machine_memory_bytes) > 90
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Kubernetes node memory usage is high.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vmalert-log-rules
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vmalert-logs
+data:
+  rules.yml: |
+    groups:
+      - name: kubernetes-logs
+        type: vlogs
+        interval: 1m
+        rules:
+          - alert: KubernetesErrorLogs
+            expr: 'error OR ERROR OR exception OR Exception OR fatal OR FATAL | stats count() as error_logs | filter error_logs:>0'
+            labels:
+              severity: warning
+            annotations:
+              summary: Error-like Kubernetes logs were detected.
+              description: VictoriaLogs found error-like log entries during the last evaluation window.
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -146,13 +183,17 @@ metadata:
 data:
   alertmanager.yml: |
     route:
-      receiver: default
-      group_by: ["alertname", "instance"]
+      receiver: telegram
+      group_by: ["alertname", "severity", "instance", "kubernetes_io_hostname"]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
     receivers:
-      - name: default
+      - name: telegram
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            send_resolved: true
 ---
 apiVersion: v1
 kind: ConfigMap

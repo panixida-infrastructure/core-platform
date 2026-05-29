@@ -102,6 +102,9 @@ observability:
     - https://identity.panixida.ru
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru
+  alerts:
+    telegram:
+      chatId: "-1003738995665"
   images:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0
