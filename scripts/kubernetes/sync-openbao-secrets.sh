@@ -202,7 +202,8 @@ apply_secret observability grafana-secrets "$observability_secret" \
 apply_secret observability observability-secrets "$observability_secret" \
   OBSERVABILITY_VM_REMOTE_WRITE_USERNAME \
   OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD \
-  OBSERVABILITY_TELEGRAM_BOT_TOKEN
+  OBSERVABILITY_TELEGRAM_BOT_TOKEN \
+  OBSERVABILITY_WIREGUARD_CONF
 
 apply_secret quality sonarqube-secrets "$sonarqube_secret" \
   SONAR_DB_HOST \

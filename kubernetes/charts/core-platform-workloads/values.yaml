@@ -113,6 +113,7 @@ observability:
     vlagent: victoriametrics/vlagent:v1.50.0
     vmalert: victoriametrics/vmalert:v1.143.0
     alertmanager: prom/alertmanager:v0.32.1
+    gluetun: qmcgaw/gluetun:v3.40.0
     blackboxExporter: prom/blackbox-exporter:v0.28.0
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
   storage:
@@ -160,6 +161,12 @@ observability:
     alertmanager:
       requests:
         cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    telegramEgress:
+      requests:
+        cpu: 25m
         memory: 64Mi
       limits:
         memory: 256Mi

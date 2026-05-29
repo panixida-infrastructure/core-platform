@@ -194,6 +194,8 @@ data:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             send_resolved: true
+            http_config:
+              proxy_url: http://telegram-egress.observability.svc.cluster.local:8888
 ---
 apiVersion: v1
 kind: ConfigMap
