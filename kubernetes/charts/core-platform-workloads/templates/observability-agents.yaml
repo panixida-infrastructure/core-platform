@@ -248,6 +248,7 @@ spec:
           args:
             - --config.file=/etc/alertmanager/alertmanager.yml
             - --storage.path=/alertmanager
+            - --log.level=error
           ports:
             - name: http
               containerPort: 9093
