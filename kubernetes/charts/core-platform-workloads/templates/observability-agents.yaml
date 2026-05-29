@@ -141,9 +141,6 @@ spec:
       labels:
         app.kubernetes.io/name: vmalert
         app.kubernetes.io/part-of: core-platform
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8880"
     spec:
       containers:
         - name: vmalert
@@ -155,7 +152,6 @@ spec:
             - -datasource.basicAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
             - -datasource.basicAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
             - -notifier.url=http://alertmanager.observability.svc.cluster.local:9093
-            - -httpListenAddr=:8880
           envFrom:
             - secretRef:
                 name: {{ .Values.observability.secretName }}
@@ -163,9 +159,6 @@ spec:
             - name: rules
               mountPath: /etc/vmalert
               readOnly: true
-          ports:
-            - name: http
-              containerPort: 8880
           resources:
             {{- toYaml .Values.observability.resources.vmalert | nindent 12 }}
       volumes:
