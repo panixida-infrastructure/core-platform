@@ -19,7 +19,6 @@ spec:
         app.kubernetes.io/name: vmagent
         app.kubernetes.io/part-of: core-platform
       annotations:
-        checksum/blackbox-targets: {{ join "," .Values.observability.blackboxTargets | sha256sum | quote }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "8429"
     spec:
@@ -143,7 +142,6 @@ spec:
         app.kubernetes.io/name: vmalert
         app.kubernetes.io/part-of: core-platform
       annotations:
-        checksum/blackbox-targets: {{ join "," .Values.observability.blackboxTargets | sha256sum | quote }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "8880"
     spec:

@@ -128,7 +128,7 @@ data:
             annotations:
               summary: Kubernetes node metrics are unavailable.
           - alert: PlatformEndpointDown
-            expr: probe_success{job="blackbox-platform",platform_endpoint="true"} == 0
+            expr: probe_success{job="blackbox-platform",instance=~"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru"} == 0
             for: 5m
             labels:
               severity: warning
