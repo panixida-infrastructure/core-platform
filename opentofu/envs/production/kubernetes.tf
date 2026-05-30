@@ -40,7 +40,6 @@ resource "twc_k8s_node_group" "core_platform_default" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [node_count]
   }
 }
 
