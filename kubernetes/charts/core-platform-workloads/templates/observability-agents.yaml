@@ -340,6 +340,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9093"
     spec:
+      securityContext:
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: alertmanager
           image: {{ .Values.observability.images.alertmanager | quote }}
