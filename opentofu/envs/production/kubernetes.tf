@@ -59,12 +59,6 @@ resource "twc_k8s_node_group" "core_platform_quality" {
     value = "quality"
   }
 
-  taints {
-    key    = "panixida.ru/dedicated"
-    value  = "quality"
-    effect = "NoSchedule"
-  }
-
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [node_count]

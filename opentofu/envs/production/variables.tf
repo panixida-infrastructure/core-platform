@@ -56,13 +56,13 @@ variable "k8s_worker_preset_id" {
 variable "k8s_worker_node_count" {
   description = "Initial worker node count. Keep in sync with autoscaling min size on first create."
   type        = number
-  default     = 4
+  default     = 3
 }
 
 variable "k8s_worker_min_size" {
   description = "Minimum autoscaling size for the default worker node group."
   type        = number
-  default     = 4
+  default     = 3
 }
 
 variable "k8s_worker_max_size" {
@@ -78,19 +78,19 @@ variable "k8s_quality_worker_preset_id" {
 }
 
 variable "k8s_quality_worker_node_count" {
-  description = "Initial worker node count for the quality node group."
+  description = "Initial worker node count for the shared quality node group."
   type        = number
   default     = 1
 }
 
 variable "k8s_quality_worker_min_size" {
-  description = "Minimum autoscaling size for the quality node group."
+  description = "Minimum autoscaling size for the shared quality node group."
   type        = number
   default     = 1
 }
 
 variable "k8s_quality_worker_max_size" {
-  description = "Maximum autoscaling size for the quality node group."
+  description = "Maximum autoscaling size for the shared quality node group."
   type        = number
   default     = 2
 }
