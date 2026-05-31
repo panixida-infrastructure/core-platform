@@ -64,7 +64,8 @@ jobs:
         run: |
           set -euo pipefail
           kubectl -n csi-driver-timeweb-cloud set image daemonset/csi-driver-timeweb-cloud-node \
-            node-driver-registrar=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.6.3
+            liveness-probe=rancher/mirrored-sig-storage-livenessprobe:v2.12.0 \
+            node-driver-registrar=rancher/mirrored-sig-storage-csi-node-driver-registrar:v2.12.0
           kubectl -n csi-driver-timeweb-cloud rollout status daemonset/csi-driver-timeweb-cloud-node --timeout=15m
           kubectl -n csi-driver-timeweb-cloud get pods -o wide
           kubectl get csidriver network-drives.csi.timeweb.cloud
