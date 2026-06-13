@@ -101,7 +101,7 @@ observability:
   persistence:
     enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud
-  blackboxTargets:
+  httpCheckTargets:
     - https://argocd.panixida.ru
     - https://k8s.panixida.ru
     - https://identity.panixida.ru
@@ -114,12 +114,9 @@ observability:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0
     victoriatraces: victoriametrics/victoria-traces:v0.9.0
-    vmagent: victoriametrics/vmagent:v1.143.0
-    vlagent: victoriametrics/vlagent:v1.50.0
     vmalert: victoriametrics/vmalert:v1.143.0
     alertmanager: prom/alertmanager:v0.32.1
     gluetun: ghcr.io/qdm12/gluetun:v3.40.0
-    blackboxExporter: prom/blackbox-exporter:v0.28.0
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
   storage:
     victoriametrics: 20Gi
@@ -145,18 +142,6 @@ observability:
         memory: 128Mi
       limits:
         memory: 512Mi
-    vmagent:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        memory: 512Mi
-    vlagent:
-      requests:
-        cpu: 50m
-        memory: 8Mi
-      limits:
-        memory: 128Mi
     vmalert:
       requests:
         cpu: 50m
@@ -175,15 +160,9 @@ observability:
         memory: 64Mi
       limits:
         memory: 256Mi
-    blackboxExporter:
-      requests:
-        cpu: 25m
-        memory: 64Mi
-      limits:
-        memory: 128Mi
     otelCollector:
       requests:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 100m
+        memory: 256Mi
       limits:
-        memory: 512Mi
+        memory: 768Mi

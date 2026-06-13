@@ -28,6 +28,12 @@ data:
         url: http://victorialogs.observability.svc.cluster.local:9428
         basicAuth: true
         basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
+        jsonData:
+          derivedFields:
+            - name: Trace
+              matcherRegex: 'trace[_\.]?id[=:\"]+([a-fA-F0-9]{32})'
+              datasourceUid: victoriatraces
+              url: '$${__value.raw}'
         secureJsonData:
           basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
       - name: VictoriaTraces
@@ -35,6 +41,15 @@ data:
         type: jaeger
         access: proxy
         url: http://victoriatraces.observability.svc.cluster.local:10428/select/jaeger
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: victorialogs
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+            filterByTraceID: true
+            filterBySpanID: false
+            customQuery: true
+            query: 'trace_id:"$${__trace.traceId}" OR traceId:"$${__trace.traceId}"'
       - name: Alertmanager
         uid: alertmanager
         type: alertmanager
@@ -162,8 +177,8 @@ data:
           "pluginVersion": "13.0.1",
           "targets": [
             {
-              "expr": "avg by (instance) (probe_success{job=\"blackbox-platform\",instance=~\"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru\"})",
-              "legendFormat": "{{`{{instance}}`}}",
+              "expr": "max by (http_url) (httpcheck_status{http_status_class=\"2xx\"})",
+              "legendFormat": "{{`{{http_url}}`}}",
               "refId": "A"
             }
           ],
@@ -218,8 +233,8 @@ data:
           },
           "targets": [
             {
-              "expr": "min by (instance) ((probe_ssl_earliest_cert_expiry{job=\"blackbox-platform\",instance=~\"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru\"} - time()) / 86400)",
-              "legendFormat": "{{`{{instance}}`}}",
+              "expr": "min by (http_url) (httpcheck_tls_cert_remaining_seconds / 86400)",
+              "legendFormat": "{{`{{http_url}}`}}",
               "refId": "A"
             }
           ],
@@ -534,17 +549,22 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(vmagent_remotewrite_rows_sent_total[5m])",
-              "legendFormat": "remote write rows/s",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points[5m]))",
+              "legendFormat": "metrics -> {{`{{exporter}}`}}",
               "refId": "A"
             },
             {
-              "expr": "rate(vm_promscrape_scraped_samples_sum[5m])",
-              "legendFormat": "scraped samples/s",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records[5m]))",
+              "legendFormat": "logs -> {{`{{exporter}}`}}",
               "refId": "B"
+            },
+            {
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans[5m]))",
+              "legendFormat": "traces -> {{`{{exporter}}`}}",
+              "refId": "C"
             }
           ],
-          "title": "vmagent throughput",
+          "title": "OpenTelemetry Collector export throughput",
           "type": "timeseries"
         },
         {
@@ -578,12 +598,12 @@ data:
           },
           "targets": [
             {
-              "expr": "avg by (instance) (probe_duration_seconds{job=\"blackbox-platform\",instance=~\"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru\"})",
-              "legendFormat": "{{`{{instance}}`}}",
+              "expr": "avg by (http_url) (httpcheck_duration_milliseconds / 1000)",
+              "legendFormat": "{{`{{http_url}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Blackbox probe duration",
+          "title": "HTTP check duration",
           "type": "timeseries"
         },
         {
@@ -1027,7 +1047,7 @@ data:
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "Trace ingestion is handled by OpenTelemetry Collector and VictoriaTraces. Use the dashboard link or Grafana Explore with the VictoriaTraces datasource to search by service, operation, or trace id.",
+            "content": "Applications send OTLP metrics, logs, and traces to OpenTelemetry Collector. VictoriaLogs log rows should include trace_id when logs are emitted inside an active trace, which enables jumping from logs to traces and from traces back to matching logs.",
             "mode": "markdown"
           },
           "pluginVersion": "13.0.1",
@@ -1067,7 +1087,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Recent Kubernetes logs",
+          "title": "Recent application logs",
           "type": "logs"
         }
       ],
@@ -1088,6 +1108,303 @@ data:
       "timezone": "browser",
       "title": "Logs and Traces",
       "uid": "logs-and-traces",
+      "version": 1,
+      "weekStart": ""
+    }
+  application-telemetry.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": false,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "links": [
+        {
+          "asDropdown": false,
+          "icon": "external link",
+          "includeVars": false,
+          "keepTime": true,
+          "tags": [],
+          "targetBlank": false,
+          "title": "Explore logs",
+          "type": "link",
+          "url": "/explore?left=%7B%22datasource%22:%22victorialogs%22%7D"
+        },
+        {
+          "asDropdown": false,
+          "icon": "external link",
+          "includeVars": false,
+          "keepTime": true,
+          "tags": [],
+          "targetBlank": false,
+          "title": "Explore traces",
+          "type": "link",
+          "url": "/explore?left=%7B%22datasource%22:%22victoriatraces%22%7D"
+        }
+      ],
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application request rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p95 {{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application request latency p95",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_response_status_code}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application 5xx rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "max by (service_name) (process_runtime_dotnet_gc_heap_size_bytes)",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET GC heap size",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, gc_heap_generation) (rate(process_runtime_dotnet_gc_collections_count_total[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} gen {{`{{gc_heap_generation}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET GC collections",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "id": 6,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": true,
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "expr": "*",
+              "query": "*",
+              "refId": "A"
+            }
+          ],
+          "title": "Recent application logs",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 41,
+      "tags": [
+        "application",
+        "opentelemetry"
+      ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "title": "Application Telemetry",
+      "uid": "application-telemetry",
       "version": 1,
       "weekStart": ""
     }

@@ -2,110 +2,172 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: vmagent-scrape
+  name: otel-collector
   namespace: {{ .Values.observability.namespace }}
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
-    app.kubernetes.io/name: vmagent
+    app.kubernetes.io/name: otel-collector
 data:
-  scrape.yml: |
-    global:
-      scrape_interval: 30s
-      scrape_timeout: 10s
-    scrape_configs:
-      - job_name: kubernetes-nodes
-        scheme: https
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        tls_config:
-          insecure_skip_verify: true
-        kubernetes_sd_configs:
-          - role: node
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
-          - target_label: __address__
-            replacement: kubernetes.default.svc:443
-          - source_labels: [__meta_kubernetes_node_name]
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/$1/proxy/metrics
-      - job_name: kubernetes-cadvisor
-        scheme: https
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        tls_config:
-          insecure_skip_verify: true
-        kubernetes_sd_configs:
-          - role: node
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
-          - target_label: __address__
-            replacement: kubernetes.default.svc:443
-          - source_labels: [__meta_kubernetes_node_name]
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
-      - job_name: kubernetes-pods
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            action: keep
-            regex: "true"
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-          - action: labelmap
-            regex: __meta_kubernetes_pod_label_(.+)
-          - source_labels: [__meta_kubernetes_namespace]
-            action: replace
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
-      - job_name: blackbox-platform
-        metrics_path: /probe
-        params:
-          module: [http_2xx]
-        static_configs:
-          - targets:
-              {{- range .Values.observability.blackboxTargets }}
+  config.yml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      basicauth/victoria:
+        client_auth:
+          username: ${env:OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
+          password: ${env:OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+      prometheus/kubernetes:
+        config:
+          global:
+            scrape_interval: 30s
+            scrape_timeout: 10s
+          scrape_configs:
+            - job_name: kubernetes-nodes
+              scheme: https
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              tls_config:
+                insecure_skip_verify: true
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - target_label: __address__
+                  replacement: kubernetes.default.svc:443
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                  replacement: /api/v1/nodes/$$1/proxy/metrics
+            - job_name: kubernetes-cadvisor
+              scheme: https
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              tls_config:
+                insecure_skip_verify: true
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - target_label: __address__
+                  replacement: kubernetes.default.svc:443
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                  replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
+            - job_name: kubernetes-pods
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                  action: keep
+                  regex: "true"
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                  action: replace
+                  target_label: __metrics_path__
+                  regex: (.+)
+                - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                  action: replace
+                  regex: ([^:]+)(?::\d+)?;(\d+)
+                  replacement: $$1:$$2
+                  target_label: __address__
+                - action: labelmap
+                  regex: __meta_kubernetes_pod_label_(.+)
+                - source_labels: [__meta_kubernetes_namespace]
+                  action: replace
+                  target_label: kubernetes_namespace
+                - source_labels: [__meta_kubernetes_pod_name]
+                  action: replace
+                  target_label: kubernetes_pod_name
+
+      http_check/platform:
+        collection_interval: 30s
+        metrics:
+          httpcheck.dns.lookup.duration:
+            enabled: true
+          httpcheck.client.connection.duration:
+            enabled: true
+          httpcheck.tls.handshake.duration:
+            enabled: true
+          httpcheck.client.request.duration:
+            enabled: true
+          httpcheck.response.duration:
+            enabled: true
+          httpcheck.tls.cert_remaining:
+            enabled: true
+          httpcheck.response.size:
+            enabled: true
+        targets:
+          - method: GET
+            endpoints:
+              {{- range .Values.observability.httpCheckTargets }}
               - {{ . | quote }}
               {{- end }}
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: platform_endpoint
-            replacement: "true"
-          - target_label: __address__
-            replacement: blackbox-exporter.observability.svc.cluster.local:9115
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: blackbox-exporter
-  namespace: {{ .Values.observability.namespace }}
-  labels:
-    {{- include "core-platform-workloads.labels" . | nindent 4 }}
-    app.kubernetes.io/name: blackbox-exporter
-data:
-  blackbox.yml: |
-    modules:
-      http_2xx:
-        prober: http
+
+    processors:
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource/core-platform:
+        attributes:
+          - key: platform.name
+            value: core-platform
+            action: upsert
+      batch:
         timeout: 5s
-        http:
-          valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-          follow_redirects: true
-          preferred_ip_protocol: ip4
+        send_batch_size: 8192
+
+    exporters:
+      otlphttp/victoriametrics:
+        compression: gzip
+        metrics_endpoint: http://victoriametrics.observability.svc.cluster.local:8428/opentelemetry/v1/metrics
+        auth:
+          authenticator: basicauth/victoria
+      otlphttp/victorialogs:
+        compression: gzip
+        logs_endpoint: http://victorialogs.observability.svc.cluster.local:9428/insert/opentelemetry/v1/logs
+        headers:
+          VL-Stream-Fields: service.name,deployment.environment,platform.name
+        auth:
+          authenticator: basicauth/victoria
+      otlphttp/victoriatraces:
+        compression: gzip
+        traces_endpoint: http://victoriatraces.observability.svc.cluster.local:10428/insert/opentelemetry/v1/traces
+
+    service:
+      extensions: [health_check, basicauth/victoria]
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+                    without_type_suffix: true
+                    without_units: true
+      pipelines:
+        metrics:
+          receivers: [otlp, prometheus/kubernetes, http_check/platform]
+          processors: [memory_limiter, resource/core-platform, batch]
+          exporters: [otlphttp/victoriametrics]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resource/core-platform, batch]
+          exporters: [otlphttp/victorialogs]
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resource/core-platform, batch]
+          exporters: [otlphttp/victoriatraces]
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -127,16 +189,16 @@ data:
               severity: warning
             annotations:
               summary: Kubernetes node metrics are unavailable.
-              description: Node exporter metrics for one Kubernetes node have been unavailable for at least 5 minutes.
+              description: Kubelet node metrics have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: PlatformEndpointDown
-            expr: probe_success{job="blackbox-platform",instance=~"https://(argocd|grafana|identity|k8s|secrets)\\.panixida\\.ru"} == 0
+            expr: max by (http_url) (httpcheck_status{http_status_class="2xx"}) == 0
             for: 5m
             labels:
               severity: warning
             annotations:
               summary: Platform endpoint is not reachable.
-              description: One public platform endpoint has failed blackbox checks for at least 5 minutes.
+              description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: KubernetesNodeHighCpu
             expr: 100 * sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{id="/"}[5m])) / sum by (kubernetes_io_hostname) (machine_cpu_cores) > 85
@@ -177,8 +239,8 @@ data:
             labels:
               severity: warning
             annotations:
-              summary: Error-like Kubernetes logs were detected.
-              description: VictoriaLogs found error-like log entries during the last evaluation window.
+              summary: Error-like application logs were detected.
+              description: VictoriaLogs found OTLP error-like log entries during the last evaluation window.
               logs_url: https://grafana.panixida.ru/d/logs-and-traces/logs-and-traces
 ---
 apiVersion: v1
@@ -240,30 +302,4 @@ data:
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector
-  namespace: {{ .Values.observability.namespace }}
-  labels:
-    {{- include "core-platform-workloads.labels" . | nindent 4 }}
-    app.kubernetes.io/name: otel-collector
-data:
-  config.yml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-    exporters:
-      otlphttp/victoriatraces:
-        endpoint: http://victoriatraces.observability.svc.cluster.local:10428/insert/opentelemetry
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          exporters: [otlphttp/victoriatraces]
 {{- end }}

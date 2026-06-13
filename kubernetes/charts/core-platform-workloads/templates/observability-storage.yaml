@@ -29,6 +29,7 @@ spec:
           args:
             - -storageDataPath=/storage
             - -retentionPeriod=30d
+            - -opentelemetry.usePrometheusNaming=true
             - -httpAuth.username=$(OBSERVABILITY_VM_REMOTE_WRITE_USERNAME)
             - -httpAuth.password=$(OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD)
           envFrom:

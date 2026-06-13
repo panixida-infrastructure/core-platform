@@ -80,6 +80,18 @@ k8s.panixida.ru
 sonar.panixida.ru
 ```
 
-VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, vmagent, vlagent, vmalert, and OpenTelemetry Collector. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, logs, and traces.
+VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, OpenTelemetry Collector, and vmalert. OpenTelemetry Collector receives application OTLP metrics/logs/traces, scrapes kubelet and cAdvisor metrics through Kubernetes service discovery, and runs HTTP endpoint checks through the `http_check` receiver. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, application OpenTelemetry metrics, logs, and traces.
+
+Applications should send OTLP traffic to the in-cluster collector:
+
+```text
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc.cluster.local:4317
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+```
+
+If an application uses OTLP/HTTP instead of OTLP/gRPC, use port `4318` and protocol `http/protobuf`.
+
+Kubernetes stdout/stderr logs are not tailed from every node after removing `vlagent`.
+Application logs should be exported through OTLP by the application runtime.
 
 SonarQube uses managed PostgreSQL for application data, but the Kubernetes workload is disabled while the cluster stays on the free 2 GB worker preset. Keycloak SSO for SonarQube is kept in code and uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
