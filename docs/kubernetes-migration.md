@@ -91,7 +91,7 @@ SonarQube has Kubernetes manifests and a managed PostgreSQL database, but the wo
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
-OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The Kubernetes OpenBao instance has been initialized and unsealed on the PostgreSQL backend, and current KV data has been copied from the legacy file-backed OpenBao before switching traffic.
+OpenBao gets a dedicated managed PostgreSQL database and user named `openbao` / `openbao_user`. The Kubernetes OpenBao instance has been initialized on the PostgreSQL backend, migrated to static auto-unseal, and current KV data has been copied from the legacy file-backed OpenBao before switching traffic.
 
 The Kubernetes OpenBao workload uses the managed PostgreSQL backend from the first start. Keep bootstrap material outside Git.
 

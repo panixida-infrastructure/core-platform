@@ -18,10 +18,19 @@ The Kubernetes PostgreSQL-backed OpenBao bootstrap file is also stored outside G
 C:\Users\mixai\Desktop\Infrastructure\openbao-kubernetes-bootstrap.json
 ```
 
-The repository GitHub Actions secret `OPENBAO_UNSEAL_KEY` contains the Kubernetes OpenBao
-unseal key from that bootstrap file. The `OpenBao Unseal` workflow uses it as a
-break-glass/auto-recovery mechanism when the Kubernetes pod restarts and OpenBao comes
-back sealed. The key must not be committed to Git.
+The repository GitHub Actions secret `OPENBAO_STATIC_SEAL_KEY` contains the 32-byte
+static auto-unseal key for the Kubernetes OpenBao instance. `Kubernetes Secrets Sync`
+maps it into the Kubernetes secret `secrets/openbao-static-seal`, and OpenBao reads it
+through the `seal "static"` configuration block. A local copy is stored outside Git:
+
+```text
+C:\Users\mixai\Desktop\Infrastructure\openbao-static-seal-key.txt
+```
+
+This key is not an OpenBao login credential and does not replace Keycloak/OIDC access,
+but it is required for OpenBao to decrypt its barrier key after pod restarts. If this
+key is lost together with the Kubernetes secret, the PostgreSQL-backed OpenBao data
+cannot be auto-unsealed from backup.
 
 This repository keeps only OpenTofu state backend secrets in repository secrets:
 
@@ -37,6 +46,7 @@ Application/service deploy secrets are stored in OpenBao KV v2 and read by GitHu
 ## Initial OpenBao Steps
 
 The Kubernetes OpenBao instance uses the managed PostgreSQL backend. It has been initialized and unsealed, and `secret/core-platform/*` KV data has been copied from the legacy file-backed instance.
+It was later migrated from Shamir seal to static auto-unseal.
 
 Initial setup should be done once:
 
