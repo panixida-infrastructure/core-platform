@@ -18,6 +18,11 @@ The Kubernetes PostgreSQL-backed OpenBao bootstrap file is also stored outside G
 C:\Users\mixai\Desktop\Infrastructure\openbao-kubernetes-bootstrap.json
 ```
 
+The repository GitHub Actions secret `OPENBAO_UNSEAL_KEY` contains the Kubernetes OpenBao
+unseal key from that bootstrap file. The `OpenBao Unseal` workflow uses it as a
+break-glass/auto-recovery mechanism when the Kubernetes pod restarts and OpenBao comes
+back sealed. The key must not be committed to Git.
+
 This repository keeps only OpenTofu state backend secrets in repository secrets:
 
 ```text

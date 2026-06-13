@@ -1,0 +1,79 @@
+name: OpenBao Unseal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type unseal-openbao to unseal OpenBao
+        required: true
+        type: string
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openbao-unseal-production
+  cancel-in-progress: false
+
+env:
+  OPENBAO_ADDR: https://secrets.panixida.ru
+  OPENBAO_UNSEAL_KEY: ${{ secrets.OPENBAO_UNSEAL_KEY }}
+
+jobs:
+  unseal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.confirm }}" != "unseal-openbao" ]; then
+            echo "::error::Confirmation must be exactly unseal-openbao"
+            exit 1
+          fi
+
+      - name: Check required secret
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENBAO_UNSEAL_KEY:-}" ]; then
+            echo "::error::OPENBAO_UNSEAL_KEY is not available"
+            exit 1
+          fi
+
+      - name: Unseal OpenBao if needed
+        run: |
+          set -euo pipefail
+
+          status_json="$(curl -fsS "${OPENBAO_ADDR}/v1/sys/seal-status")"
+          initialized="$(jq -r '.initialized' <<<"$status_json")"
+          sealed="$(jq -r '.sealed' <<<"$status_json")"
+
+          if [ "$initialized" != "true" ]; then
+            echo "::error::OpenBao is not initialized"
+            exit 1
+          fi
+
+          if [ "$sealed" != "true" ]; then
+            echo "OpenBao is already unsealed"
+            jq '{initialized, sealed, standby, version}' <<<"$status_json"
+            exit 0
+          fi
+
+          unseal_response="$(
+            jq -n --arg key "$OPENBAO_UNSEAL_KEY" '{key: $key}' \
+              | curl -fsS -X POST \
+                  -H "Content-Type: application/json" \
+                  --data-binary @- \
+                  "${OPENBAO_ADDR}/v1/sys/unseal"
+          )"
+
+          sealed_after="$(jq -r '.sealed' <<<"$unseal_response")"
+          if [ "$sealed_after" != "false" ]; then
+            echo "::error::OpenBao is still sealed after unseal attempt"
+            jq '{sealed, progress, t, n, version}' <<<"$unseal_response"
+            exit 1
+          fi
+
+          echo "OpenBao unsealed successfully"
+          jq '{sealed, progress, t, n, version}' <<<"$unseal_response"
