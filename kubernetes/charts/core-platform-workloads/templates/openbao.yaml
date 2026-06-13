@@ -33,6 +33,13 @@ spec:
               api_addr = "https://${OPENBAO_HOST}"
               cluster_addr = "http://127.0.0.1:8201"
 
+              {{ if .Values.openbao.staticSeal.enabled }}
+              seal "static" {
+                current_key_id = "{{ .Values.openbao.staticSeal.currentKeyId }}"
+                current_key = "env://{{ .Values.openbao.staticSeal.key }}"
+              }
+
+              {{ end }}
               listener "tcp" {
                 address = "0.0.0.0:8200"
                 tls_disable = true
@@ -53,6 +60,13 @@ spec:
           env:
             - name: OPENBAO_HOST
               value: {{ .Values.openbao.host | quote }}
+            {{ if .Values.openbao.staticSeal.enabled }}
+            - name: {{ .Values.openbao.staticSeal.key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.openbao.staticSeal.secretName }}
+                  key: {{ .Values.openbao.staticSeal.key }}
+            {{ end }}
           ports:
             - name: http
               containerPort: 8200

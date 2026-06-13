@@ -39,6 +39,11 @@ openbao:
   host: secrets.panixida.ru
   image: openbao/openbao:2.5.4
   secretName: openbao-secrets
+  staticSeal:
+    enabled: true
+    secretName: openbao-static-seal
+    key: OPENBAO_STATIC_SEAL_KEY
+    currentKeyId: static-20260613-1
   replicas: 1
   resources:
     requests:
