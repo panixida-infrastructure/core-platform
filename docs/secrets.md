@@ -27,10 +27,13 @@ through the `seal "static"` configuration block. A local copy is stored outside 
 C:\Users\mixai\Desktop\Infrastructure\openbao-static-seal-key.txt
 ```
 
-This key is not an OpenBao login credential and does not replace Keycloak/OIDC access,
-but it is required for OpenBao to decrypt its barrier key after pod restarts. If this
-key is lost together with the Kubernetes secret, the PostgreSQL-backed OpenBao data
-cannot be auto-unsealed from backup.
+The key value itself must not be written to this document or committed to Git.
+
+This key is not an OpenBao login credential and does not replace Keycloak/OIDC access.
+Keycloak authenticates humans after OpenBao is already unsealed. The static seal key is
+used earlier in the lifecycle: OpenBao needs it during pod startup to decrypt its
+barrier key and become operational. If this key is lost together with the Kubernetes
+secret, the PostgreSQL-backed OpenBao data cannot be auto-unsealed from backup.
 
 This repository keeps only OpenTofu state backend secrets in repository secrets:
 
@@ -52,8 +55,8 @@ Initial setup should be done once:
 
 ```text
 1. Initialize OpenBao.
-2. Store the unseal key and root token outside Git.
-3. Unseal OpenBao.
+2. Store the bootstrap file, root token, and static seal key outside Git.
+3. Unseal or migrate OpenBao seal as required by the current seal mode.
 4. Enable KV v2 at secret/.
 5. Configure Keycloak OIDC auth for human operators with `scripts/openbao/configure.sh`.
 6. Configure GitHub Actions auth through OpenBao `jwt` auth.
