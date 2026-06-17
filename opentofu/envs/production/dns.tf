@@ -53,7 +53,7 @@ resource "twc_dns_rr" "dotnet_template_api" {
 
 resource "twc_dns_rr" "dotnet_template_api_dev" {
   zone_id = data.twc_dns_zone.panixida_ru.id
-  name    = "api.dev.dotnet-template"
+  name    = "dev.api.dotnet-template"
   type    = "A"
   value   = var.kubernetes_gateway_public_ipv4
 }

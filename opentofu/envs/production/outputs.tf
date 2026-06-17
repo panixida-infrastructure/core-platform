@@ -41,7 +41,7 @@ output "timeweb_inventory" {
       k8s                     = "k8s.panixida.ru"
       sonar                   = "sonar.panixida.ru"
       dotnet_template_api     = "api.dotnet-template.panixida.ru"
-      dotnet_template_api_dev = "api.dev.dotnet-template.panixida.ru"
+      dotnet_template_api_dev = "dev.api.dotnet-template.panixida.ru"
     }
   }
 }

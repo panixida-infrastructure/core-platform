@@ -15,7 +15,7 @@ Application endpoints:
 
 ```text
 api.dotnet-template.panixida.ru       dotnet-template production API, DNS/Gateway prepared
-api.dev.dotnet-template.panixida.ru   dotnet-template development API
+dev.api.dotnet-template.panixida.ru   dotnet-template development API
 ```
 
 Retired platform endpoints:

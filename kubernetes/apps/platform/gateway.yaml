@@ -105,7 +105,7 @@ spec:
     - name: api-dev-dotnet-template-https
       protocol: HTTPS
       port: 443
-      hostname: "api.dev.dotnet-template.panixida.ru"
+      hostname: "dev.api.dotnet-template.panixida.ru"
       tls:
         mode: Terminate
         certificateRefs:

@@ -116,7 +116,7 @@ metadata:
 spec:
   secretName: api-dev-dotnet-template-panixida-ru-tls
   dnsNames:
-    - api.dev.dotnet-template.panixida.ru
+    - dev.api.dotnet-template.panixida.ru
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer

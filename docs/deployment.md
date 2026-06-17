@@ -66,7 +66,7 @@ kubernetes/charts/core-platform-workloads
 Application deployment is also pull-based through Argo CD. The root `core-platform` application currently creates the development `dotnet-template` child application:
 
 ```text
-dotnet-template-development   development branch api.dev.dotnet-template.panixida.ru
+dotnet-template-development   development branch dev.api.dotnet-template.panixida.ru
 ```
 
 The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is not enabled until the Helm chart is merged into `dotnet-template/main`.
@@ -93,7 +93,7 @@ argocd.panixida.ru
 k8s.panixida.ru
 sonar.panixida.ru
 api.dotnet-template.panixida.ru
-api.dev.dotnet-template.panixida.ru
+dev.api.dotnet-template.panixida.ru
 ```
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, OpenTelemetry Collector, and vmalert. OpenTelemetry Collector receives application OTLP metrics/logs/traces, scrapes kubelet and cAdvisor metrics through Kubernetes service discovery, and runs HTTP endpoint checks through the `http_check` receiver. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, application OpenTelemetry metrics, logs, and traces.
