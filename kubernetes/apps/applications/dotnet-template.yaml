@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/PANiXiDA-Templates/dotnet-template.git
+    repoURL: https://github.com/panixida-templates/dotnet-backend-template.git
     targetRevision: development
     path: deploy/helm/dotnet-template
     helm:

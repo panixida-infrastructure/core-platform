@@ -179,7 +179,7 @@ apply_argocd_repository_secret \
 
 apply_argocd_repository_secret \
   dotnet-template-repo \
-  https://github.com/PANiXiDA-Templates/dotnet-template.git \
+  https://github.com/panixida-templates/dotnet-backend-template.git \
   "$github_secret"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
