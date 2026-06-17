@@ -704,6 +704,293 @@ data:
       "version": 1,
       "weekStart": ""
     }
+  node-exporter.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": false,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job=\"linux-node-exporter\",mode=\"idle\"}[5m])))",
+              "legendFormat": "{{`{{instance}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Node CPU usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"linux-node-exporter\"} / node_memory_MemTotal_bytes{job=\"linux-node-exporter\"}))",
+              "legendFormat": "{{`{{instance}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Node memory usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - (node_filesystem_avail_bytes{job=\"linux-node-exporter\",mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"linux-node-exporter\",mountpoint=\"/\"}))",
+              "legendFormat": "{{`{{instance}}`}} /",
+              "refId": "A"
+            }
+          ],
+          "title": "Root filesystem usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_load1{job=\"linux-node-exporter\"}",
+              "legendFormat": "{{`{{instance}}`}} load1",
+              "refId": "A"
+            }
+          ],
+          "title": "Load average",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (instance) (rate(node_disk_read_bytes_total{job=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{instance}}`}} read",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (instance) (rate(node_disk_written_bytes_total{job=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{instance}}`}} write",
+              "refId": "B"
+            }
+          ],
+          "title": "Disk IO throughput",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "id": 6,
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (instance) (rate(node_network_receive_bytes_total{job=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{instance}}`}} receive",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{job=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{instance}}`}} transmit",
+              "refId": "B"
+            }
+          ],
+          "title": "Network throughput",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 41,
+      "tags": [
+        "core-platform",
+        "node-exporter"
+      ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "title": "Node Exporter",
+      "uid": "node-exporter",
+      "version": 1,
+      "weekStart": ""
+    }
   workloads.json: |
     {
       "annotations": {

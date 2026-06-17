@@ -63,6 +63,27 @@ data:
                   regex: (.+)
                   target_label: __metrics_path__
                   replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
+            - job_name: linux-node-exporter
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_app_kubernetes_io_name]
+                  action: keep
+                  regex: observability;node-exporter
+                - source_labels: [__meta_kubernetes_pod_phase]
+                  action: keep
+                  regex: Running
+                - source_labels: [__meta_kubernetes_pod_container_port_number]
+                  action: keep
+                  regex: "9100"
+                - source_labels: [__meta_kubernetes_pod_node_name]
+                  target_label: instance
+                - source_labels: [__meta_kubernetes_pod_node_name]
+                  target_label: kubernetes_node
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: kubernetes_pod_name
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: kubernetes_namespace
             - job_name: kubernetes-pods
               kubernetes_sd_configs:
                 - role: pod
@@ -191,6 +212,15 @@ data:
               summary: Kubernetes node metrics are unavailable.
               description: Kubelet node metrics have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: LinuxNodeExporterDown
+            expr: up{job="linux-node-exporter"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Linux node exporter metrics are unavailable.
+              description: Host OS metrics from node-exporter have been unavailable for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
           - alert: PlatformEndpointDown
             expr: max by (http_url) (httpcheck_status{http_status_class="2xx"}) == 0
             for: 5m
@@ -201,23 +231,32 @@ data:
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: KubernetesNodeHighCpu
-            expr: 100 * sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{id="/"}[5m])) / sum by (kubernetes_io_hostname) (machine_cpu_cores) > 85
+            expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="linux-node-exporter",mode="idle"}[5m]))) > 85
             for: 10m
             labels:
               severity: warning
             annotations:
               summary: Kubernetes node CPU usage is high.
               description: Node CPU usage has stayed above 85 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+              dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
           - alert: KubernetesNodeHighMemory
-            expr: 100 * sum by (kubernetes_io_hostname) (container_memory_working_set_bytes{id="/"}) / sum by (kubernetes_io_hostname) (machine_memory_bytes) > 90
+            expr: 100 * (1 - (node_memory_MemAvailable_bytes{job="linux-node-exporter"} / node_memory_MemTotal_bytes{job="linux-node-exporter"})) > 90
             for: 10m
             labels:
               severity: warning
             annotations:
               summary: Kubernetes node memory usage is high.
               description: Node memory usage has stayed above 90 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+              dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
+          - alert: KubernetesNodeRootFilesystemHighUsage
+            expr: 100 * (1 - (node_filesystem_avail_bytes{job="linux-node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="linux-node-exporter",mountpoint="/"})) > 85
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Kubernetes node root filesystem usage is high.
+              description: Node root filesystem usage has stayed above 85 percent for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
 ---
 apiVersion: v1
 kind: ConfigMap

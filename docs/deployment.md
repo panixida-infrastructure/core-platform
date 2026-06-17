@@ -98,6 +98,8 @@ api.dev.dotnet-template.panixida.ru
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, OpenTelemetry Collector, and vmalert. OpenTelemetry Collector receives application OTLP metrics/logs/traces, scrapes kubelet and cAdvisor metrics through Kubernetes service discovery, and runs HTTP endpoint checks through the `http_check` receiver. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, application OpenTelemetry metrics, logs, and traces.
 
+Linux host metrics for Kubernetes worker nodes are collected by a `node-exporter` DaemonSet and scraped by OpenTelemetry Collector with the `linux-node-exporter` job. Kubelet `/metrics` remains enabled for Kubernetes node/kubelet metrics, while kubelet cAdvisor remains the source for pod and container CPU, memory, filesystem, and network usage.
+
 Applications should send OTLP traffic to the in-cluster collector:
 
 ```text
