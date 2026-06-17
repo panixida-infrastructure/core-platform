@@ -213,7 +213,7 @@ data:
               description: Kubelet node metrics have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: LinuxNodeExporterDown
-            expr: up{job="linux-node-exporter"} == 0
+            expr: up{service_name="linux-node-exporter"} == 0
             for: 5m
             labels:
               severity: warning
@@ -231,7 +231,7 @@ data:
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: KubernetesNodeHighCpu
-            expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="linux-node-exporter",mode="idle"}[5m]))) > 85
+            expr: 100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name="linux-node-exporter",mode="idle"}[5m]))) > 85
             for: 10m
             labels:
               severity: warning
@@ -240,7 +240,7 @@ data:
               description: Node CPU usage has stayed above 85 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
           - alert: KubernetesNodeHighMemory
-            expr: 100 * (1 - (node_memory_MemAvailable_bytes{job="linux-node-exporter"} / node_memory_MemTotal_bytes{job="linux-node-exporter"})) > 90
+            expr: 100 * (1 - (node_memory_MemAvailable_bytes{service_name="linux-node-exporter"} / node_memory_MemTotal_bytes{service_name="linux-node-exporter"})) > 90
             for: 10m
             labels:
               severity: warning
@@ -249,7 +249,7 @@ data:
               description: Node memory usage has stayed above 90 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
           - alert: KubernetesNodeRootFilesystemHighUsage
-            expr: 100 * (1 - (node_filesystem_avail_bytes{job="linux-node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="linux-node-exporter",mountpoint="/"})) > 85
+            expr: 100 * (1 - (node_filesystem_avail_bytes{service_name="linux-node-exporter",mountpoint="/"} / node_filesystem_size_bytes{service_name="linux-node-exporter",mountpoint="/"})) > 85
             for: 10m
             labels:
               severity: warning

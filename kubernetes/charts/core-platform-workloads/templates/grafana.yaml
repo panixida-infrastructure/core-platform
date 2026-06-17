@@ -758,8 +758,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job=\"linux-node-exporter\",mode=\"idle\"}[5m])))",
-              "legendFormat": "{{`{{instance}}`}}",
+              "expr": "100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",mode=\"idle\"}[5m])))",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
               "refId": "A"
             }
           ],
@@ -797,8 +797,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"linux-node-exporter\"} / node_memory_MemTotal_bytes{job=\"linux-node-exporter\"}))",
-              "legendFormat": "{{`{{instance}}`}}",
+              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\"} / node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\"}))",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
               "refId": "A"
             }
           ],
@@ -836,8 +836,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_filesystem_avail_bytes{job=\"linux-node-exporter\",mountpoint=\"/\"} / node_filesystem_size_bytes{job=\"linux-node-exporter\",mountpoint=\"/\"}))",
-              "legendFormat": "{{`{{instance}}`}} /",
+              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",mountpoint=\"/\"}))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} /",
               "refId": "A"
             }
           ],
@@ -875,8 +875,8 @@ data:
           },
           "targets": [
             {
-              "expr": "node_load1{job=\"linux-node-exporter\"}",
-              "legendFormat": "{{`{{instance}}`}} load1",
+              "expr": "node_load1{service_name=\"linux-node-exporter\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} load1",
               "refId": "A"
             }
           ],
@@ -914,13 +914,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (instance) (rate(node_disk_read_bytes_total{job=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{instance}}`}} read",
+              "expr": "sum by (k8s_node_name) (rate(node_disk_read_bytes_total{service_name=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} read",
               "refId": "A"
             },
             {
-              "expr": "sum by (instance) (rate(node_disk_written_bytes_total{job=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{instance}}`}} write",
+              "expr": "sum by (k8s_node_name) (rate(node_disk_written_bytes_total{service_name=\"linux-node-exporter\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} write",
               "refId": "B"
             }
           ],
@@ -958,13 +958,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (instance) (rate(node_network_receive_bytes_total{job=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
-              "legendFormat": "{{`{{instance}}`}} receive",
+              "expr": "sum by (k8s_node_name) (rate(node_network_receive_bytes_total{service_name=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} receive",
               "refId": "A"
             },
             {
-              "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{job=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
-              "legendFormat": "{{`{{instance}}`}} transmit",
+              "expr": "sum by (k8s_node_name) (rate(node_network_transmit_bytes_total{service_name=\"linux-node-exporter\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} transmit",
               "refId": "B"
             }
           ],
