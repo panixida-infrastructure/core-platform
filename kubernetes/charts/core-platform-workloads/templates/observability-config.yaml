@@ -84,6 +84,38 @@ data:
                   target_label: kubernetes_pod_name
                 - source_labels: [__meta_kubernetes_namespace]
                   target_label: kubernetes_namespace
+            - job_name: timeweb-dbaas-postgres
+              scheme: https
+              metrics_path: /${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID}/service/metrics
+              basic_auth:
+                username: ${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME}
+                password: ${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD}
+              static_configs:
+                - targets:
+                    - dbs-exporter.timeweb.cloud
+                  labels:
+                    db_cluster: postgres
+                    db_system: postgresql
+                    provider: timeweb
+              relabel_configs:
+                - target_label: instance
+                  replacement: managed-postgres
+            - job_name: timeweb-dbaas-node
+              scheme: https
+              metrics_path: /${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID}/node-exporter/metrics
+              basic_auth:
+                username: ${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME}
+                password: ${env:OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD}
+              static_configs:
+                - targets:
+                    - dbs-exporter.timeweb.cloud
+                  labels:
+                    db_cluster: postgres
+                    db_system: postgresql
+                    provider: timeweb
+              relabel_configs:
+                - target_label: instance
+                  replacement: managed-postgres
             - job_name: kubernetes-pods
               kubernetes_sd_configs:
                 - role: pod
@@ -204,7 +236,7 @@ data:
       - name: kubernetes-basic
         rules:
           - alert: KubernetesNodeDown
-            expr: up{job="kubernetes-nodes"} == 0
+            expr: up{service_name="kubernetes-nodes"} == 0
             for: 5m
             labels:
               severity: warning
@@ -212,6 +244,15 @@ data:
               summary: Kubernetes node metrics are unavailable.
               description: Kubelet node metrics have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: KubernetesCadvisorDown
+            expr: up{service_name="kubernetes-cadvisor"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Kubernetes cAdvisor metrics are unavailable.
+              description: Kubelet cAdvisor container metrics have been unavailable for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
           - alert: LinuxNodeExporterDown
             expr: up{service_name="linux-node-exporter"} == 0
             for: 5m
@@ -230,6 +271,51 @@ data:
               summary: Platform endpoint is not reachable.
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: TimewebPostgresExporterDown
+            expr: up{service_name="timeweb-dbaas-postgres"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Timeweb PostgreSQL exporter is unavailable.
+              description: Managed PostgreSQL DB exporter metrics have been unavailable for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+          - alert: TimewebPostgresHostExporterDown
+            expr: up{service_name="timeweb-dbaas-node"} == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Timeweb PostgreSQL host exporter is unavailable.
+              description: Managed PostgreSQL host node exporter metrics have been unavailable for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/node-exporter/node-exporter
+          - alert: TimewebPostgresScrapeError
+            expr: pg_exporter_last_scrape_error{service_name="timeweb-dbaas-postgres"} > 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Managed PostgreSQL exporter scrape is failing.
+              description: The PostgreSQL exporter reports scrape errors for the managed database.
+              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+          - alert: TimewebPostgresDown
+            expr: pg_up{service_name="timeweb-dbaas-postgres"} == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: Managed PostgreSQL is not reachable by exporter.
+              description: The PostgreSQL exporter cannot reach the managed PostgreSQL instance.
+              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+          - alert: TimewebPostgresHighConnectionUsage
+            expr: 100 * sum(pg_stat_activity_count{service_name="timeweb-dbaas-postgres"}) / max(pg_settings_max_connections{service_name="timeweb-dbaas-postgres"}) > 80
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Managed PostgreSQL connection usage is high.
+              description: PostgreSQL connection usage has stayed above 80 percent for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
           - alert: KubernetesNodeHighCpu
             expr: 100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name="linux-node-exporter",mode="idle"}[5m]))) > 85
             for: 10m

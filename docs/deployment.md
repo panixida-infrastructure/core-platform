@@ -100,6 +100,8 @@ VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept interna
 
 Linux host metrics for Kubernetes worker nodes are collected by a `node-exporter` DaemonSet and scraped by OpenTelemetry Collector with the `linux-node-exporter` job. Kubelet `/metrics` remains enabled for Kubernetes node/kubelet metrics, while kubelet cAdvisor remains the source for pod and container CPU, memory, filesystem, and network usage.
 
+Managed PostgreSQL metrics are collected from the Timeweb DBaaS Prometheus exporter. OpenTelemetry Collector scrapes both the PostgreSQL exporter endpoint for database metrics and the DB host `node_exporter` endpoint for server metrics, then stores them in VictoriaMetrics. The exporter id and basic-auth credentials live in the OpenBao `secret/core-platform/observability` path and are synced into the `observability/observability-secrets` Kubernetes secret.
+
 Applications should send OTLP traffic to the in-cluster collector:
 
 ```text

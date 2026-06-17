@@ -532,6 +532,17 @@ if [ "$backup_status" != "0" ]; then
   echo "Skipping managed PostgreSQL auto-backup API reconcile; backup schedule is managed by OpenTofu."
 fi
 
+dbaas_exporter="$(twc GET "/api/v1/dbs/${target_cluster_id}/exporters" | jq -c '.exporters[0] // {}')"
+dbaas_exporter_id="$(jq -r '.id // empty' <<<"$dbaas_exporter")"
+dbaas_exporter_username="$(jq -r '.login // empty' <<<"$dbaas_exporter")"
+dbaas_exporter_password="$(jq -r '.password // empty' <<<"$dbaas_exporter")"
+
+if [ -z "$dbaas_exporter_id" ]; then
+  dbaas_exporter_id="$(jq -r '.OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID // empty' <<<"$observability_secret")"
+  dbaas_exporter_username="$(jq -r '.OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME // empty' <<<"$observability_secret")"
+  dbaas_exporter_password="$(jq -r '.OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD // empty' <<<"$observability_secret")"
+fi
+
 identity_secret="$(jq \
   --arg host "$target_host" \
   --arg port "$target_port" \
@@ -549,6 +560,21 @@ observability_secret="$(jq \
   --arg password "$grafana_password" \
   '. + {GRAFANA_DB_HOST: $host, GRAFANA_DB_PORT: $port, GRAFANA_DB_NAME: "grafana", GRAFANA_DB_USERNAME: $user, GRAFANA_DB_PASSWORD: $password}' \
   <<<"$observability_secret")"
+if [ -n "$dbaas_exporter_id" ] && [ -n "$dbaas_exporter_username" ] && [ -n "$dbaas_exporter_password" ]; then
+  observability_secret="$(jq \
+    --arg exporter_id "$dbaas_exporter_id" \
+    --arg exporter_username "$dbaas_exporter_username" \
+    --arg exporter_password "$dbaas_exporter_password" \
+    '. + {
+      OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID: $exporter_id,
+      OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME: $exporter_username,
+      OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD: $exporter_password
+    }' \
+    <<<"$observability_secret")"
+  echo "Managed PostgreSQL DBaaS exporter credentials are stored in OpenBao observability secret"
+else
+  echo "::warning::Managed PostgreSQL DBaaS exporter credentials were not found in Timeweb API or existing OpenBao secret"
+fi
 openbao_secret="$(jq \
   --arg host "$target_host" \
   --arg port "$target_port" \
