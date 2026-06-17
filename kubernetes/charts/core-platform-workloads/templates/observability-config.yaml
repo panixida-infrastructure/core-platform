@@ -109,7 +109,7 @@ data:
                   action: replace
                   target_label: kubernetes_pod_name
 
-      http_check/platform:
+      httpcheck/platform:
         collection_interval: 30s
         metrics:
           httpcheck.dns.lookup.duration:
@@ -178,7 +178,7 @@ data:
                     without_units: true
       pipelines:
         metrics:
-          receivers: [otlp, prometheus/kubernetes, http_check/platform]
+          receivers: [otlp, prometheus/kubernetes, httpcheck/platform]
           processors: [memory_limiter, resource/core-platform, batch]
           exporters: [otlphttp/victoriametrics]
         logs:
