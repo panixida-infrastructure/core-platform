@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - applications/platform-workloads.yaml
   - applications/dotnet-template.yaml
+  - applications/dotnet-template-ci-rbac.yaml
   - platform/namespaces.yaml
   - platform/envoyproxy.yaml
   - platform/gateway.yaml

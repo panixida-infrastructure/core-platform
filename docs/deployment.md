@@ -73,7 +73,7 @@ The production DNS record and Gateway certificate are prepared, but `dotnet-temp
 
 The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images, writes the new tags to `images-development.yaml`, and pushes that Git change. Argo CD then pulls the updated chart state and syncs the development environment.
 
-For the temporary pre-OpenBao application secret flow, the application CI reads `BACKEND_ENV_FILE` from the selected GitHub Environment and applies it directly to Kubernetes as `dotnet-template-api-env`. The same CI job creates `dotnet-template-registry` from `REGISTRY_URL`, `REGISTRY_USER`, and `REGISTRY_TOKEN`. These secret values are never written to Git or Helm values. The CI environment must also provide either `KUBECONFIG_BASE64` or `KUBECONFIG` so the workflow can apply the Kubernetes secrets.
+For the temporary pre-OpenBao application secret flow, the application CI reads `BACKEND_ENV_FILE` from the selected GitHub Environment and applies it directly to Kubernetes as `dotnet-template-api-env`. The same CI job creates `dotnet-template-registry` from `REGISTRY_URL`, `REGISTRY_USER`, and `REGISTRY_TOKEN`. These secret values are never written to Git or Helm values. The CI environment must also provide either `KUBECONFIG_BASE64` or `KUBECONFIG` for the namespace-scoped `github-actions-dotnet-template` service account, so the workflow can apply the Kubernetes secrets without cluster-admin access.
 
 Production and development can use the existing `dotnet_template` managed PostgreSQL database unless their `BACKEND_ENV_FILE` values point to different databases.
 
