@@ -117,11 +117,15 @@ apply_secret_json() {
 }
 
 apply_argocd_repository_secret() {
-  local data="$1"
+  local name="$1"
+  local repo_url="$2"
+  local data="$3"
   local manifest
 
   manifest="$(mktemp)"
   jq -n \
+    --arg name "$name" \
+    --arg repo_url "$repo_url" \
     --argjson data "$data" \
     '
       def required($key):
@@ -134,7 +138,7 @@ apply_argocd_repository_secret() {
         apiVersion: "v1",
         kind: "Secret",
         metadata: {
-          name: "core-platform-repo",
+          name: $name,
           namespace: "argocd",
           labels: {
             "argocd.argoproj.io/secret-type": "repository"
@@ -143,16 +147,16 @@ apply_argocd_repository_secret() {
         type: "Opaque",
         stringData: {
           type: "git",
-          url: "https://github.com/panixida-infrastructure/core-platform.git",
+          url: $repo_url,
           username: "x-access-token",
           password: required("SERVER_GH_PAT")
         }
       }' >"$manifest"
 
   kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
-  kubectl -n argocd annotate secret core-platform-repo kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
+  kubectl -n argocd annotate secret "$name" kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
   rm -f "$manifest"
-  echo "Synced Kubernetes secret argocd/core-platform-repo"
+  echo "Synced Kubernetes secret argocd/${name}"
 }
 
 for namespace in argocd identity secrets observability quality headlamp; do
@@ -168,7 +172,15 @@ observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 
-apply_argocd_repository_secret "$github_secret"
+apply_argocd_repository_secret \
+  core-platform-repo \
+  https://github.com/panixida-infrastructure/core-platform.git \
+  "$github_secret"
+
+apply_argocd_repository_secret \
+  dotnet-template-repo \
+  https://github.com/PANiXiDA-Templates/dotnet-template.git \
+  "$github_secret"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
   KEYCLOAK_DB_HOST \

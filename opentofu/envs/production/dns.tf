@@ -43,3 +43,17 @@ resource "twc_dns_rr" "sonar" {
   type    = "A"
   value   = var.kubernetes_gateway_public_ipv4
 }
+
+resource "twc_dns_rr" "dotnet_template_api" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "api.dotnet-template"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}
+
+resource "twc_dns_rr" "dotnet_template_api_dev" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "api.dev.dotnet-template"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}

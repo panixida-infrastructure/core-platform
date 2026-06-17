@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dotnet-template-development
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/PANiXiDA-Templates/dotnet-template.git
+    targetRevision: development
+    path: deploy/helm/dotnet-template
+    helm:
+      releaseName: dotnet-template-development
+      valueFiles:
+        - values.yaml
+        - values-development.yaml
+        - images-development.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dotnet-template-development
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

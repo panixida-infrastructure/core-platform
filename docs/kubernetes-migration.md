@@ -58,6 +58,10 @@ After Argo CD is available, workload deployment is pull-based from this reposito
 kubernetes/charts/core-platform-workloads
 ```
 
+Application deployment follows the same GitOps model. The root application currently creates `dotnet-template-development`, which pulls the Helm chart from `PANiXiDA-Templates/dotnet-template` and tracks the `development` branch. The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is enabled only after the Helm chart is merged into `dotnet-template/main`.
+
+For the temporary pre-OpenBao application secret flow, the application repository CI copies `BACKEND_ENV_FILE` from the selected GitHub Environment into the matching Kubernetes namespace as `dotnet-template-api-env`. The Helm chart only references this existing secret; it does not store secret values in Git.
+
 Docker Compose deployments and Ansible server bootstrap have been removed from the desired state. Workload deployment is pull-based through Argo CD.
 
 Keycloak clients and groups for platform SSO are reconciled by the workload chart through a PostSync job. Argo CD uses the `argocd` public client with PKCE. Grafana and OpenBao use their native OIDC clients. Headlamp uses the `kubernetes` client, which is also the audience configured on the Timeweb Kubernetes OIDC provider.

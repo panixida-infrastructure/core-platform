@@ -36,6 +36,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  HELM_VERSION: v4.2.1
   TF_IN_AUTOMATION: "true"
   TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
@@ -77,7 +78,9 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
           sudo apt-get update
           sudo apt-get install -y gettext-base tofu
-          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+          chmod 700 get_helm.sh
+          DESIRED_VERSION="${HELM_VERSION}" ./get_helm.sh
           kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
           curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
           sudo install -m 0755 kubectl /usr/local/bin/kubectl

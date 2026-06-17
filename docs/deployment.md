@@ -63,6 +63,20 @@ GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo C
 kubernetes/charts/core-platform-workloads
 ```
 
+Application deployment is also pull-based through Argo CD. The root `core-platform` application currently creates the development `dotnet-template` child application:
+
+```text
+dotnet-template-development   development branch api.dev.dotnet-template.panixida.ru
+```
+
+The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is not enabled until the Helm chart is merged into `dotnet-template/main`.
+
+The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images, writes the new tags to `images-development.yaml`, and pushes that Git change. Argo CD then pulls the updated chart state and syncs the development environment.
+
+For the temporary pre-OpenBao application secret flow, the application CI reads `BACKEND_ENV_FILE` from the selected GitHub Environment and applies it directly to Kubernetes as `dotnet-template-api-env`. The same CI job creates `dotnet-template-registry` from `REGISTRY_URL`, `REGISTRY_USER`, and `REGISTRY_TOKEN`. These secret values are never written to Git or Helm values. The CI environment must also provide either `KUBECONFIG_BASE64` or `KUBECONFIG` so the workflow can apply the Kubernetes secrets.
+
+Production and development can use the existing `dotnet_template` managed PostgreSQL database unless their `BACKEND_ENV_FILE` values point to different databases.
+
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets, syncs the OpenBao static seal key from the `OPENBAO_STATIC_SEAL_KEY` GitHub secret, and reapplies OpenBao auth/SSO configuration from this repository. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 
 Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, and OpenBao.
@@ -78,6 +92,8 @@ grafana.panixida.ru
 argocd.panixida.ru
 k8s.panixida.ru
 sonar.panixida.ru
+api.dotnet-template.panixida.ru
+api.dev.dotnet-template.panixida.ru
 ```
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, OpenTelemetry Collector, and vmalert. OpenTelemetry Collector receives application OTLP metrics/logs/traces, scrapes kubelet and cAdvisor metrics through Kubernetes service discovery, and runs HTTP endpoint checks through the `http_check` receiver. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, application OpenTelemetry metrics, logs, and traces.

@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  HELM_VERSION: v4.2.1
+
 jobs:
   shell:
     runs-on: ubuntu-latest
@@ -51,7 +54,9 @@ jobs:
       - name: Install Kubernetes tooling
         run: |
           set -euo pipefail
-          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+          chmod 700 get_helm.sh
+          DESIRED_VERSION="${HELM_VERSION}" ./get_helm.sh
           kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
           curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
           sudo install -m 0755 kubectl /usr/local/bin/kubectl

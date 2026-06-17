@@ -34,12 +34,14 @@ output "timeweb_inventory" {
     tofu_state_bucket_id = data.twc_s3_bucket.tofu_state.id
 
     dns_records = {
-      identity = "identity.panixida.ru"
-      secrets  = "secrets.panixida.ru"
-      grafana  = "grafana.panixida.ru"
-      argocd   = "argocd.panixida.ru"
-      k8s      = "k8s.panixida.ru"
-      sonar    = "sonar.panixida.ru"
+      identity                = "identity.panixida.ru"
+      secrets                 = "secrets.panixida.ru"
+      grafana                 = "grafana.panixida.ru"
+      argocd                  = "argocd.panixida.ru"
+      k8s                     = "k8s.panixida.ru"
+      sonar                   = "sonar.panixida.ru"
+      dotnet_template_api     = "api.dotnet-template.panixida.ru"
+      dotnet_template_api_dev = "api.dev.dotnet-template.panixida.ru"
     }
   }
 }

@@ -2,6 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - applications/platform-workloads.yaml
+  - applications/dotnet-template.yaml
   - platform/namespaces.yaml
   - platform/envoyproxy.yaml
   - platform/gateway.yaml

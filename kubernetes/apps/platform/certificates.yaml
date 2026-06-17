@@ -94,3 +94,29 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-dotnet-template-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: api-dotnet-template-panixida-ru-tls
+  dnsNames:
+    - api.dotnet-template.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-dev-dotnet-template-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: api-dev-dotnet-template-panixida-ru-tls
+  dnsNames:
+    - api.dev.dotnet-template.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer

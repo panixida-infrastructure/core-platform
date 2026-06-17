@@ -91,3 +91,25 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: api-dotnet-template-https
+      protocol: HTTPS
+      port: 443
+      hostname: "api.dotnet-template.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-dotnet-template-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: api-dev-dotnet-template-https
+      protocol: HTTPS
+      port: 443
+      hostname: "api.dev.dotnet-template.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-dev-dotnet-template-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
