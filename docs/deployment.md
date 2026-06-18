@@ -73,9 +73,20 @@ The production DNS record and Gateway certificate are prepared, but `dotnet-temp
 
 The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images, writes the new tags to `images-development.yaml`, and pushes that Git change. Argo CD then pulls the updated chart state and syncs the development environment.
 
-For the temporary pre-OpenBao application secret flow, the application CI reads `BACKEND_ENV_FILE` from the selected GitHub Environment and applies it directly to Kubernetes as `dotnet-template-api-env`. The same CI job creates `dotnet-template-registry` from `REGISTRY_URL`, `REGISTRY_USER`, and `REGISTRY_TOKEN`. These secret values are never written to Git or Helm values. The CI environment must also provide either `KUBECONFIG_BASE64` or `KUBECONFIG` for the namespace-scoped `github-actions-dotnet-template` service account, so the workflow can apply the Kubernetes secrets without cluster-admin access.
+Application runtime secrets are pulled by External Secrets Operator from OpenBao. The chart creates a namespace-scoped `SecretStore` that authenticates through OpenBao Kubernetes auth and syncs `dotnet-template-api-env` from:
 
-Production and development can use the existing `dotnet_template` managed PostgreSQL database unless their `BACKEND_ENV_FILE` values point to different databases.
+```text
+secret/applications/dotnet-template/development
+secret/applications/dotnet-template/production
+```
+
+Both environments currently use the same managed PostgreSQL database credentials from `dotnet_template`. The chart also expects registry pull credentials in:
+
+```text
+secret/applications/dotnet-template/registry
+```
+
+The application repository CI updates this registry path through the `dotnet-template-github-actions` OpenBao JWT role. That role is scoped only to registry pull credentials and cannot read application database secrets.
 
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets, syncs the OpenBao static seal key from the `OPENBAO_STATIC_SEAL_KEY` GitHub secret, and reapplies OpenBao auth/SSO configuration from this repository. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 

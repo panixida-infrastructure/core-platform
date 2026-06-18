@@ -5,6 +5,9 @@ realm="${KEYCLOAK_REALM:-panixida}"
 issuer="${OPENBAO_OIDC_ISSUER_URL:-https://identity.panixida.ru/realms/${realm}}"
 github_audience="${OPENBAO_GITHUB_AUDIENCE:-https://github.com/panixida-infrastructure/core-platform}"
 github_repository="${OPENBAO_GITHUB_REPOSITORY:-panixida-infrastructure/core-platform}"
+dotnet_template_github_audience="${OPENBAO_DOTNET_TEMPLATE_GITHUB_AUDIENCE:-https://github.com/panixida-templates/dotnet-backend-template}"
+dotnet_template_github_repository="${OPENBAO_DOTNET_TEMPLATE_GITHUB_REPOSITORY:-panixida-templates/dotnet-backend-template}"
+kubernetes_auth_path="${OPENBAO_KUBERNETES_AUTH_PATH:-kubernetes}"
 
 if [ -z "${OPENBAO_OIDC_CLIENT_SECRET:-}" ]; then
   echo "OPENBAO_OIDC_CLIENT_SECRET is required" >&2
@@ -54,6 +57,14 @@ path "secret/data/core-platform/applications" {
   capabilities = ["create", "read", "update"]
 }
 
+path "secret/data/applications/dotnet-template/*" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/metadata/applications/dotnet-template/*" {
+  capabilities = ["read", "list"]
+}
+
 path "sys/mounts" {
   capabilities = ["read", "list"]
 }
@@ -74,11 +85,19 @@ path "sys/auth/jwt" {
   capabilities = ["create", "read", "update", "sudo"]
 }
 
+path "sys/auth/kubernetes" {
+  capabilities = ["create", "read", "update", "sudo"]
+}
+
 path "auth/oidc/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
 path "auth/jwt/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "auth/kubernetes/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
@@ -92,6 +111,30 @@ path "sys/policies/acl/platform-admin" {
 
 path "sys/policies/acl/github-actions" {
   capabilities = ["create", "read", "update"]
+}
+
+path "sys/policies/acl/dotnet-template-github-actions" {
+  capabilities = ["create", "read", "update"]
+}
+EOF
+
+bao policy write dotnet-template-app - <<'EOF'
+path "secret/data/applications/dotnet-template/*" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/applications/dotnet-template/*" {
+  capabilities = ["read", "list"]
+}
+EOF
+
+bao policy write dotnet-template-github-actions - <<'EOF'
+path "secret/data/applications/dotnet-template/registry" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/metadata/applications/dotnet-template/registry" {
+  capabilities = ["read", "list"]
 }
 EOF
 
@@ -149,3 +192,45 @@ EOF
 
 bao write auth/jwt/role/core-platform-github-actions @/tmp/core-platform-github-actions-role.json
 rm -f /tmp/core-platform-github-actions-role.json
+
+cat >/tmp/dotnet-template-github-actions-role.json <<EOF
+{
+  "role_type": "jwt",
+  "user_claim": "repository",
+  "bound_audiences": ["${dotnet_template_github_audience}"],
+  "bound_claims": {
+    "repository": "${dotnet_template_github_repository}"
+  },
+  "policies": ["dotnet-template-github-actions"],
+  "ttl": "15m"
+}
+EOF
+
+bao write auth/jwt/role/dotnet-template-github-actions @/tmp/dotnet-template-github-actions-role.json
+rm -f /tmp/dotnet-template-github-actions-role.json
+
+if ! bao auth list -format=json | grep -q "\"${kubernetes_auth_path}/\""; then
+  bao auth enable -path="$kubernetes_auth_path" kubernetes
+fi
+
+if [ -r /var/run/secrets/kubernetes.io/serviceaccount/token ] && [ -r /var/run/secrets/kubernetes.io/serviceaccount/ca.crt ]; then
+  bao write "auth/${kubernetes_auth_path}/config" \
+    kubernetes_host=https://kubernetes.default.svc:443 \
+    kubernetes_ca_cert="$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)" \
+    token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+else
+  bao write "auth/${kubernetes_auth_path}/config" \
+    kubernetes_host=https://kubernetes.default.svc:443
+fi
+
+bao write "auth/${kubernetes_auth_path}/role/dotnet-template-development" \
+  bound_service_account_names=dotnet-template-external-secrets \
+  bound_service_account_namespaces=dotnet-template-development \
+  policies=dotnet-template-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/dotnet-template-production" \
+  bound_service_account_names=dotnet-template-external-secrets \
+  bound_service_account_namespaces=dotnet-template-production \
+  policies=dotnet-template-app \
+  ttl=1h

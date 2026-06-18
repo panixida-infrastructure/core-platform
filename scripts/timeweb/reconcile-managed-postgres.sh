@@ -589,12 +589,18 @@ applications_secret="$(jq \
   --arg password "$dotnet_template_password" \
   '. + {DOTNET_TEMPLATE_DB_HOST: $host, DOTNET_TEMPLATE_DB_PORT: $port, DOTNET_TEMPLATE_DB_NAME: "dotnet_template", DOTNET_TEMPLATE_DB_USERNAME: $user, DOTNET_TEMPLATE_DB_PASSWORD: $password}' \
   <<<"$applications_secret")"
+dotnet_template_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template;Username=${dotnet_template_user};Password=${dotnet_template_password};SSL Mode=Require;Trust Server Certificate=true"
+dotnet_template_app_secret="$(jq -n \
+  --arg connection_string "$dotnet_template_connection_string" \
+  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
 bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
 bao_write "$openbao_token" core-platform/observability "$observability_secret"
 bao_write "$openbao_token" core-platform/openbao "$openbao_secret"
 bao_write "$openbao_token" core-platform/applications "$applications_secret"
+bao_write "$openbao_token" applications/dotnet-template/development "$dotnet_template_app_secret"
+bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_template_app_secret"
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"

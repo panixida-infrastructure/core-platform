@@ -1,4 +1,29 @@
 {{- if .Values.openbao.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao
+  namespace: {{ .Values.openbao.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: openbao
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: openbao-token-reviewer
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: openbao
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: openbao
+    namespace: {{ .Values.openbao.namespace }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +44,7 @@ spec:
         app.kubernetes.io/name: openbao
         app.kubernetes.io/part-of: core-platform
     spec:
+      serviceAccountName: openbao
       containers:
         - name: openbao
           image: {{ .Values.openbao.image | quote }}

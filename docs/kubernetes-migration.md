@@ -60,7 +60,7 @@ kubernetes/charts/core-platform-workloads
 
 Application deployment follows the same GitOps model. The root application currently creates `dotnet-template-development`, which pulls the Helm chart from `panixida-templates/dotnet-backend-template` and tracks the `development` branch. The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is enabled only after the Helm chart is merged into `dotnet-template/main`.
 
-For the temporary pre-OpenBao application secret flow, the application repository CI copies `BACKEND_ENV_FILE` from the selected GitHub Environment into the matching Kubernetes namespace as `dotnet-template-api-env`. The Helm chart only references this existing secret; it does not store secret values in Git.
+Application runtime secrets are synchronized by External Secrets Operator from OpenBao. The application chart creates namespace-scoped SecretStores and ExternalSecrets; Git only stores the remote OpenBao paths and never stores secret values.
 
 Docker Compose deployments and Ansible server bootstrap have been removed from the desired state. Workload deployment is pull-based through Argo CD.
 
@@ -77,6 +77,16 @@ observability/observability-secrets
 headlamp/headlamp-oidc
 quality/sonarqube-secrets
 ```
+
+Application secrets are read by External Secrets Operator from:
+
+```text
+secret/applications/dotnet-template/development
+secret/applications/dotnet-template/production
+secret/applications/dotnet-template/registry
+```
+
+The registry path is written by the application repository CI through an OpenBao JWT role scoped only to that path.
 
 Workload replacements:
 
