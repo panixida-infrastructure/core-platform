@@ -5,16 +5,19 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://github.com/panixida-templates/dotnet-backend-template.git
-    targetRevision: development
-    path: deploy/helm/dotnet-template
-    helm:
-      releaseName: dotnet-template-development
-      valueFiles:
-        - values.yaml
-        - values-development.yaml
-        - images-development.yaml
+  sources:
+    - repoURL: https://github.com/panixida-infrastructure/ci-cd.git
+      targetRevision: main
+      path: charts/application
+      helm:
+        releaseName: dotnet-template-development
+        valueFiles:
+          - $values/deploy/helm/dotnet-template/values.yaml
+          - $values/deploy/helm/dotnet-template/values-development.yaml
+          - $values/deploy/helm/dotnet-template/images-development.yaml
+    - repoURL: https://github.com/panixida-templates/dotnet-backend-template.git
+      targetRevision: development
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: dotnet-template-development
