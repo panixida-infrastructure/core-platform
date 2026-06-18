@@ -178,6 +178,112 @@ data:
       rm -f /tmp/groups-mapper.json
     }
 
+    client_scope_uuid() {
+      "$kc" get client-scopes -r "$realm" --fields id,name --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r scope_id scope_name; do
+            if [ "$scope_name" = "$1" ]; then
+              printf '%s\n' "$scope_id"
+              break
+            fi
+          done
+    }
+
+    client_scope_mapper_uuid() {
+      scope_id="$1"
+      mapper_name="$2"
+      "$kc" get "client-scopes/$scope_id/protocol-mappers/models" -r "$realm" --fields id,name --format csv \
+        | tr -d '"' \
+        | while IFS=, read -r mapper_id current_mapper_name; do
+            if [ "$current_mapper_name" = "$mapper_name" ]; then
+              if [ -n "$mapper_id" ] && [ "$mapper_id" != "null" ]; then
+                printf '%s\n' "$mapper_id"
+              fi
+              break
+            fi
+          done
+    }
+
+    ensure_groups_client_scope() {
+      scope_id="$(client_scope_uuid groups)"
+      if [ -z "$scope_id" ]; then
+        cat >/tmp/groups-client-scope.json <<'EOF'
+    {
+      "name": "groups",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    }
+    EOF
+        "$kc" create client-scopes -r "$realm" -f /tmp/groups-client-scope.json >/dev/null
+        scope_id="$(client_scope_uuid groups)"
+      fi
+
+      mapper_id="$(client_scope_mapper_uuid "$scope_id" groups)"
+      if [ -n "$mapper_id" ]; then
+        cat >/tmp/groups-client-scope-mapper.json <<EOF
+    {
+      "id": "$mapper_id",
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "config": {
+        "claim.name": "groups",
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+    EOF
+        "$kc" update "client-scopes/$scope_id/protocol-mappers/models/$mapper_id" -r "$realm" -f /tmp/groups-client-scope-mapper.json >/dev/null
+      else
+        cat >/tmp/groups-client-scope-mapper.json <<'EOF'
+    {
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "config": {
+        "claim.name": "groups",
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+    EOF
+        "$kc" create "client-scopes/$scope_id/protocol-mappers/models" -r "$realm" -f /tmp/groups-client-scope-mapper.json >/dev/null
+      fi
+
+      rm -f /tmp/groups-client-scope.json /tmp/groups-client-scope-mapper.json
+      printf '%s\n' "$scope_id"
+    }
+
+    client_has_optional_scope() {
+      client_id="$1"
+      scope_name="$2"
+      "$kc" get "clients/$client_id/optional-client-scopes" -r "$realm" --fields name --format csv \
+        | tr -d '"' \
+        | grep -Fx "$scope_name" >/dev/null
+    }
+
+    ensure_optional_client_scope() {
+      client_id="$1"
+      scope_name="$2"
+      scope_id="$3"
+      if ! client_has_optional_scope "$client_id" "$scope_name"; then
+        "$kc" update "clients/$client_id/optional-client-scopes/$scope_id" -r "$realm" -n >/dev/null
+      fi
+    }
+
+    ensure_groups_scope_for_client() {
+      uuid="$1"
+      groups_scope_id="$(ensure_groups_client_scope)"
+      ensure_optional_client_scope "$uuid" groups "$groups_scope_id"
+    }
+
     upsert_client() {
       client_id="$1"
       client_file="$2"
@@ -413,10 +519,12 @@ data:
     }
     EOF
     upsert_oidc_client kargo /tmp/kargo-client.json
+    ensure_groups_scope_for_client "$(client_uuid kargo)"
 
     create_saml_sonarqube_client
 
-    rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json /tmp/kargo-client.json
+    rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json /tmp/kargo-client.json \
+      /tmp/groups-client-scope.json /tmp/groups-client-scope-mapper.json
 ---
 apiVersion: batch/v1
 kind: Job
