@@ -113,6 +113,10 @@ path "sys/policies/acl/github-actions" {
   capabilities = ["create", "read", "update"]
 }
 
+path "sys/policies/acl/dotnet-template-app" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "sys/policies/acl/dotnet-template-github-actions" {
   capabilities = ["create", "read", "update"]
 }
