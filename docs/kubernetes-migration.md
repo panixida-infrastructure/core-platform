@@ -64,7 +64,7 @@ Application runtime secrets are synchronized by External Secrets Operator from O
 
 Docker Compose deployments and Ansible server bootstrap have been removed from the desired state. Workload deployment is pull-based through Argo CD.
 
-Keycloak clients and groups for platform SSO are reconciled by the workload chart through a PostSync job. Argo CD uses the `argocd` public client with PKCE. Grafana and OpenBao use their native OIDC clients. Headlamp uses the `kubernetes` client, which is also the audience configured on the Timeweb Kubernetes OIDC provider.
+Keycloak clients and groups for platform SSO are reconciled by the workload chart through a PostSync job. Argo CD uses the `argocd` public client with PKCE. Kargo uses the `kargo` public client with PKCE. Grafana and OpenBao use their native OIDC clients. Headlamp uses the `kubernetes` client, which is also the audience configured on the Timeweb Kubernetes OIDC provider.
 
 Kubernetes workload secrets are not stored in Git. Run the manual `Kubernetes Secrets Sync` workflow before or immediately after enabling the workload chart. It reads OpenBao through GitHub Actions OIDC and applies only Kubernetes `Secret` objects for:
 

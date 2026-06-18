@@ -39,6 +39,7 @@ output "timeweb_inventory" {
       grafana                 = "grafana.panixida.ru"
       argocd                  = "argocd.panixida.ru"
       k8s                     = "k8s.panixida.ru"
+      kargo                   = "kargo.panixida.ru"
       sonar                   = "sonar.panixida.ru"
       dotnet_template_api     = "api.dotnet-template.panixida.ru"
       dotnet_template_api_dev = "dev.api.dotnet-template.panixida.ru"

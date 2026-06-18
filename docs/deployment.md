@@ -90,7 +90,7 @@ The application repository CI updates this registry path through the `dotnet-tem
 
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets, syncs the OpenBao static seal key from the `OPENBAO_STATIC_SEAL_KEY` GitHub secret, and reapplies OpenBao auth/SSO configuration from this repository. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 
-Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, and OpenBao.
+Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, OpenBao, and Kargo.
 
 Kubernetes workloads use the public Keycloak issuer URL directly. The Timeweb LoadBalancer is configured as TCP passthrough, so TLS is terminated by Envoy Gateway with cert-manager certificates.
 
@@ -102,6 +102,7 @@ secrets.panixida.ru
 grafana.panixida.ru
 argocd.panixida.ru
 k8s.panixida.ru
+kargo.panixida.ru
 sonar.panixida.ru
 api.dotnet-template.panixida.ru
 dev.api.dotnet-template.panixida.ru

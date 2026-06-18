@@ -37,6 +37,13 @@ resource "twc_dns_rr" "k8s" {
   value   = var.kubernetes_gateway_public_ipv4
 }
 
+resource "twc_dns_rr" "kargo" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "kargo"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}
+
 resource "twc_dns_rr" "sonar" {
   zone_id = data.twc_dns_zone.panixida_ru.id
   name    = "sonar"

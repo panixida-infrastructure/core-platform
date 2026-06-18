@@ -80,6 +80,17 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: kargo-https
+      protocol: HTTPS
+      port: 443
+      hostname: "kargo.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: kargo-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: sonar-https
       protocol: HTTPS
       port: 443

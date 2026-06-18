@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kargo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/akuity/kargo-charts
+    chart: kargo
+    targetRevision: 1.10.7
+    helm:
+      releaseName: kargo
+      valuesObject:
+        api:
+          host: kargo.panixida.ru
+          secretManagementEnabled: false
+          adminAccount:
+            enabled: false
+          oidc:
+            enabled: true
+            issuerURL: https://identity.panixida.ru/realms/panixida
+            clientID: kargo
+            usernameClaim: preferred_username
+            additionalScopes:
+              - groups
+            admins:
+              claims:
+                groups:
+                  - platform-admins
+            viewers:
+              claims:
+                groups:
+                  - platform-viewers
+            dex:
+              enabled: false
+          argocd:
+            urls:
+              "": https://argocd.panixida.ru
+          rollouts:
+            integrationEnabled: false
+          tls:
+            enabled: false
+            terminatedUpstream: true
+          service:
+            type: ClusterIP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+        controller:
+          gitClient:
+            name: Kargo
+            email: kargo@panixida.ru
+            pushIntegrationPolicy: RebaseOrMerge
+          rollouts:
+            integrationEnabled: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+        externalWebhooksServer:
+          enabled: false
+        garbageCollector:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+        managementController:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+        webhooksServer:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kargo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

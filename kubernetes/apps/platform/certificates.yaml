@@ -85,6 +85,19 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  name: kargo-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: kargo-panixida-ru-tls
+  dnsNames:
+    - kargo.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
   name: sonar-panixida-ru
   namespace: envoy-gateway-system
 spec:

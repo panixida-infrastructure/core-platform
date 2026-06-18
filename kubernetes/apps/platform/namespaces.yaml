@@ -16,6 +16,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: kargo
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: quality
 ---
 apiVersion: v1

@@ -106,6 +106,7 @@ observability:
   httpCheckTargets:
     - https://argocd.panixida.ru
     - https://k8s.panixida.ru
+    - https://kargo.panixida.ru
     - https://identity.panixida.ru
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru

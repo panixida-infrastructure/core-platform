@@ -37,6 +37,42 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
+  name: kargo-http-redirect
+  namespace: kargo
+spec:
+  parentRefs:
+    - name: core-platform
+      namespace: envoy-gateway-system
+      sectionName: http
+  hostnames:
+    - kargo.panixida.ru
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kargo
+  namespace: kargo
+spec:
+  parentRefs:
+    - name: core-platform
+      namespace: envoy-gateway-system
+      sectionName: kargo-https
+  hostnames:
+    - kargo.panixida.ru
+  rules:
+    - backendRefs:
+        - name: kargo-api
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
   name: k8s-http-redirect
   namespace: headlamp
 spec:

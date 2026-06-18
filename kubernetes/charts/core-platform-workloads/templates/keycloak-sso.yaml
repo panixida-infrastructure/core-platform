@@ -393,9 +393,30 @@ data:
     EOF
     upsert_oidc_client openbao /tmp/openbao-client.json
 
+    cat >/tmp/kargo-client.json <<'EOF'
+    {
+      "clientId": "kargo",
+      "name": "Kargo",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://kargo.panixida.ru/login",
+        "http://localhost/auth/callback"
+      ],
+      "webOrigins": ["https://kargo.panixida.ru"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+    EOF
+    upsert_oidc_client kargo /tmp/kargo-client.json
+
     create_saml_sonarqube_client
 
-    rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json
+    rm -f /tmp/argocd-client.json /tmp/kubernetes-client.json /tmp/grafana-client.json /tmp/openbao-client.json /tmp/kargo-client.json
 ---
 apiVersion: batch/v1
 kind: Job

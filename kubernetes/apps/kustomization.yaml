@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - applications/kargo.yaml
   - applications/platform-workloads.yaml
   - applications/dotnet-template.yaml
   - platform/namespaces.yaml
