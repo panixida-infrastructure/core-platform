@@ -100,7 +100,7 @@ spec:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/api
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
-          - ^dev-[0-9]+$
+          - ^development-[0-9]+$
         discoveryLimit: 20
         strictSemvers: true
         cacheByTag: true
@@ -108,7 +108,7 @@ spec:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
-          - ^dev-[0-9]+$
+          - ^development-[0-9]+$
         discoveryLimit: 20
         strictSemvers: true
         cacheByTag: true
@@ -133,7 +133,7 @@ spec:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/api
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
-          - ^prod-[0-9]+$
+          - ^production-[0-9]+$
         discoveryLimit: 20
         strictSemvers: true
         cacheByTag: true
@@ -141,7 +141,7 @@ spec:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
-          - ^prod-[0-9]+$
+          - ^production-[0-9]+$
         discoveryLimit: 20
         strictSemvers: true
         cacheByTag: true
