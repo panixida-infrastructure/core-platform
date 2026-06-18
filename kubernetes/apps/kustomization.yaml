@@ -4,6 +4,7 @@ resources:
   - applications/kargo.yaml
   - applications/platform-workloads.yaml
   - applications/dotnet-template.yaml
+  - applications/dotnet-template-kargo.yaml
   - platform/namespaces.yaml
   - platform/envoyproxy.yaml
   - platform/gateway.yaml

@@ -3,6 +3,12 @@ kind: Application
 metadata:
   name: dotnet-template-development
   namespace: argocd
+  labels:
+    app.kubernetes.io/name: dotnet-template
+    app.kubernetes.io/part-of: dotnet-template
+    environment: development
+  annotations:
+    kargo.akuity.io/authorized-stage: dotnet-template:development
 spec:
   project: default
   sources:

@@ -159,9 +159,59 @@ apply_argocd_repository_secret() {
   echo "Synced Kubernetes secret argocd/${name}"
 }
 
+apply_kargo_repository_secret() {
+  local namespace="$1"
+  local name="$2"
+  local cred_type="$3"
+  local repo_url="$4"
+  local username="$5"
+  local password="$6"
+  local manifest
+
+  manifest="$(mktemp)"
+  jq -n \
+    --arg namespace "$namespace" \
+    --arg name "$name" \
+    --arg cred_type "$cred_type" \
+    --arg repo_url "$repo_url" \
+    --arg username "$username" \
+    --arg password "$password" \
+    '{
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: {
+        name: $name,
+        namespace: $namespace,
+        labels: {
+          "kargo.akuity.io/cred-type": $cred_type
+        }
+      },
+      type: "Opaque",
+      stringData: {
+        repoURL: $repo_url,
+        username: $username,
+        password: $password
+      }
+    }' >"$manifest"
+
+  kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
+  kubectl -n "$namespace" annotate secret "$name" kubectl.kubernetes.io/last-applied-configuration- --overwrite >/dev/null 2>&1 || true
+  rm -f "$manifest"
+  echo "Synced Kubernetes secret ${namespace}/${name}"
+}
+
 for namespace in argocd identity secrets observability quality headlamp; do
   kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 done
+
+kubectl apply -f - >/dev/null <<'EOF'
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotnet-template
+  labels:
+    kargo.akuity.io/project: "true"
+EOF
 
 openbao_token="$(openbao_login)"
 
@@ -171,6 +221,7 @@ openbao_secret="$(bao_read "$openbao_token" core-platform/openbao)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
+dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
 
 apply_argocd_repository_secret \
   core-platform-repo \
@@ -181,6 +232,44 @@ apply_argocd_repository_secret \
   dotnet-template-repo \
   https://github.com/panixida-templates/dotnet-backend-template.git \
   "$github_secret"
+
+server_gh_pat="$(jq -r '.SERVER_GH_PAT // empty' <<<"$github_secret")"
+registry_user="$(jq -r '.REGISTRY_USER // empty' <<<"$dotnet_template_registry_secret")"
+registry_token="$(jq -r '.REGISTRY_TOKEN // empty' <<<"$dotnet_template_registry_secret")"
+
+if [ -z "$server_gh_pat" ]; then
+  echo "::error::missing required secret key SERVER_GH_PAT"
+  exit 1
+fi
+
+if [ -z "$registry_user" ] || [ -z "$registry_token" ]; then
+  echo "::error::missing required dotnet-template registry credentials"
+  exit 1
+fi
+
+apply_kargo_repository_secret \
+  dotnet-template \
+  dotnet-template-git \
+  git \
+  https://github.com/panixida-templates/dotnet-backend-template.git \
+  x-access-token \
+  "$server_gh_pat"
+
+apply_kargo_repository_secret \
+  dotnet-template \
+  dotnet-template-api-image \
+  image \
+  ghcr.io/panixida-templates/dotnet-backend-template/api \
+  "$registry_user" \
+  "$registry_token"
+
+apply_kargo_repository_secret \
+  dotnet-template \
+  dotnet-template-migrator-image \
+  image \
+  ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator \
+  "$registry_user" \
+  "$registry_token"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
   KEYCLOAK_DB_HOST \

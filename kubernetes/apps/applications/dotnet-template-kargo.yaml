@@ -1,0 +1,213 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dotnet-template
+  labels:
+    kargo.akuity.io/project: "true"
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: dotnet-template
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: dotnet-template
+  namespace: dotnet-template
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  promotionPolicies:
+    - stageSelector:
+        name: development
+      autoPromotionEnabled: true
+    - stageSelector:
+        name: production
+      autoPromotionEnabled: false
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: update-helm-images
+  namespace: dotnet-template
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  vars:
+    - name: gitRepo
+    - name: targetBranch
+    - name: valuesFile
+    - name: argocdApp
+    - name: apiImageRepo
+    - name: migratorImageRepo
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+    - uses: yaml-update
+      as: update-api-image
+      config:
+        path: ./repo/${{ vars.valuesFile }}
+        updates:
+          - key: image.tag
+            value: ${{ imageFrom(vars.apiImageRepo).Tag }}
+    - uses: yaml-update
+      as: update-migrator-image
+      config:
+        path: ./repo/${{ vars.valuesFile }}
+        updates:
+          - key: migrations.image.tag
+            value: ${{ imageFrom(vars.migratorImageRepo).Tag }}
+    - uses: git-commit
+      as: commit
+      config:
+        path: ./repo
+        message: |
+          chore: promote ${{ ctx.stage }} images
+
+          ${{ outputs['update-api-image'].commitMessage }}
+          ${{ outputs['update-migrator-image'].commitMessage }}
+    - uses: git-push
+      config:
+        path: ./repo
+    - uses: argocd-update
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: dotnet-template-development
+  namespace: dotnet-template
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  interval: 2m
+  freightCreationPolicy: Automatic
+  freightCreationCriteria:
+    expression: |
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/api") != nil &&
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator") != nil &&
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/api").Tag == imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator").Tag
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/panixida-templates/dotnet-backend-template/api
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^dev-[0-9]+$
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^dev-[0-9]+$
+        cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: dotnet-template-production
+  namespace: dotnet-template
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  interval: 2m
+  freightCreationPolicy: Automatic
+  freightCreationCriteria:
+    expression: |
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/api") != nil &&
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator") != nil &&
+      imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/api").Tag == imageFrom("ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator").Tag
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/panixida-templates/dotnet-backend-template/api
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^prod-[0-9]+$
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^prod-[0-9]+$
+        cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: development
+  namespace: dotnet-template
+  labels:
+    environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dotnet-template-development
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-helm-images
+          vars:
+            - name: gitRepo
+              value: https://github.com/panixida-templates/dotnet-backend-template.git
+            - name: targetBranch
+              value: development
+            - name: valuesFile
+              value: deploy/helm/dotnet-template/images-development.yaml
+            - name: argocdApp
+              value: dotnet-template-development
+            - name: apiImageRepo
+              value: ghcr.io/panixida-templates/dotnet-backend-template/api
+            - name: migratorImageRepo
+              value: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: production
+  namespace: dotnet-template
+  labels:
+    environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: dotnet-template-production
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-helm-images
+          vars:
+            - name: gitRepo
+              value: https://github.com/panixida-templates/dotnet-backend-template.git
+            - name: targetBranch
+              value: main
+            - name: valuesFile
+              value: deploy/helm/dotnet-template/images-production.yaml
+            - name: argocdApp
+              value: dotnet-template-production
+            - name: apiImageRepo
+              value: ghcr.io/panixida-templates/dotnet-backend-template/api
+            - name: migratorImageRepo
+              value: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
