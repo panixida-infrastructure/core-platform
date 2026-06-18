@@ -92,7 +92,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
 spec:
-  interval: 2m
+  interval: 2m0s
   freightCreationPolicy: Automatic
   freightCreationCriteria:
     expression: |
@@ -105,12 +105,16 @@ spec:
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
           - ^dev-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
         cacheByTag: true
     - image:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
           - ^dev-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
         cacheByTag: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
@@ -121,7 +125,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
 spec:
-  interval: 2m
+  interval: 2m0s
   freightCreationPolicy: Automatic
   freightCreationCriteria:
     expression: |
@@ -134,12 +138,16 @@ spec:
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
           - ^prod-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
         cacheByTag: true
     - image:
         repoURL: ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator
         imageSelectionStrategy: NewestBuild
         allowTagsRegexes:
           - ^prod-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
         cacheByTag: true
 ---
 apiVersion: kargo.akuity.io/v1alpha1
