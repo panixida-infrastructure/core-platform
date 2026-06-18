@@ -70,11 +70,7 @@ spec:
       as: commit
       config:
         path: ./repo
-        message: |
-          chore: promote ${{ ctx.stage }} images
-
-          ${{ outputs['update-api-image'].commitMessage }}
-          ${{ outputs['update-migrator-image'].commitMessage }}
+        message: "chore: promote ${{ ctx.stage }} images"
     - uses: git-push
       config:
         path: ./repo
