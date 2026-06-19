@@ -67,18 +67,6 @@ data:
               datasourceUid: victoriatraces
               url: '$${__value.raw}'
               urlDisplayLabel: View trace
-            - name: TraceId
-              matcherType: label
-              matcherRegex: TraceId
-              datasourceUid: victoriatraces
-              url: '$${__value.raw}'
-              urlDisplayLabel: View trace
-            - name: traceId
-              matcherType: label
-              matcherRegex: traceId
-              datasourceUid: victoriatraces
-              url: '$${__value.raw}'
-              urlDisplayLabel: View trace
         secureJsonData:
           basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
       - name: VictoriaTraces
@@ -1935,7 +1923,7 @@ data:
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "Applications send OTLP metrics, logs, and traces to OpenTelemetry Collector. VictoriaLogs log rows should include TraceId or trace_id when logs are emitted inside an active trace, which enables jumping from logs to traces and from traces back to matching logs.",
+            "content": "Applications send OTLP metrics, logs, and traces to OpenTelemetry Collector. VictoriaLogs log rows should include trace_id when logs are emitted inside an active trace, which enables jumping from logs to traces and from traces back to matching logs.",
             "mode": "markdown"
           },
           "pluginVersion": "13.0.1",

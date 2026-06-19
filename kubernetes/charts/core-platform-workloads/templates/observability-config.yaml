@@ -175,6 +175,30 @@ data:
           - key: platform.name
             value: core-platform
             action: upsert
+      transform/logs:
+        error_mode: ignore
+        log_statements:
+          - 'set(log.attributes["http.request.method"], log.attributes["Method"]) where log.attributes["http.request.method"] == nil and log.attributes["Method"] != nil'
+          - 'set(log.attributes["url.path"], log.attributes["RequestPath"]) where log.attributes["url.path"] == nil and log.attributes["RequestPath"] != nil'
+          - 'set(log.attributes["url.path"], log.attributes["Path"]) where log.attributes["url.path"] == nil and log.attributes["Path"] != nil'
+          - 'set(log.attributes["http.response.status_code"], log.attributes["StatusCode"]) where log.attributes["http.response.status_code"] == nil and log.attributes["StatusCode"] != nil'
+          - 'set(log.attributes["http.server.request.duration_ms"], log.attributes["ElapsedMs"]) where log.attributes["http.server.request.duration_ms"] == nil and log.attributes["ElapsedMs"] != nil'
+          - 'set(log.attributes["aspnetcore.endpoint.display_name"], log.attributes["Endpoint"]) where log.attributes["aspnetcore.endpoint.display_name"] == nil and log.attributes["Endpoint"] != nil'
+          - 'set(log.attributes["client.address"], log.attributes["RemoteIp"]) where log.attributes["client.address"] == nil and log.attributes["RemoteIp"] != nil'
+          - 'set(log.attributes["user_agent.original"], log.attributes["UserAgent"]) where log.attributes["user_agent.original"] == nil and log.attributes["UserAgent"] != nil'
+          - 'set(log.attributes["network.protocol.name"], log.attributes["Transport"]) where log.attributes["network.protocol.name"] == nil and log.attributes["Transport"] != nil'
+          - 'delete_key(log.attributes, "Method") where log.attributes["http.request.method"] != nil'
+          - 'delete_key(log.attributes, "RequestPath") where log.attributes["url.path"] != nil'
+          - 'delete_key(log.attributes, "Path") where log.attributes["url.path"] != nil'
+          - 'delete_key(log.attributes, "StatusCode") where log.attributes["http.response.status_code"] != nil'
+          - 'delete_key(log.attributes, "ElapsedMs") where log.attributes["http.server.request.duration_ms"] != nil'
+          - 'delete_key(log.attributes, "Endpoint") where log.attributes["aspnetcore.endpoint.display_name"] != nil'
+          - 'delete_key(log.attributes, "RemoteIp") where log.attributes["client.address"] != nil'
+          - 'delete_key(log.attributes, "UserAgent") where log.attributes["user_agent.original"] != nil'
+          - 'delete_key(log.attributes, "Transport") where log.attributes["network.protocol.name"] != nil'
+          - 'delete_key(log.attributes, "TraceId")'
+          - 'delete_key(log.attributes, "SpanId")'
+          - 'delete_key(log.attributes, "ParentId")'
       batch:
         timeout: 5s
         send_batch_size: 8192
@@ -215,7 +239,7 @@ data:
           exporters: [otlphttp/victoriametrics]
         logs:
           receivers: [otlp]
-          processors: [memory_limiter, resource/core-platform, batch]
+          processors: [memory_limiter, resource/core-platform, transform/logs, batch]
           exporters: [otlphttp/victorialogs]
         traces:
           receivers: [otlp]
