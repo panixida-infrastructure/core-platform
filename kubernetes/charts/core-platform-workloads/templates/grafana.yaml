@@ -61,21 +61,24 @@ data:
               operator: regex
               enabled: true
           derivedFields:
-            - name: Trace
+            - name: trace_id
               matcherType: label
-              matcherRegex: '^trace_id$'
+              matcherRegex: trace_id
               datasourceUid: victoriatraces
               url: '$${__value.raw}'
-            - name: Trace
+              urlDisplayLabel: View trace
+            - name: TraceId
               matcherType: label
-              matcherRegex: '^TraceId$'
+              matcherRegex: TraceId
               datasourceUid: victoriatraces
               url: '$${__value.raw}'
-            - name: Trace
+              urlDisplayLabel: View trace
+            - name: traceId
               matcherType: label
-              matcherRegex: '^traceId$'
+              matcherRegex: traceId
               datasourceUid: victoriatraces
               url: '$${__value.raw}'
+              urlDisplayLabel: View trace
         secureJsonData:
           basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
       - name: VictoriaTraces
