@@ -29,6 +29,37 @@ data:
         basicAuth: true
         basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
         jsonData:
+          logLevelRules:
+            - field: severity_text
+              value: ^Critical$
+              level: critical
+              operator: regex
+              enabled: true
+            - field: severity_text
+              value: ^Error$
+              level: error
+              operator: regex
+              enabled: true
+            - field: severity_text
+              value: ^Warning$
+              level: warning
+              operator: regex
+              enabled: true
+            - field: severity_text
+              value: ^Information$
+              level: info
+              operator: regex
+              enabled: true
+            - field: severity_text
+              value: ^Debug$
+              level: debug
+              operator: regex
+              enabled: true
+            - field: severity_text
+              value: ^Trace$
+              level: trace
+              operator: regex
+              enabled: true
           derivedFields:
             - name: Trace
               matcherType: label
