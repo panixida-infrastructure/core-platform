@@ -31,7 +31,18 @@ data:
         jsonData:
           derivedFields:
             - name: Trace
-              matcherRegex: 'trace[_\.]?id[=:\"]+([a-fA-F0-9]{32})'
+              matcherType: label
+              matcherRegex: '^trace_id$'
+              datasourceUid: victoriatraces
+              url: '$${__value.raw}'
+            - name: Trace
+              matcherType: label
+              matcherRegex: '^TraceId$'
+              datasourceUid: victoriatraces
+              url: '$${__value.raw}'
+            - name: Trace
+              matcherType: label
+              matcherRegex: '^traceId$'
               datasourceUid: victoriatraces
               url: '$${__value.raw}'
         secureJsonData:
@@ -49,7 +60,7 @@ data:
             filterByTraceID: true
             filterBySpanID: false
             customQuery: true
-            query: 'trace_id:"$${__trace.traceId}" OR traceId:"$${__trace.traceId}"'
+            query: 'trace_id:="$${__trace.traceId}"'
       - name: Alertmanager
         uid: alertmanager
         type: alertmanager
@@ -1890,7 +1901,7 @@ data:
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "Applications send OTLP metrics, logs, and traces to OpenTelemetry Collector. VictoriaLogs log rows should include trace_id when logs are emitted inside an active trace, which enables jumping from logs to traces and from traces back to matching logs.",
+            "content": "Applications send OTLP metrics, logs, and traces to OpenTelemetry Collector. VictoriaLogs log rows should include TraceId or trace_id when logs are emitted inside an active trace, which enables jumping from logs to traces and from traces back to matching logs.",
             "mode": "markdown"
           },
           "pluginVersion": "13.0.1",
