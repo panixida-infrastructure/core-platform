@@ -2434,6 +2434,8 @@ spec:
               value: https://{{ .Values.keycloak.host }}/realms/panixida/protocol/openid-connect/userinfo
             - name: GF_INSTALL_PLUGINS
               value: victoriametrics-logs-datasource,victoriametrics-metrics-datasource
+            - name: GF_PLUGINS_DISABLE_PLUGINS
+              value: grafana-exploretraces-app
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/core-platform-overview.json
             - name: OBSERVABILITY_VM_REMOTE_WRITE_USERNAME
