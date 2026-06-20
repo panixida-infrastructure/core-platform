@@ -2,7 +2,6 @@
 set -euo pipefail
 
 core_platform_project_id="${CORE_PLATFORM_PROJECT_ID:-1152653}"
-core_platform_cluster_id="${CORE_PLATFORM_CLUSTER_ID:-1091532}"
 core_platform_worker_group_id="${CORE_PLATFORM_WORKER_GROUP_ID:-113109}"
 
 state_id() {
@@ -51,4 +50,4 @@ import_or_replace() {
 
 remove_if_present twc_project.common
 import_or_replace twc_project.infrastructure "$core_platform_project_id"
-import_or_replace twc_k8s_node_group.core_platform_default "${core_platform_cluster_id}/${core_platform_worker_group_id}"
+import_or_replace twc_k8s_node_group.core_platform_default "$core_platform_worker_group_id"
