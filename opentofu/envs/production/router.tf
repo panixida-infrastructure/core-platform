@@ -21,7 +21,7 @@ resource "twc_router" "core_platform_msk" {
   project_id = twc_project.infrastructure.id
 
   networks {
-    network_name    = twc_vpc.infrastructure_msk.name
+    id              = twc_vpc.infrastructure_msk.id
     is_dhcp_enabled = true
   }
 
@@ -29,7 +29,7 @@ resource "twc_router" "core_platform_msk" {
     ip = twc_floating_ip.core_platform_router_ipv4_msk.ip
 
     nat {
-      network_name = twc_vpc.infrastructure_msk.name
+      id = twc_vpc.infrastructure_msk.id
     }
   }
 
