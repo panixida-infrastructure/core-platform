@@ -21,6 +21,16 @@ data:
         basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
         secureJsonData:
           basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
+      - name: VictoriaMetrics Native
+        uid: victoriametrics-native
+        type: victoriametrics-metrics-datasource
+        access: proxy
+        url: http://victoriametrics.observability.svc.cluster.local:8428
+        isDefault: false
+        basicAuth: true
+        basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
+        secureJsonData:
+          basicAuthPassword: ${OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
       - name: VictoriaLogs
         uid: victorialogs
         type: victoriametrics-logs-datasource
@@ -2379,7 +2389,7 @@ spec:
             - name: GF_AUTH_GENERIC_OAUTH_API_URL
               value: https://{{ .Values.keycloak.host }}/realms/panixida/protocol/openid-connect/userinfo
             - name: GF_INSTALL_PLUGINS
-              value: victoriametrics-logs-datasource
+              value: victoriametrics-logs-datasource,victoriametrics-metrics-datasource
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
               value: /var/lib/grafana/dashboards/core-platform/core-platform-overview.json
             - name: OBSERVABILITY_VM_REMOTE_WRITE_USERNAME
