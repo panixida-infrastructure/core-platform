@@ -16,6 +16,11 @@ output "timeweb_inventory" {
       core_platform_msk = twc_vpc.infrastructure_msk.id
     }
 
+    routers = {
+      core_platform_msk      = twc_router.core_platform_msk.id
+      core_platform_msk_ipv4 = twc_floating_ip.core_platform_router_ipv4_msk.ip
+    }
+
     kubernetes = {
       id                    = twc_k8s_cluster.core_platform.id
       version               = twc_k8s_cluster.core_platform.version

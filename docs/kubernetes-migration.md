@@ -8,6 +8,7 @@ OpenTofu owns cloud resources:
 
 ```text
 core-platform-network       Timeweb VPC in MSK-1
+core-platform-router        Timeweb virtual router for Kubernetes worker egress in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
 core-platform-default       Default worker node group
 postgres                    Managed PostgreSQL cluster in MSK-1
@@ -23,11 +24,12 @@ Kubernetes version: v1.35.4+k0s.0
 Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
 Worker autoscaling: 1-6 nodes
+Worker networking:  private worker IPs with egress through Timeweb virtual router
 CNI:                cilium
 Built-in ingress:   disabled
 ```
 
-Worker public IPs are enabled for the first cluster creation because Timeweb requires every worker group to use either public IPs or a virtual router. The target production hardening step is to add a Timeweb virtual router and then disable public IPs on workers.
+Worker public IPs were enabled for the first cluster creation because Timeweb requires every worker group to use either public IPs or a virtual router. The production target is private worker IPs with outbound internet access through a Timeweb virtual router. Public platform traffic still enters through the Envoy Gateway LoadBalancer.
 
 Labels are lightweight key/value metadata attached to nodes. They are used by Kubernetes scheduling, selectors, and operational grouping. The default node group receives `panixida.ru/node-pool=core-platform`.
 

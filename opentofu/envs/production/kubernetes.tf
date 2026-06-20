@@ -31,7 +31,8 @@ resource "twc_k8s_node_group" "core_platform_default" {
   min_size          = var.k8s_worker_min_size
   max_size          = var.k8s_worker_max_size
   is_autohealing    = true
-  public_ip_enabled = true
+  public_ip_enabled = false
+  virtual_router_id = twc_router.core_platform_msk.id
 
   labels {
     key   = "panixida.ru/node-pool"
