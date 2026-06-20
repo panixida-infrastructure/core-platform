@@ -2,6 +2,7 @@
 set -euo pipefail
 
 core_platform_project_id="${CORE_PLATFORM_PROJECT_ID:-1152653}"
+core_platform_cluster_id="${CORE_PLATFORM_CLUSTER_ID:-1091532}"
 core_platform_worker_group_id="${CORE_PLATFORM_WORKER_GROUP_ID:-113109}"
 
 state_id() {
@@ -30,24 +31,28 @@ remove_if_present() {
 
 import_or_replace() {
   local address="$1"
-  local id="$2"
+  local import_id="$2"
+  local expected_id="${3:-$2}"
   local current_id
 
   if tofu state show "$address" >/dev/null 2>&1; then
     current_id="$(state_id "$address")"
-    if [ "$current_id" = "$id" ]; then
+    if [ "$current_id" = "$expected_id" ]; then
       echo "Already imported: ${address}"
       return
     fi
 
-    echo "Replacing import: ${address} ${current_id} -> ${id}"
+    echo "Replacing import: ${address} ${current_id} -> ${expected_id}"
     tofu state rm "$address"
   fi
 
   echo "Importing: ${address}"
-  tofu import -input=false "$address" "$id"
+  tofu import -input=false "$address" "$import_id"
 }
 
 remove_if_present twc_project.common
 import_or_replace twc_project.infrastructure "$core_platform_project_id"
-import_or_replace twc_k8s_node_group.core_platform_default "$core_platform_worker_group_id"
+import_or_replace \
+  twc_k8s_node_group.core_platform_default \
+  "${core_platform_worker_group_id}?cluster_id=${core_platform_cluster_id}" \
+  "$core_platform_worker_group_id"
