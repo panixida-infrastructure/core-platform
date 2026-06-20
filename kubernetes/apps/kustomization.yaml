@@ -6,6 +6,7 @@ resources:
   - applications/dotnet-template.yaml
   - applications/dotnet-template-kargo.yaml
   - platform/namespaces.yaml
+  - platform/coredns.yaml
   - platform/envoyproxy.yaml
   - platform/gateway.yaml
   - platform/certificates.yaml
