@@ -21,7 +21,6 @@ The manual `OpenTofu Apply` workflow reconciles Timeweb resources from `opentofu
 core-platform-network       Timeweb VPC in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
 core-platform-default       Default worker node group
-core-platform-quality       Dedicated worker node group for quality tools
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 panixida.ru DNS records     Platform UI records pointing to Envoy Gateway

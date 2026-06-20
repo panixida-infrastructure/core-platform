@@ -13,7 +13,7 @@ Planned platform layers:
 
 - Envoy Gateway for public entrypoints.
 - Keycloak for SSO.
-- Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmalert, Alertmanager, blackbox_exporter, vmagent, vlagent, and OpenTelemetry Collector for observability.
+- Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmalert, Alertmanager, node-exporter, and OpenTelemetry Collector for observability.
 - OpenBao for secrets.
 - Argo CD and Headlamp for Kubernetes management.
 - Restic backups with restore checks.

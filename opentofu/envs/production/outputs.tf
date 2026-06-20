@@ -22,7 +22,6 @@ output "timeweb_inventory" {
       status                = twc_k8s_cluster.core_platform.status
       network_driver        = var.k8s_network_driver
       default_node_group_id = twc_k8s_node_group.core_platform_default.id
-      quality_node_group_id = twc_k8s_node_group.core_platform_quality.id
     }
 
     postgres_database = {

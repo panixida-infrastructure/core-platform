@@ -72,13 +72,6 @@ sonarqube:
   host: sonar.panixida.ru
   image: sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
-  nodeSelector:
-    panixida.ru/node-pool: quality
-  tolerations:
-    - key: panixida.ru/dedicated
-      operator: Equal
-      value: quality
-      effect: NoSchedule
   javaOpts:
     web: -Xms128m -Xmx384m
     ce: -Xms128m -Xmx384m

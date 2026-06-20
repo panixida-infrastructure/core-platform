@@ -42,25 +42,3 @@ resource "twc_k8s_node_group" "core_platform_default" {
     prevent_destroy = true
   }
 }
-
-resource "twc_k8s_node_group" "core_platform_quality" {
-  cluster_id        = twc_k8s_cluster.core_platform.id
-  name              = "core-platform-quality"
-  preset_id         = var.k8s_quality_worker_preset_id
-  node_count        = var.k8s_quality_worker_node_count
-  is_autoscaling    = true
-  min_size          = var.k8s_quality_worker_min_size
-  max_size          = var.k8s_quality_worker_max_size
-  is_autohealing    = true
-  public_ip_enabled = true
-
-  labels {
-    key   = "panixida.ru/node-pool"
-    value = "quality"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [node_count]
-  }
-}
