@@ -164,7 +164,8 @@ data:
         updateIntervalSeconds: 60
         allowUiUpdates: false
         options:
-          path: /var/lib/grafana/dashboards/core-platform
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -2434,7 +2435,7 @@ spec:
             - name: GF_INSTALL_PLUGINS
               value: victoriametrics-logs-datasource,victoriametrics-metrics-datasource
             - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
-              value: /var/lib/grafana/dashboards/core-platform/core-platform-overview.json
+              value: /var/lib/grafana/dashboards/core-platform-overview.json
             - name: OBSERVABILITY_VM_REMOTE_WRITE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -2468,7 +2469,7 @@ spec:
               mountPath: /etc/grafana/provisioning/dashboards
               readOnly: true
             - name: dashboards
-              mountPath: /var/lib/grafana/dashboards/core-platform
+              mountPath: /var/lib/grafana/dashboards
               readOnly: true
           resources:
             {{- toYaml .Values.grafana.resources | nindent 12 }}
