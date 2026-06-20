@@ -10,7 +10,7 @@ OpenTofu owns cloud resources:
 core-platform-network       Timeweb VPC in MSK-1
 core-platform-router        Timeweb virtual router for Kubernetes worker egress in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
-core-platform-workers-2     Private router-backed worker node group
+core-platform-infrastructure Private router-backed infrastructure node group
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```

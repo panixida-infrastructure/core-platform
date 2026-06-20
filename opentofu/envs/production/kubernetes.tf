@@ -26,7 +26,7 @@ resource "twc_k8s_cluster" "core_platform" {
 # was migrated away from the retired core-platform-default group.
 resource "twc_k8s_node_group" "core_platform_default" {
   cluster_id        = twc_k8s_cluster.core_platform.id
-  name              = "core-platform-workers-2"
+  name              = "core-platform-infrastructure"
   preset_id         = var.k8s_worker_preset_id
   node_count        = var.k8s_worker_node_count
   is_autoscaling    = false
