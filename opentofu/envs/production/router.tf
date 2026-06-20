@@ -3,11 +3,6 @@ data "twc_router_preset" "core_platform_minimal" {
   node_count = 1
   cpu        = 1
   ram        = 1
-
-  price_filter {
-    from = 0
-    to   = 600
-  }
 }
 
 resource "twc_floating_ip" "core_platform_router_ipv4_msk" {
