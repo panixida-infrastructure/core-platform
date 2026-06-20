@@ -6,9 +6,7 @@ k8s_version           = "v1.35.4+k0s.0"
 k8s_network_driver    = "cilium"
 k8s_master_preset_id  = 2947
 k8s_worker_preset_id  = 2951
-k8s_worker_node_count = 1
-k8s_worker_min_size   = 1
-k8s_worker_max_size   = 6
+k8s_worker_node_count = 3
 
 tags = {
   managed_by = "opentofu"

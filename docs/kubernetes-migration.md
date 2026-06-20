@@ -10,7 +10,7 @@ OpenTofu owns cloud resources:
 core-platform-network       Timeweb VPC in MSK-1
 core-platform-router        Timeweb virtual router for Kubernetes worker egress in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
-core-platform-default       Default worker node group
+core-platform-workers-2     Private router-backed worker node group
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```
@@ -23,17 +23,17 @@ Cluster defaults:
 Kubernetes version: v1.35.4+k0s.0
 Master preset:      2947, Promo MSK
 Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
-Worker autoscaling: 1-6 nodes
+Worker count:       3 static nodes
 Worker networking:  private worker IPs with egress through Timeweb virtual router
 CNI:                cilium
 Built-in ingress:   disabled
 ```
 
-Worker public IPs were enabled for the first cluster creation because Timeweb requires every worker group to use either public IPs or a virtual router. The production target is private worker IPs with outbound internet access through a Timeweb virtual router. Public platform traffic still enters through the Envoy Gateway LoadBalancer.
+Worker public IPs were used only during the first cluster creation and recovery steps. The production worker group uses private worker IPs with outbound internet access through a Timeweb virtual router. Public platform traffic still enters through the Envoy Gateway LoadBalancer.
 
-Labels are lightweight key/value metadata attached to nodes. They are used by Kubernetes scheduling, selectors, and operational grouping. The default node group receives `panixida.ru/node-pool=core-platform`.
+Labels are lightweight key/value metadata attached to nodes. They are used by Kubernetes scheduling, selectors, and operational grouping. The worker node group receives `panixida.ru/node-pool=core-platform`.
 
-Taints repel pods unless pods explicitly tolerate them. The default node group has no taints because general platform workloads must be schedulable there.
+Taints repel pods unless pods explicitly tolerate them. The worker node group has no taints because general platform workloads must be schedulable there.
 
 The cluster OIDC provider is managed by OpenTofu after Keycloak is reachable at `identity.panixida.ru`. Kubernetes trusts the Keycloak `panixida` realm, uses the `kubernetes` client, maps usernames from `preferred_username`, and maps RBAC groups from `groups`.
 

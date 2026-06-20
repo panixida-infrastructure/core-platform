@@ -22,14 +22,14 @@ resource "twc_k8s_cluster" "core_platform" {
   }
 }
 
+# Keep the Terraform address for state compatibility; the live worker group
+# was migrated away from the retired core-platform-default group.
 resource "twc_k8s_node_group" "core_platform_default" {
   cluster_id        = twc_k8s_cluster.core_platform.id
-  name              = "core-platform-default"
+  name              = "core-platform-workers-2"
   preset_id         = var.k8s_worker_preset_id
   node_count        = var.k8s_worker_node_count
-  is_autoscaling    = true
-  min_size          = var.k8s_worker_min_size
-  max_size          = var.k8s_worker_max_size
+  is_autoscaling    = false
   is_autohealing    = true
   public_ip_enabled = false
   virtual_router_id = twc_router.core_platform_msk.id
@@ -41,6 +41,5 @@ resource "twc_k8s_node_group" "core_platform_default" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [node_count]
   }
 }

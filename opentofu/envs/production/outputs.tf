@@ -26,6 +26,7 @@ output "timeweb_inventory" {
       version               = twc_k8s_cluster.core_platform.version
       status                = twc_k8s_cluster.core_platform.status
       network_driver        = var.k8s_network_driver
+      worker_node_group_id  = twc_k8s_node_group.core_platform_default.id
       default_node_group_id = twc_k8s_node_group.core_platform_default.id
     }
 

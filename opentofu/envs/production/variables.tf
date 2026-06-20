@@ -54,21 +54,9 @@ variable "k8s_worker_preset_id" {
 }
 
 variable "k8s_worker_node_count" {
-  description = "Initial worker node count. Keep in sync with autoscaling min size on first create."
+  description = "Static worker node count for the private router-backed worker node group."
   type        = number
-  default     = 1
-}
-
-variable "k8s_worker_min_size" {
-  description = "Minimum autoscaling size for the default worker node group."
-  type        = number
-  default     = 1
-}
-
-variable "k8s_worker_max_size" {
-  description = "Maximum autoscaling size for the default worker node group."
-  type        = number
-  default     = 6
+  default     = 3
 }
 
 variable "tags" {
