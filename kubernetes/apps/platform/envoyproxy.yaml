@@ -15,7 +15,7 @@ spec:
               cpu: 50m
               memory: 128Mi
       envoyService:
-        externalTrafficPolicy: Local
+        externalTrafficPolicy: Cluster
         patch:
           type: StrategicMerge
           value:
