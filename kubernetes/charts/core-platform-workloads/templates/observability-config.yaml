@@ -394,7 +394,7 @@ data:
             annotations:
               summary: Error-like application logs were detected.
               description: VictoriaLogs found OTLP error-like log entries during the last evaluation window.
-              logs_url: https://grafana.panixida.ru/d/logs-and-traces/logs-and-traces
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
 ---
 apiVersion: v1
 kind: ConfigMap
