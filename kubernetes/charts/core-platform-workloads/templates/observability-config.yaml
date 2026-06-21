@@ -291,7 +291,7 @@ data:
               description: Host OS metrics from node-exporter have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
           - alert: PlatformEndpointDown
-            expr: max by (http_url) (httpcheck_status{http_status_class="2xx"}) == 0
+            expr: max by (http_url) (httpcheck_status_ratio{http_status_class="2xx"}) == 0
             for: 5m
             labels:
               severity: warning

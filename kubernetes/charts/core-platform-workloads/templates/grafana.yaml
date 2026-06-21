@@ -274,7 +274,7 @@ data:
           "pluginVersion": "13.0.1",
           "targets": [
             {
-              "expr": "max by (http_url) (httpcheck_status{http_status_class=\"2xx\"})",
+              "expr": "max by (http_url) (httpcheck_status_ratio{http_status_class=\"2xx\"})",
               "legendFormat": "{{`{{http_url}}`}}",
               "refId": "A"
             }
