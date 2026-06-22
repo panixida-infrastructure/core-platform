@@ -7,8 +7,10 @@ resources:
   - applications/dotnet-template-kargo.yaml
   - platform/namespaces.yaml
   - platform/coredns.yaml
+  - platform/envoy-gateway-config.yaml
   - platform/envoyproxy.yaml
   - platform/gateway.yaml
+  - platform/grafana-alerting-redirect.yaml
   - platform/certificates.yaml
   - platform/oidc-rbac.yaml
   - platform/routes.yaml

@@ -1,0 +1,32 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyPatchPolicy
+metadata:
+  name: grafana-alerting-redirect
+  namespace: envoy-gateway-system
+spec:
+  type: JSONPatch
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: core-platform
+  jsonPatches:
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-active-notifications-default-alertmanager
+          match:
+            path: /alerting/groups
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/groups
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/groups?alertmanager=alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
