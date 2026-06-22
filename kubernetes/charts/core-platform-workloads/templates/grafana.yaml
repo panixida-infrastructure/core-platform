@@ -2458,7 +2458,7 @@ data:
       "timezone": "browser",
       "title": "Infrastructure Nodes",
       "uid": "infrastructure-nodes",
-      "version": 1,
+      "version": 10,
       "weekStart": ""
     }
 
@@ -3642,7 +3642,7 @@ data:
       "timezone": "browser",
       "title": "Managed PostgreSQL",
       "uid": "postgresql-managed",
-      "version": 1,
+      "version": 10,
       "weekStart": ""
     }
 
