@@ -28,5 +28,5 @@ spec:
           response_headers_to_add:
             - header:
                 key: location
-                value: /alerting/groups?alertmanager=alertmanager
+                value: /alerting/groups?alertmanager=Alertmanager
               append_action: OVERWRITE_IF_EXISTS_OR_ADD
