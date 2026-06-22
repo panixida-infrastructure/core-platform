@@ -337,6 +337,292 @@ data:
           ],
           "title": "TLS certificate days remaining",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 6
+          },
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum(up{service_name=\"linux-node-exporter\"})",
+              "legendFormat": "Node exporter targets up",
+              "refId": "A"
+            }
+          ],
+          "title": "Node exporter targets up",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 6
+          },
+          "id": 4,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum(up == 0)",
+              "legendFormat": "Scrape targets failing",
+              "refId": "A"
+            }
+          ],
+          "title": "Scrape targets failing",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 12,
+            "y": 6
+          },
+          "id": 5,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum(alertmanager_alerts{state=\"active\"})",
+              "legendFormat": "Active alerts",
+              "refId": "A"
+            }
+          ],
+          "title": "Active alerts",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 18,
+            "y": 6
+          },
+          "id": 6,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m])) + sum(rate(otelcol_exporter_send_failed_log_records_total[5m])) + sum(rate(otelcol_exporter_send_failed_spans_total[5m]))",
+              "legendFormat": "OTel export failures/s",
+              "refId": "A"
+            }
+          ],
+          "title": "OTel export failures/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 10
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "avg by (http_url) (httpcheck_duration_milliseconds / 1000)",
+              "legendFormat": "{{`{{http_url}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Public endpoint response time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 10
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (up)",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Scrape health by service",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -358,6 +644,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
   observability-pipeline.json: |
     {
       "annotations": {
@@ -624,6 +911,514 @@ data:
           ],
           "title": "Alertmanager alerts by state",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 21
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_metric_points_total[5m]))",
+              "legendFormat": "metrics <- {{`{{receiver}}`}}",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records_total[5m]))",
+              "legendFormat": "logs <- {{`{{receiver}}`}}",
+              "refId": "B"
+            },
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_spans_total[5m]))",
+              "legendFormat": "traces <- {{`{{receiver}}`}}",
+              "refId": "C"
+            }
+          ],
+          "title": "OpenTelemetry Collector receiver throughput",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 21
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_metric_points_total[5m]) + rate(otelcol_receiver_failed_metric_points_total[5m]))",
+              "legendFormat": "metrics {{`{{receiver}}`}}",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_log_records_total[5m]) + rate(otelcol_receiver_failed_log_records_total[5m]))",
+              "legendFormat": "logs {{`{{receiver}}`}}",
+              "refId": "B"
+            },
+            {
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_spans_total[5m]) + rate(otelcol_receiver_failed_spans_total[5m]))",
+              "legendFormat": "traces {{`{{receiver}}`}}",
+              "refId": "C"
+            }
+          ],
+          "title": "OpenTelemetry Collector refused and failed items",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 28
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+              "legendFormat": "metrics -> {{`{{exporter}}`}}",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_log_records_total[5m]))",
+              "legendFormat": "logs -> {{`{{exporter}}`}}",
+              "refId": "B"
+            },
+            {
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_spans_total[5m]))",
+              "legendFormat": "traces -> {{`{{exporter}}`}}",
+              "refId": "C"
+            }
+          ],
+          "title": "OpenTelemetry Collector exporter failures",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 28
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "otelcol_exporter_queue_size",
+              "legendFormat": "{{`{{exporter}}`}} size",
+              "refId": "A"
+            },
+            {
+              "expr": "otelcol_exporter_queue_capacity",
+              "legendFormat": "{{`{{exporter}}`}} capacity",
+              "refId": "B"
+            }
+          ],
+          "title": "OpenTelemetry Collector exporter queue",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 35
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "avg by (service_name) (scrape_duration_seconds)",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Scrape duration by job",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 35
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (scrape_samples_scraped)",
+              "legendFormat": "{{`{{service_name}}`}} scraped",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (service_name) (scrape_samples_post_metric_relabeling)",
+              "legendFormat": "{{`{{service_name}}`}} kept",
+              "refId": "B"
+            }
+          ],
+          "title": "Scrape samples by job",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 42
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (scrape_series_added)",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Scrape series added",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 42
+          },
+          "id": 14,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "max by (http_url, http_status_class) (httpcheck_status_ratio)",
+              "legendFormat": "{{`{{http_url}}`}} {{`{{http_status_class}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "HTTP check status ratio by class",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 49
+          },
+          "id": 15,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (status) (rate(alertmanager_alerts_received_total[5m]))",
+              "legendFormat": "{{`{{status}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Alertmanager alerts received",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 49
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (integration) (rate(alertmanager_notifications_failed_total[5m]))",
+              "legendFormat": "{{`{{integration}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Alertmanager notification failures",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 56
+          },
+          "id": 17,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "process_resident_memory_bytes{app_kubernetes_io_name=~\"otel-collector|alertmanager|victoriatraces\"}",
+              "legendFormat": "{{`{{app_kubernetes_io_name}}`}} {{`{{kubernetes_pod_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Observability process memory",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 56
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (app_kubernetes_io_name, kubernetes_pod_name) (rate(process_cpu_seconds_total{app_kubernetes_io_name=~\"otel-collector|alertmanager|victoriatraces\"}[5m]))",
+              "legendFormat": "{{`{{app_kubernetes_io_name}}`}} {{`{{kubernetes_pod_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Observability process CPU",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -645,6 +1440,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
   infrastructure-nodes.json: |
     {
       "annotations": {
@@ -911,6 +1707,685 @@ data:
           ],
           "title": "Network throughput",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "time() - node_boot_time_seconds{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Node uptime",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_node_name, mode) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode!=\"idle\"}[5m])) * 100",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mode}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "CPU usage by mode",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 31
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_load1{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / on (k8s_node_name) group_left count by (k8s_node_name) (node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode=\"idle\"})",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Load normalized by CPU cores",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_procs_running{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} running",
+              "refId": "A"
+            },
+            {
+              "expr": "node_procs_blocked{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} blocked",
+              "refId": "B"
+            }
+          ],
+          "title": "Processes",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 38
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} - node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} used",
+              "refId": "A"
+            },
+            {
+              "expr": "node_memory_MemFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} free",
+              "refId": "B"
+            },
+            {
+              "expr": "node_memory_Cached_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} cached",
+              "refId": "C"
+            },
+            {
+              "expr": "node_memory_Buffers_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} buffers",
+              "refId": "D"
+            }
+          ],
+          "title": "Memory breakdown",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 38
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_memory_SwapTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} - node_memory_SwapFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} used",
+              "refId": "A"
+            },
+            {
+              "expr": "node_memory_SwapFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} free",
+              "refId": "B"
+            }
+          ],
+          "title": "Swap usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 45
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"})",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mountpoint}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Filesystem usage by mountpoint",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 45
+          },
+          "id": 14,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mountpoint}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Filesystem available by mountpoint",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "iops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 52
+          },
+          "id": 15,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_disk_reads_completed_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} reads",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_disk_writes_completed_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} writes",
+              "refId": "B"
+            }
+          ],
+          "title": "Disk operations",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 52
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_disk_io_time_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Disk IO time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "pps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 59
+          },
+          "id": 17,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_packets_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} rx",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_network_transmit_packets_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} tx",
+              "refId": "B"
+            }
+          ],
+          "title": "Network packets",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 59
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_errs_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_errs_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} errors",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_drop_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_drop_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} drops",
+              "refId": "B"
+            }
+          ],
+          "title": "Network errors and drops",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 66
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * node_filefd_allocated{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / node_filefd_maximum{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "File descriptor usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 66
+          },
+          "id": 20,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "rate(node_context_switches_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}[5m])",
+              "legendFormat": "{{`{{k8s_node_name}}`}} context switches",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(node_intr_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}[5m])",
+              "legendFormat": "{{`{{k8s_node_name}}`}} interrupts",
+              "refId": "B"
+            }
+          ],
+          "title": "Context switches and interrupts",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 73
+          },
+          "id": 21,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_sockstat_TCP_inuse{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} in use",
+              "refId": "A"
+            },
+            {
+              "expr": "node_sockstat_TCP_tw{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} time wait",
+              "refId": "B"
+            },
+            {
+              "expr": "node_sockstat_TCP_alloc{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}} allocated",
+              "refId": "C"
+            }
+          ],
+          "title": "TCP sockets",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 73
+          },
+          "id": 22,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_entropy_available_bits{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Entropy available",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -958,6 +2433,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
   postgresql-managed.json: |
     {
       "annotations": {
@@ -1492,6 +2968,509 @@ data:
           ],
           "title": "Managed PostgreSQL host network throughput",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 48
+          },
+          "id": 15,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (datname) (rate(pg_stat_database_blks_hit_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m])) / (sum by (datname) (rate(pg_stat_database_blks_hit_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m])) + sum by (datname) (rate(pg_stat_database_blks_read_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m])))",
+              "legendFormat": "{{`{{datname}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "PostgreSQL cache hit ratio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "pg_stat_database_numbackends{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}",
+              "legendFormat": "{{`{{datname}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Backends by database",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 55
+          },
+          "id": 17,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_returned_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} returned",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_fetched_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} fetched",
+              "refId": "B"
+            }
+          ],
+          "title": "Tuple read rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 55
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_inserted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} inserted",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_updated_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} updated",
+              "refId": "B"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_deleted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} deleted",
+              "refId": "C"
+            }
+          ],
+          "title": "Tuple change rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 62
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_temp_files_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} files/s",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_temp_bytes_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} bytes/s",
+              "refId": "B"
+            }
+          ],
+          "title": "Temporary files and bytes",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 62
+          },
+          "id": 20,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_conflicts_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} conflicts",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_deadlocks_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} deadlocks",
+              "refId": "B"
+            }
+          ],
+          "title": "Conflicts and deadlocks",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 69
+          },
+          "id": 21,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_blk_read_time_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} read",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_blk_write_time_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}} write",
+              "refId": "B"
+            }
+          ],
+          "title": "Database IO time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 69
+          },
+          "id": 22,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (datname) (rate(pg_stat_database_active_time_seconds_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Database active time",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 76
+          },
+          "id": 23,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "pg_replication_lag_seconds{service_name=\"timeweb-dbaas-postgres\"}",
+              "legendFormat": "lag",
+              "refId": "A"
+            }
+          ],
+          "title": "Replication lag",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 76
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "pg_scrape_collector_duration_seconds{service_name=\"timeweb-dbaas-postgres\"}",
+              "legendFormat": "{{`{{collector}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Exporter collector duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 83
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "node_load1{service_name=\"timeweb-dbaas-node\"}",
+              "legendFormat": "load1",
+              "refId": "A"
+            }
+          ],
+          "title": "Managed PostgreSQL host load",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 83
+          },
+          "id": 26,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (device) (rate(node_disk_read_bytes_total{service_name=\"timeweb-dbaas-node\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{device}}`}} read",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (device) (rate(node_disk_written_bytes_total{service_name=\"timeweb-dbaas-node\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{device}}`}} write",
+              "refId": "B"
+            }
+          ],
+          "title": "Managed PostgreSQL host disk IO",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -1514,6 +3493,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
   workloads.json: |
     {
       "annotations": {
@@ -1692,6 +3672,484 @@ data:
           ],
           "title": "Top pods by network throughput",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 16
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",container!=\"\",pod!=\"\"}[5m]))",
+              "legendFormat": "{{`{{namespace}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Namespace CPU usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "id": 6,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace) (container_memory_working_set_bytes{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",container!=\"\",pod!=\"\"})",
+              "legendFormat": "{{`{{namespace}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Namespace memory working set",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 23
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count by (namespace) (sum by (namespace, pod) (container_memory_working_set_bytes{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod!=\"\",container!=\"\"}))",
+              "legendFormat": "{{`{{namespace}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Pod count by namespace",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 23
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (kubernetes_io_hostname, container_state) (kubelet_running_containers{kubernetes_io_hostname=~\"${node:pipe}\"})",
+              "legendFormat": "{{`{{kubernetes_io_hostname}}`}} {{`{{container_state}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Running containers by state",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 30
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m])) / sum by (namespace, pod, container) (rate(container_cpu_cfs_periods_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m]))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} {{`{{container}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Container CPU throttling",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 30
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (kubernetes_io_hostname, le) (rate(kubelet_pod_start_duration_seconds_bucket{kubernetes_io_hostname=~\"${node:pipe}\"}[5m])))",
+              "legendFormat": "{{`{{kubernetes_io_hostname}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Kubelet pod start p95",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 37
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod) (rate(container_fs_reads_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m])))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} read",
+              "refId": "A"
+            },
+            {
+              "expr": "topk(15, sum by (namespace, pod) (rate(container_fs_writes_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m])))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} write",
+              "refId": "B"
+            }
+          ],
+          "title": "Top pods filesystem IO",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 37
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod) (kubelet_container_log_filesystem_used_bytes{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Container log filesystem usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 44
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod) (rate(container_network_receive_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m])))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Top pods network receive",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 44
+          },
+          "id": 14,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod) (rate(container_network_transmit_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m])))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Top pods network transmit",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 51
+          },
+          "id": 15,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod) (container_memory_rss{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} rss",
+              "refId": "A"
+            },
+            {
+              "expr": "topk(15, sum by (namespace, pod) (container_memory_cache{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} cache",
+              "refId": "B"
+            }
+          ],
+          "title": "Top pods memory RSS and cache",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 51
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "topk(15, sum by (namespace, pod, container) (container_file_descriptors{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}))",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} {{`{{container}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Container file descriptors",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -1810,6 +4268,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
   application-telemetry.json: |
     {
       "annotations": {
@@ -2004,12 +4463,12 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (service_name) (process_runtime_dotnet_gc_heap_size_bytes{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}}",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
               "refId": "A"
             }
           ],
-          "title": ".NET GC heap size",
+          "title": ".NET GC heap size by generation",
           "type": "timeseries"
         },
         {
@@ -2043,8 +4502,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (service_name, gc_heap_generation) (rate(process_runtime_dotnet_gc_collections_count_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} gen {{`{{gc_heap_generation}}`}}",
+              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
               "refId": "A"
             }
           ],
@@ -2079,13 +4538,760 @@ data:
           },
           "targets": [
             {
-              "expr": "service_name:~\"${service:regex}\"",
-              "query": "service_name:~\"${service:regex}\"",
+              "expr": "{service.name=~\"${service:regex}\"}",
+              "query": "{service.name=~\"${service:regex}\"}",
               "refId": "A"
             }
           ],
           "title": "Recent application logs",
           "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application active requests",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_response_status_code}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application request rate by status",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 31
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} p50",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} p95",
+              "refId": "B"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} p99",
+              "refId": "C"
+            }
+          ],
+          "title": "Application request latency p50/p95/p99",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Route p95 latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 38
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\"}[5m])) / sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application 5xx error ratio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 38
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Route request rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 45
+          },
+          "id": 13,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET CPU usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 45
+          },
+          "id": 14,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET working set memory",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 52
+          },
+          "id": 15,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} allocated bytes/s",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} pause seconds/s",
+              "refId": "B"
+            }
+          ],
+          "title": ".NET GC allocations and pause",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 52
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET GC fragmentation",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 59
+          },
+          "id": 17,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} threads",
+              "refId": "A"
+            },
+            {
+              "expr": "dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} queue",
+              "refId": "B"
+            },
+            {
+              "expr": "rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\"}[5m])",
+              "legendFormat": "{{`{{service_name}}`}} work items/s",
+              "refId": "C"
+            }
+          ],
+          "title": ".NET thread pool",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 59
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{error_type}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": ".NET exceptions by type",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 66
+          },
+          "id": 19,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} jit seconds/s",
+              "refId": "A"
+            },
+            {
+              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} lock contentions/s",
+              "refId": "B"
+            }
+          ],
+          "title": ".NET JIT and lock contention",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 66
+          },
+          "id": 20,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "dotnet_timer_count{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} timers",
+              "refId": "A"
+            },
+            {
+              "expr": "dotnet_assembly_count{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} assemblies",
+              "refId": "B"
+            }
+          ],
+          "title": ".NET timers and assemblies",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 73
+          },
+          "id": 21,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{db_system_name}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "DB client operation latency p95",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 73
+          },
+          "id": 22,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{db_client_connection_state}}`}}",
+              "refId": "A"
+            },
+            {
+              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} max",
+              "refId": "B"
+            }
+          ],
+          "title": "DB connection pool usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 80
+          },
+          "id": 23,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{server_address}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "HTTP client latency p95",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 80
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "kestrel_active_connections{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} active",
+              "refId": "A"
+            },
+            {
+              "expr": "kestrel_queued_connections{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} queued",
+              "refId": "B"
+            }
+          ],
+          "title": "Kestrel connections",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -2132,6 +5338,7 @@ data:
       "version": 1,
       "weekStart": ""
     }
+
 ---
 apiVersion: apps/v1
 kind: Deployment
