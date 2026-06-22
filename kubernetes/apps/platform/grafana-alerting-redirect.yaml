@@ -16,6 +16,206 @@ spec:
         op: add
         path: /virtual_hosts/0/routes/0
         value:
+          name: grafana-alerting-settings-default-alertmanager
+          match:
+            path: /alerting/admin/alertmanager
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/admin/alertmanager
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/admin/alertmanager?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-templates-default-alertmanager
+          match:
+            path: /alerting/notifications/templates
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/notifications/templates
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/notifications/templates?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-templates-slash-default-alertmanager
+          match:
+            path: /alerting/notifications/templates/
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/notifications/templates/
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/notifications/templates/?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-routes-default-alertmanager
+          match:
+            path: /alerting/routes
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/routes
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/routes?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-mute-timing-default-alertmanager
+          match:
+            path: /alerting/routes/mute-timing
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/routes/mute-timing
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/routes/mute-timing?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-contact-points-default-alertmanager
+          match:
+            path: /alerting/notifications/receivers
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/notifications/receivers
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/notifications/receivers?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-contact-points-slash-default-alertmanager
+          match:
+            path: /alerting/notifications/receivers/
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/notifications/receivers/
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/notifications/receivers/?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-notifications-default-alertmanager
+          match:
+            path: /alerting/notifications
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/notifications
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/notifications?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-silences-default-alertmanager
+          match:
+            path: /alerting/silences
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/silences
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/silences?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-new-silence-default-alertmanager
+          match:
+            path: /alerting/silence/new
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/silence/new
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/silence/new?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
           name: grafana-alerting-active-notifications-default-alertmanager
           match:
             path: /alerting/groups
@@ -29,4 +229,24 @@ spec:
             - header:
                 key: location
                 value: /alerting/groups?alertmanager=Alertmanager
+              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+    - type: type.googleapis.com/envoy.config.route.v3.RouteConfiguration
+      name: envoy-gateway-system/core-platform/grafana-https
+      operation:
+        op: add
+        path: /virtual_hosts/0/routes/0
+        value:
+          name: grafana-alerting-active-notifications-slash-default-alertmanager
+          match:
+            path: /alerting/groups/
+            headers:
+              - name: :path
+                string_match:
+                  exact: /alerting/groups/
+          direct_response:
+            status: 302
+          response_headers_to_add:
+            - header:
+                key: location
+                value: /alerting/groups/?alertmanager=Alertmanager
               append_action: OVERWRITE_IF_EXISTS_OR_ADD
