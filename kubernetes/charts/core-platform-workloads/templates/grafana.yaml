@@ -490,17 +490,17 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points_total[5m]))",
               "legendFormat": "metrics -> {{`{{exporter}}`}}",
               "refId": "A"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records_total[5m]))",
               "legendFormat": "logs -> {{`{{exporter}}`}}",
               "refId": "B"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans_total[5m]))",
               "legendFormat": "traces -> {{`{{exporter}}`}}",
               "refId": "C"
             }
@@ -617,12 +617,12 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (alertname, severity) (ALERTS)",
-              "legendFormat": "{{`{{alertname}}`}} {{`{{severity}}`}}",
+              "expr": "sum by (state) (alertmanager_alerts)",
+              "legendFormat": "{{`{{state}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Active alert series",
+          "title": "Alertmanager alerts by state",
           "type": "timeseries"
         }
       ],
