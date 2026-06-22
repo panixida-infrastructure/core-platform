@@ -5034,7 +5034,7 @@ data:
                 "type": "victoriametrics-metrics-datasource",
                 "uid": "victoriametrics"
               },
-              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))))",
+              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (increase(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[$__range]))))",
               "format": "table",
               "instant": true,
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
@@ -6731,7 +6731,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 23,
+      "version": 24,
       "weekStart": ""
     }
 
