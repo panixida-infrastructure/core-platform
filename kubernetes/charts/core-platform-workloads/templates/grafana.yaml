@@ -4747,7 +4747,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "max"
               ],
               "fields": "",
               "values": false
@@ -4757,7 +4757,7 @@ data:
           },
           "targets": [
             {
-              "expr": "max_over_time((sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval])))[${__range}:${__interval}])",
+              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval]))",
               "refId": "A"
             }
           ],
@@ -6707,7 +6707,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 21,
+      "version": 22,
       "weekStart": ""
     }
 
