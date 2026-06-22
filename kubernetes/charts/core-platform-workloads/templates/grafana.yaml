@@ -4860,7 +4860,7 @@ data:
               "limit": 50,
               "queryType": "search",
               "refId": "A",
-              "service": "$service",
+              "service": "$trace_service",
               "operation": "",
               "tags": "",
               "minDuration": "",
@@ -6676,6 +6676,30 @@ data:
       "templating": {
         "list": [
           {
+            "allValue": ".*",
+            "current": {
+              "selected": false,
+              "text": "dotnet-template-api-development",
+              "value": "dotnet-template-api-development"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values(http_server_request_duration_seconds_count, service_name)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Service",
+            "multi": true,
+            "name": "service",
+            "options": [],
+            "query": "label_values(http_server_request_duration_seconds_count, service_name)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
             "current": {
               "selected": false,
               "text": "dotnet-template-api-development",
@@ -6688,9 +6712,9 @@ data:
             "definition": "label_values(http_server_request_duration_seconds_count, service_name)",
             "hide": 0,
             "includeAll": false,
-            "label": "Service",
+            "label": "Trace service",
             "multi": false,
-            "name": "service",
+            "name": "trace_service",
             "options": [],
             "query": "label_values(http_server_request_duration_seconds_count, service_name)",
             "refresh": 1,
@@ -6707,7 +6731,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 22,
+      "version": 23,
       "weekStart": ""
     }
 
