@@ -699,7 +699,7 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",mode=\"idle\"}[5m])))",
+              "expr": "100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode=\"idle\"}[5m])))",
               "legendFormat": "{{`{{k8s_node_name}}`}}",
               "refId": "A"
             }
@@ -738,7 +738,7 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\"} / node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\"}))",
+              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}))",
               "legendFormat": "{{`{{k8s_node_name}}`}}",
               "refId": "A"
             }
@@ -777,7 +777,7 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",mountpoint=\"/\"}))",
+              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mountpoint=\"/\"}))",
               "legendFormat": "{{`{{k8s_node_name}}`}} /",
               "refId": "A"
             }
@@ -816,7 +816,7 @@ data:
           },
           "targets": [
             {
-              "expr": "node_load1{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\"}",
+              "expr": "node_load1{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
               "legendFormat": "{{`{{k8s_node_name}}`}} load1",
               "refId": "A"
             }
@@ -855,12 +855,12 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name) (rate(node_disk_read_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "expr": "sum by (k8s_node_name) (rate(node_disk_read_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
               "legendFormat": "{{`{{k8s_node_name}}`}} read",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name) (rate(node_disk_written_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "expr": "sum by (k8s_node_name) (rate(node_disk_written_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
               "legendFormat": "{{`{{k8s_node_name}}`}} write",
               "refId": "B"
             }
@@ -899,12 +899,12 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name) (rate(node_network_receive_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "expr": "sum by (k8s_node_name) (rate(node_network_receive_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
               "legendFormat": "{{`{{k8s_node_name}}`}} receive",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name) (rate(node_network_transmit_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:regex}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "expr": "sum by (k8s_node_name) (rate(node_network_transmit_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
               "legendFormat": "{{`{{k8s_node_name}}`}} transmit",
               "refId": "B"
             }
@@ -1568,7 +1568,7 @@ data:
           },
           "targets": [
             {
-              "expr": "topk(15, sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m])))",
+              "expr": "topk(15, sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}[5m])))",
               "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
               "refId": "A"
             }
@@ -1607,7 +1607,7 @@ data:
           },
           "targets": [
             {
-              "expr": "topk(15, sum by (namespace, pod, container) (container_memory_working_set_bytes{kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}))",
+              "expr": "topk(15, sum by (namespace, pod, container) (container_memory_working_set_bytes{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",container!=\"\",pod!=\"\"}))",
               "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
               "refId": "A"
             }
@@ -1646,7 +1646,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (kubernetes_io_hostname) (kubelet_running_pods{kubernetes_io_hostname=~\"${node:regex}\"})",
+              "expr": "sum by (kubernetes_io_hostname) (kubelet_running_pods{kubernetes_io_hostname=~\"${node:pipe}\"})",
               "legendFormat": "{{`{{kubernetes_io_hostname}}`}}",
               "refId": "A"
             }
@@ -1685,7 +1685,7 @@ data:
           },
           "targets": [
             {
-              "expr": "topk(15, sum by (namespace, pod) (rate(container_network_receive_bytes_total{kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m]) + rate(container_network_transmit_bytes_total{kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m])))",
+              "expr": "topk(15, sum by (namespace, pod) (rate(container_network_receive_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m]) + rate(container_network_transmit_bytes_total{kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",pod!=\"\"}[5m])))",
               "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}}",
               "refId": "A"
             }
@@ -1737,14 +1737,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\"}, namespace)",
+            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\"}, namespace)",
             "hide": 0,
             "includeAll": true,
             "label": "Namespace",
             "multi": true,
             "name": "namespace",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\"}, namespace)",
+            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\"}, namespace)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -1761,14 +1761,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\"}, pod)",
+            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
             "hide": 0,
             "includeAll": true,
             "label": "Pod",
             "multi": true,
             "name": "pod",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\"}, pod)",
+            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -1785,14 +1785,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
+            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
             "hide": 0,
             "includeAll": true,
             "label": "Container",
             "multi": true,
             "name": "container",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:regex}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
+            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
