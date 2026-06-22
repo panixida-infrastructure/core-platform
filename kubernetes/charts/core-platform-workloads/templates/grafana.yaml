@@ -97,6 +97,7 @@ data:
         url: http://alertmanager.observability.svc.cluster.local:9093
         jsonData:
           implementation: prometheus
+          handleGrafanaManagedAlerts: true
 ---
 apiVersion: v1
 kind: ConfigMap
