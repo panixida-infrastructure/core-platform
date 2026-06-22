@@ -1495,8 +1495,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode=\"idle\"}[5m])))",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "100 * (1 - avg by (service_instance_id) (rate(node_cpu_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",mode=\"idle\"}[5m])))",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
@@ -1534,12 +1534,12 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}))",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"} / node_memory_MemTotal_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}))",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Node memory usage",
+          "title": "Node RAM usage",
           "type": "timeseries"
         },
         {
@@ -1573,8 +1573,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mountpoint=\"/\"}))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} /",
+              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",mountpoint=\"/\"}))",
+              "legendFormat": "{{`{{service_instance_id}}`}} /",
               "refId": "A"
             }
           ],
@@ -1612,8 +1612,8 @@ data:
           },
           "targets": [
             {
-              "expr": "node_load1{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} load1",
+              "expr": "node_load1{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} load1",
               "refId": "A"
             }
           ],
@@ -1651,13 +1651,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name) (rate(node_disk_read_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} read",
+              "expr": "sum by (service_instance_id) (rate(node_disk_read_bytes_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} read",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name) (rate(node_disk_written_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} write",
+              "expr": "sum by (service_instance_id) (rate(node_disk_written_bytes_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} write",
               "refId": "B"
             }
           ],
@@ -1695,13 +1695,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name) (rate(node_network_receive_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} receive",
+              "expr": "sum by (service_instance_id) (rate(node_network_receive_bytes_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} receive",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name) (rate(node_network_transmit_bytes_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} transmit",
+              "expr": "sum by (service_instance_id) (rate(node_network_transmit_bytes_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} transmit",
               "refId": "B"
             }
           ],
@@ -1739,8 +1739,8 @@ data:
           },
           "targets": [
             {
-              "expr": "time() - node_boot_time_seconds{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "time() - node_boot_time_seconds{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
@@ -1778,8 +1778,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name, mode) (rate(node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode!=\"idle\"}[5m])) * 100",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mode}}`}}",
+              "expr": "sum by (service_instance_id, mode) (rate(node_cpu_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",mode!=\"idle\"}[5m])) * 100",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{mode}}`}}",
               "refId": "A"
             }
           ],
@@ -1817,8 +1817,8 @@ data:
           },
           "targets": [
             {
-              "expr": "node_load1{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / on (k8s_node_name) group_left count by (k8s_node_name) (node_cpu_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",mode=\"idle\"})",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "node_load1{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"} / on (service_instance_id) group_left count by (service_instance_id) (node_cpu_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",mode=\"idle\"})",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
@@ -1856,13 +1856,13 @@ data:
           },
           "targets": [
             {
-              "expr": "node_procs_running{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} running",
+              "expr": "node_procs_running{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} running",
               "refId": "A"
             },
             {
-              "expr": "node_procs_blocked{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} blocked",
+              "expr": "node_procs_blocked{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} blocked",
               "refId": "B"
             }
           ],
@@ -1900,27 +1900,27 @@ data:
           },
           "targets": [
             {
-              "expr": "node_memory_MemTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} - node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} used",
+              "expr": "node_memory_MemTotal_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"} - node_memory_MemAvailable_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} used",
               "refId": "A"
             },
             {
-              "expr": "node_memory_MemFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} free",
+              "expr": "node_memory_MemFree_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} free",
               "refId": "B"
             },
             {
-              "expr": "node_memory_Cached_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} cached",
+              "expr": "node_memory_Cached_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} cached",
               "refId": "C"
             },
             {
-              "expr": "node_memory_Buffers_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} buffers",
+              "expr": "node_memory_Buffers_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} buffers",
               "refId": "D"
             }
           ],
-          "title": "Memory breakdown",
+          "title": "RAM breakdown",
           "type": "timeseries"
         },
         {
@@ -1954,13 +1954,13 @@ data:
           },
           "targets": [
             {
-              "expr": "node_memory_SwapTotal_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} - node_memory_SwapFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} used",
+              "expr": "node_memory_SwapTotal_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"} - node_memory_SwapFree_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} used",
               "refId": "A"
             },
             {
-              "expr": "node_memory_SwapFree_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} free",
+              "expr": "node_memory_SwapFree_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} free",
               "refId": "B"
             }
           ],
@@ -1998,8 +1998,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (1 - node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"} / node_filesystem_size_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"})",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mountpoint}}`}}",
+              "expr": "100 * (1 - node_filesystem_avail_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"} / node_filesystem_size_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"})",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{mountpoint}}`}}",
               "refId": "A"
             }
           ],
@@ -2037,12 +2037,12 @@ data:
           },
           "targets": [
             {
-              "expr": "node_filesystem_avail_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{mountpoint}}`}}",
+              "expr": "node_filesystem_avail_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",fstype!~\"tmpfs|overlay|squashfs|fuse.*\",mountpoint!~\"/run.*|/var/lib/kubelet/pods.*\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{mountpoint}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Filesystem available by mountpoint",
+          "title": "Filesystem free space by mountpoint",
           "type": "timeseries"
         },
         {
@@ -2076,13 +2076,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_disk_reads_completed_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} reads",
+              "expr": "sum by (service_instance_id, device) (rate(node_disk_reads_completed_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} reads",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_disk_writes_completed_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} writes",
+              "expr": "sum by (service_instance_id, device) (rate(node_disk_writes_completed_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} writes",
               "refId": "B"
             }
           ],
@@ -2120,8 +2120,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_disk_io_time_seconds_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}}",
+              "expr": "sum by (service_instance_id, device) (rate(node_disk_io_time_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"loop.*|ram.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}}",
               "refId": "A"
             }
           ],
@@ -2159,13 +2159,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_packets_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} rx",
+              "expr": "sum by (service_instance_id, device) (rate(node_network_receive_packets_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} rx",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_network_transmit_packets_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} tx",
+              "expr": "sum by (service_instance_id, device) (rate(node_network_transmit_packets_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} tx",
               "refId": "B"
             }
           ],
@@ -2203,13 +2203,13 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_errs_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_errs_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} errors",
+              "expr": "sum by (service_instance_id, device) (rate(node_network_receive_errs_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_errs_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} errors",
               "refId": "A"
             },
             {
-              "expr": "sum by (k8s_node_name, device) (rate(node_network_receive_drop_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_drop_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
-              "legendFormat": "{{`{{k8s_node_name}}`}} {{`{{device}}`}} drops",
+              "expr": "sum by (service_instance_id, device) (rate(node_network_receive_drop_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]) + rate(node_network_transmit_drop_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\",device!~\"lo|veth.*|cali.*|cilium.*|flannel.*\"}[5m]))",
+              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} drops",
               "refId": "B"
             }
           ],
@@ -2247,8 +2247,8 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * node_filefd_allocated{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"} / node_filefd_maximum{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "100 * node_filefd_allocated{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"} / node_filefd_maximum{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
@@ -2286,13 +2286,13 @@ data:
           },
           "targets": [
             {
-              "expr": "rate(node_context_switches_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}[5m])",
-              "legendFormat": "{{`{{k8s_node_name}}`}} context switches",
+              "expr": "rate(node_context_switches_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}[5m])",
+              "legendFormat": "{{`{{service_instance_id}}`}} context switches",
               "refId": "A"
             },
             {
-              "expr": "rate(node_intr_total{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}[5m])",
-              "legendFormat": "{{`{{k8s_node_name}}`}} interrupts",
+              "expr": "rate(node_intr_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}[5m])",
+              "legendFormat": "{{`{{service_instance_id}}`}} interrupts",
               "refId": "B"
             }
           ],
@@ -2330,18 +2330,18 @@ data:
           },
           "targets": [
             {
-              "expr": "node_sockstat_TCP_inuse{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} in use",
+              "expr": "node_sockstat_TCP_inuse{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} in use",
               "refId": "A"
             },
             {
-              "expr": "node_sockstat_TCP_tw{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} time wait",
+              "expr": "node_sockstat_TCP_tw{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} time wait",
               "refId": "B"
             },
             {
-              "expr": "node_sockstat_TCP_alloc{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}} allocated",
+              "expr": "node_sockstat_TCP_alloc{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}} allocated",
               "refId": "C"
             }
           ],
@@ -2379,8 +2379,8 @@ data:
           },
           "targets": [
             {
-              "expr": "node_entropy_available_bits{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}}",
+              "expr": "node_entropy_available_bits{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}}",
               "refId": "A"
             }
           ],
@@ -2408,11 +2408,11 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "node_memory_MemAvailable_bytes{service_name=\"linux-node-exporter\",k8s_node_name=~\"${node:pipe}\"}",
-              "legendFormat": "{{`{{k8s_node_name}}`}}"
+              "expr": "node_memory_MemAvailable_bytes{service_name=~\"linux-node-exporter|timeweb-dbaas-node\",service_instance_id=~\"${node:pipe}\"}",
+              "legendFormat": "{{`{{service_instance_id}}`}}"
             }
           ],
-          "title": "Node memory available",
+          "title": "Node RAM available",
           "type": "timeseries"
         }
       ],
@@ -2436,14 +2436,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(node_cpu_seconds_total{service_name=\"linux-node-exporter\"}, k8s_node_name)",
+            "definition": "label_values(node_cpu_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\"}, service_instance_id)",
             "hide": 0,
             "includeAll": true,
             "label": "Node",
             "multi": true,
             "name": "node",
             "options": [],
-            "query": "label_values(node_cpu_seconds_total{service_name=\"linux-node-exporter\"}, k8s_node_name)",
+            "query": "label_values(node_cpu_seconds_total{service_name=~\"linux-node-exporter|timeweb-dbaas-node\"}, service_instance_id)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -2458,7 +2458,7 @@ data:
       "timezone": "browser",
       "title": "Infrastructure Nodes",
       "uid": "infrastructure-nodes",
-      "version": 10,
+      "version": 20,
       "weekStart": ""
     }
 
@@ -2609,7 +2609,7 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 0,
             "y": 4
@@ -2648,7 +2648,7 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 12,
             "y": 4
@@ -2682,15 +2682,76 @@ data:
           },
           "fieldConfig": {
             "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 11
+          },
+          "id": 27,
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=\"active\"})",
+              "legendFormat": "{{`{{datname}}`}} active"
+            }
+          ],
+          "title": "Active sessions",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 11
+          },
+          "id": 28,
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=\"idle\"})",
+              "legendFormat": "{{`{{datname}}`}} idle"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=~\"idle in transaction.*\"})",
+              "legendFormat": "{{`{{datname}}`}} idle in transaction"
+            }
+          ],
+          "title": "Idle sessions",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
               "unit": "ops"
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 0,
-            "y": 19
+            "y": 18
           },
           "id": 7,
           "options": {
@@ -2731,10 +2792,10 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 12,
-            "y": 19
+            "y": 18
           },
           "id": 8,
           "options": {
@@ -2770,10 +2831,10 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 0,
-            "y": 27
+            "y": 25
           },
           "id": 9,
           "options": {
@@ -2809,10 +2870,10 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 7,
             "w": 12,
             "x": 12,
-            "y": 27
+            "y": 25
           },
           "id": 10,
           "options": {
@@ -2848,171 +2909,10 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 45
-          },
-          "id": 11,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * (1 - avg by (service_instance_id) (rate(node_cpu_seconds_total{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",mode=\"idle\"}[5m])))",
-              "legendFormat": "{{`{{service_instance_id}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Managed PostgreSQL host CPU usage",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 45
-          },
-          "id": 12,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * (1 - (node_memory_MemAvailable_bytes{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"} / node_memory_MemTotal_bytes{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"}))",
-              "legendFormat": "{{`{{service_instance_id}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Managed PostgreSQL host memory usage",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 54
-          },
-          "id": 13,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * (1 - (node_filesystem_avail_bytes{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",mountpoint=\"/\"} / node_filesystem_size_bytes{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",mountpoint=\"/\"}))",
-              "legendFormat": "{{`{{service_instance_id}}`}} /",
-              "refId": "A"
-            }
-          ],
-          "title": "Managed PostgreSQL host root filesystem usage",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "Bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 54
-          },
-          "id": 14,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_instance_id) (rate(node_network_receive_bytes_total{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",device!~\"lo\"}[5m]))",
-              "legendFormat": "{{`{{service_instance_id}}`}} receive",
-              "refId": "A"
-            },
-            {
-              "expr": "sum by (service_instance_id) (rate(node_network_transmit_bytes_total{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",device!~\"lo\"}[5m]))",
-              "legendFormat": "{{`{{service_instance_id}}`}} transmit",
-              "refId": "B"
-            }
-          ],
-          "title": "Managed PostgreSQL host network throughput",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "percent"
-            },
-            "overrides": []
-          },
-          "gridPos": {
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 62
+            "y": 32
           },
           "id": 15,
           "options": {
@@ -3051,7 +2951,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 62
+            "y": 32
           },
           "id": 16,
           "options": {
@@ -3090,33 +2990,17 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 69
+            "y": 39
           },
-          "id": 17,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
+          "id": 29,
           "targets": [
             {
+              "refId": "A",
               "expr": "sum by (datname) (rate(pg_stat_database_tup_returned_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
-              "legendFormat": "{{`{{datname}}`}} returned",
-              "refId": "A"
-            },
-            {
-              "expr": "sum by (datname) (rate(pg_stat_database_tup_fetched_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
-              "legendFormat": "{{`{{datname}}`}} fetched",
-              "refId": "B"
+              "legendFormat": "{{`{{datname}}`}}"
             }
           ],
-          "title": "SELECT rows returned and fetched",
+          "title": "SELECT rows returned",
           "type": "timeseries"
         },
         {
@@ -3134,38 +3018,101 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 69
+            "y": 39
           },
-          "id": 18,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
+          "id": 30,
           "targets": [
             {
-              "expr": "sum by (datname) (rate(pg_stat_database_tup_inserted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
-              "legendFormat": "{{`{{datname}}`}} insert",
-              "refId": "A"
-            },
-            {
-              "expr": "sum by (datname) (rate(pg_stat_database_tup_updated_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
-              "legendFormat": "{{`{{datname}}`}} update",
-              "refId": "B"
-            },
-            {
-              "expr": "sum by (datname) (rate(pg_stat_database_tup_deleted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
-              "legendFormat": "{{`{{datname}}`}} delete",
-              "refId": "C"
+              "refId": "A",
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_fetched_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}}"
             }
           ],
-          "title": "Insert/update/delete rows",
+          "title": "SELECT rows fetched",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 46
+          },
+          "id": 31,
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_inserted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}}"
+            }
+          ],
+          "title": "Insert rows",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 46
+          },
+          "id": 32,
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_updated_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}}"
+            }
+          ],
+          "title": "Update rows",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 53
+          },
+          "id": 33,
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (datname) (rate(pg_stat_database_tup_deleted_total{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\"}[5m]))",
+              "legendFormat": "{{`{{datname}}`}}"
+            }
+          ],
+          "title": "Delete rows",
           "type": "timeseries"
         },
         {
@@ -3182,8 +3129,8 @@ data:
           "gridPos": {
             "h": 7,
             "w": 12,
-            "x": 0,
-            "y": 76
+            "x": 12,
+            "y": 53
           },
           "id": 19,
           "options": {
@@ -3226,8 +3173,8 @@ data:
           "gridPos": {
             "h": 7,
             "w": 12,
-            "x": 12,
-            "y": 76
+            "x": 0,
+            "y": 60
           },
           "id": 20,
           "options": {
@@ -3270,8 +3217,8 @@ data:
           "gridPos": {
             "h": 7,
             "w": 12,
-            "x": 0,
-            "y": 83
+            "x": 12,
+            "y": 60
           },
           "id": 21,
           "options": {
@@ -3314,8 +3261,8 @@ data:
           "gridPos": {
             "h": 7,
             "w": 12,
-            "x": 12,
-            "y": 83
+            "x": 0,
+            "y": 67
           },
           "id": 22,
           "options": {
@@ -3353,8 +3300,8 @@ data:
           "gridPos": {
             "h": 7,
             "w": 12,
-            "x": 0,
-            "y": 90
+            "x": 12,
+            "y": 67
           },
           "id": 23,
           "options": {
@@ -3391,9 +3338,9 @@ data:
           },
           "gridPos": {
             "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 90
+            "w": 24,
+            "x": 0,
+            "y": 74
           },
           "id": 24,
           "options": {
@@ -3416,188 +3363,6 @@ data:
           ],
           "title": "Exporter collector duration",
           "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 97
-          },
-          "id": 25,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "node_load1{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"}",
-              "legendFormat": "{{`{{service_instance_id}}`}} load1",
-              "refId": "A"
-            },
-            {
-              "expr": "node_load5{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"}",
-              "legendFormat": "{{`{{service_instance_id}}`}} load5",
-              "refId": "B"
-            },
-            {
-              "expr": "node_load15{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"}",
-              "legendFormat": "{{`{{service_instance_id}}`}} load15",
-              "refId": "C"
-            }
-          ],
-          "title": "Managed PostgreSQL host load",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "Bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 97
-          },
-          "id": 26,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_instance_id, device) (rate(node_disk_read_bytes_total{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} read",
-              "refId": "A"
-            },
-            {
-              "expr": "sum by (service_instance_id, device) (rate(node_disk_written_bytes_total{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\",device!~\"loop.*|ram.*\"}[5m]))",
-              "legendFormat": "{{`{{service_instance_id}}`}} {{`{{device}}`}} write",
-              "refId": "B"
-            }
-          ],
-          "title": "Managed PostgreSQL host disk IO",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 12
-          },
-          "id": 27,
-          "targets": [
-            {
-              "refId": "A",
-              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=\"active\"})",
-              "legendFormat": "{{`{{datname}}`}} active"
-            }
-          ],
-          "title": "Active sessions",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 12
-          },
-          "id": 28,
-          "targets": [
-            {
-              "refId": "A",
-              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=\"idle\"})",
-              "legendFormat": "{{`{{datname}}`}} idle"
-            },
-            {
-              "refId": "B",
-              "expr": "sum by (datname) (pg_stat_activity_count{service_name=\"timeweb-dbaas-postgres\",datname!~\"template.*\",state=~\"idle in transaction.*\"})",
-              "legendFormat": "{{`{{datname}}`}} idle in transaction"
-            }
-          ],
-          "title": "Idle sessions",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 38
-          },
-          "id": 29,
-          "targets": [
-            {
-              "refId": "A",
-              "expr": "node_memory_MemAvailable_bytes{service_name=\"timeweb-dbaas-node\",service_instance_id=~\"${pg_host:regex}\"}",
-              "legendFormat": "{{`{{service_instance_id}}`}}"
-            }
-          ],
-          "title": "Managed PostgreSQL host memory available",
-          "type": "timeseries"
         }
       ],
       "refresh": "30s",
@@ -3608,32 +3373,7 @@ data:
         "timeweb"
       ],
       "templating": {
-        "list": [
-          {
-            "allValue": ".*",
-            "current": {
-              "selected": true,
-              "text": "All",
-              "value": "$__all"
-            },
-            "datasource": {
-              "type": "victoriametrics-metrics-datasource",
-              "uid": "victoriametrics"
-            },
-            "definition": "label_values(node_cpu_seconds_total{service_name=\"timeweb-dbaas-node\"}, service_instance_id)",
-            "hide": 0,
-            "includeAll": true,
-            "label": "PostgreSQL host",
-            "multi": true,
-            "name": "pg_host",
-            "options": [],
-            "query": "label_values(node_cpu_seconds_total{service_name=\"timeweb-dbaas-node\"}, service_instance_id)",
-            "refresh": 1,
-            "regex": "",
-            "sort": 1,
-            "type": "query"
-          }
-        ]
+        "list": []
       },
       "time": {
         "from": "now-6h",
@@ -3642,7 +3382,7 @@ data:
       "timezone": "browser",
       "title": "Managed PostgreSQL",
       "uid": "postgresql-managed",
-      "version": 10,
+      "version": 20,
       "weekStart": ""
     }
 
