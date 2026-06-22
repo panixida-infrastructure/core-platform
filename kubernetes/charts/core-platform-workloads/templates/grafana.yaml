@@ -4576,11 +4576,12 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (service_name) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m])) or vector(0)",
+              "expr": "sum(rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m])) or vector(0)",
+              "legendFormat": ".NET exceptions/sec",
               "refId": "A"
             }
           ],
-          "title": "Exceptions/sec",
+          "title": "Application exceptions/sec",
           "type": "stat",
           "id": 7
         },
@@ -4696,11 +4697,11 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "expr": "sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__range])) / $__range_s",
               "refId": "A"
             }
           ],
-          "title": "Avg RPS 15m",
+          "title": "Avg RPS",
           "type": "stat",
           "id": 9
         },
@@ -4756,11 +4757,11 @@ data:
           },
           "targets": [
             {
-              "expr": "max_over_time((sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m])))[15m:1m])",
+              "expr": "max_over_time((sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval])))[${__range}:${__interval}])",
               "refId": "A"
             }
           ],
-          "title": "Max RPS 15m",
+          "title": "Max RPS",
           "type": "stat",
           "id": 10
         },
@@ -4861,7 +4862,9 @@ data:
               "refId": "A",
               "service": "$service",
               "operation": "",
-              "tags": ""
+              "tags": "",
+              "minDuration": "",
+              "maxDuration": ""
             }
           ],
           "title": "Recent application traces",
@@ -5270,7 +5273,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[5m]))",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[$__rate_interval])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[$__rate_interval])))",
               "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
             }
           ],
@@ -6673,7 +6676,6 @@ data:
       "templating": {
         "list": [
           {
-            "allValue": ".*",
             "current": {
               "selected": false,
               "text": "dotnet-template-api-development",
@@ -6685,9 +6687,9 @@ data:
             },
             "definition": "label_values(http_server_request_duration_seconds_count, service_name)",
             "hide": 0,
-            "includeAll": true,
+            "includeAll": false,
             "label": "Service",
-            "multi": true,
+            "multi": false,
             "name": "service",
             "options": [],
             "query": "label_values(http_server_request_duration_seconds_count, service_name)",
@@ -6705,7 +6707,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 20,
+      "version": 21,
       "weekStart": ""
     }
 
