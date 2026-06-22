@@ -5010,6 +5010,27 @@ data:
             "x": 0,
             "y": 41
           },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95 latency"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  }
+                ]
+              }
+            ]
+          },
           "options": {
             "cellHeight": "sm",
             "footer": {
@@ -5024,7 +5045,7 @@ data:
             "sortBy": [
               {
                 "desc": true,
-                "displayName": "Value"
+                "displayName": "p95 latency"
               }
             ]
           },
@@ -5042,7 +5063,23 @@ data:
             }
           ],
           "title": "Top routes by p95 latency",
-          "transformations": [],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {
+                  "Time": 0,
+                  "http_route": 1,
+                  "service_name": 2,
+                  "Value": 3
+                },
+                "renameByName": {
+                  "Value": "p95 latency"
+                }
+              }
+            }
+          ],
           "type": "table",
           "id": 17
         },
@@ -6731,7 +6768,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 24,
+      "version": 25,
       "weekStart": ""
     }
 
