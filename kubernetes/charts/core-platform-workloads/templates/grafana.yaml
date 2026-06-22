@@ -4825,7 +4825,26 @@ data:
           },
           "fieldConfig": {
             "defaults": {},
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "traceID"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "targetBlank": false,
+                        "title": "View logs",
+                        "url": "/explore?left=%7B%22datasource%22%3A%22victorialogs%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22victoriametrics-logs-datasource%22%2C%22uid%22%3A%22victorialogs%22%7D%2C%22editorMode%22%3A%22code%22%2C%22expr%22%3A%22trace_id%3A%3D%5C%22%24%7B__value.raw%7D%5C%22%22%2C%22query%22%3A%22trace_id%3A%3D%5C%22%24%7B__value.raw%7D%5C%22%22%7D%5D%7D"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 10,
@@ -6768,7 +6787,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 25,
+      "version": 26,
       "weekStart": ""
     }
 
