@@ -4208,43 +4208,21 @@ data:
       ],
       "panels": [
         {
+          "collapsed": false,
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
             "uid": "victoriametrics"
           },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
           "gridPos": {
-            "h": 8,
-            "w": 12,
+            "h": 1,
+            "w": 24,
             "x": 0,
             "y": 0
           },
-          "id": 1,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Application request rate",
-          "type": "timeseries"
+          "panels": [],
+          "title": "Состояние приложения",
+          "type": "row",
+          "id": 1
         },
         {
           "datasource": {
@@ -4253,37 +4231,178 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "percent",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 1
           },
-          "id": 2,
           "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
             },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100",
+              "refId": "A"
             }
+          ],
+          "title": "% CPU",
+          "type": "stat",
+          "id": 2
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "decimals": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 536870912
+                  },
+                  {
+                    "color": "red",
+                    "value": 1073741824
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 1
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}",
+              "refId": "A"
+            }
+          ],
+          "title": "RSS Memory",
+          "type": "stat",
+          "id": 3
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "decimals": 3,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 1
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
           },
           "targets": [
             {
               "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "p95 {{`{{service_name}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Application request latency p95",
-          "type": "timeseries"
+          "title": "HTTP p95 latency",
+          "type": "stat",
+          "id": 4
         },
         {
           "datasource": {
@@ -4292,76 +4411,58 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "reqps"
+              "unit": "short",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 8
-          },
-          "id": 3,
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{http_response_status_code}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Application 5xx rate",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "bytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
+            "h": 4,
+            "w": 4,
             "x": 12,
-            "y": 8
+            "y": 1
           },
-          "id": 4,
           "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
             },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
+            "textMode": "auto",
+            "wideLayout": true
           },
           "targets": [
             {
-              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
+              "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\"}[15m])) or vector(0)",
               "refId": "A"
             }
           ],
-          "title": ".NET GC heap size by generation",
-          "type": "timeseries"
+          "title": "5xx за 15 мин",
+          "type": "stat",
+          "id": 5
         },
         {
           "datasource": {
@@ -4370,37 +4471,315 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "ops"
+              "unit": "short",
+              "decimals": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 10
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 16
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 1
           },
-          "id": 5,
           "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
             },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
+            "textMode": "auto",
+            "wideLayout": true
           },
           "targets": [
             {
-              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
+              "expr": "sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"})",
               "refId": "A"
             }
           ],
-          "title": ".NET GC collections",
-          "type": "timeseries"
+          "title": "Thread pool queue",
+          "type": "stat",
+          "id": 6
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 1
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m])) or vector(0)",
+              "refId": "A"
+            }
+          ],
+          "title": "Exceptions/sec",
+          "type": "stat",
+          "id": 7
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 0,
+            "y": 5
+          },
+          "options": {
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m]))",
+              "refId": "A"
+            }
+          ],
+          "title": "Current RPS",
+          "type": "stat",
+          "id": 8
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 8,
+            "y": 5
+          },
+          "options": {
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "refId": "A"
+            }
+          ],
+          "title": "Avg RPS 15m",
+          "type": "stat",
+          "id": 9
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 16,
+            "y": 5
+          },
+          "options": {
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "max_over_time((sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m])))[15m:1m])",
+              "refId": "A"
+            }
+          ],
+          "title": "Max RPS 15m",
+          "type": "stat",
+          "id": 10
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "panels": [],
+          "title": "Logs and traces",
+          "type": "row",
+          "id": 11
         },
         {
           "datasource": {
@@ -4412,12 +4791,11 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 16
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 10
           },
-          "id": 6,
           "options": {
             "dedupStrategy": "none",
             "enableLogDetails": true,
@@ -4436,7 +4814,77 @@ data:
             }
           ],
           "title": "Recent application logs",
-          "type": "logs"
+          "type": "logs",
+          "id": 12
+        },
+        {
+          "datasource": {
+            "type": "jaeger",
+            "uid": "victoriatraces"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 22
+          },
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Start time"
+              }
+            ]
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "jaeger",
+                "uid": "victoriatraces"
+              },
+              "limit": 50,
+              "queryType": "search",
+              "refId": "A",
+              "service": "$service",
+              "operation": "",
+              "tags": ""
+            }
+          ],
+          "title": "Recent application traces",
+          "transformations": [],
+          "type": "table",
+          "id": 13
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "panels": [],
+          "title": "HTTP — Производительность",
+          "type": "row",
+          "id": 14
         },
         {
           "datasource": {
@@ -4445,164 +4893,51 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "short"
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 7,
+            "h": 8,
             "w": 12,
             "x": 0,
-            "y": 24
+            "y": 33
           },
-          "id": 7,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Application active requests",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 24
-          },
-          "id": 8,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{http_response_status_code}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Application request rate by status",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 31
-          },
-          "id": 9,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "histogram_quantile(0.50, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} p50",
-              "refId": "A"
-            },
-            {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} p95",
-              "refId": "B"
-            },
-            {
-              "expr": "histogram_quantile(0.99, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} p99",
-              "refId": "C"
-            }
-          ],
-          "title": "Application request latency p50/p95/p99",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 31
-          },
-          "id": 10,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
+              "refId": "A",
               "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
-              "refId": "A"
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
-          "title": "Route p95 latency",
-          "type": "timeseries"
+          "title": "p95 latency by route",
+          "type": "timeseries",
+          "id": 15
         },
         {
           "datasource": {
@@ -4611,76 +4946,119 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "reqps",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 38
-          },
-          "id": 11,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\"}[5m])) / sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": "Application 5xx error ratio",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
+            "h": 8,
             "w": 12,
             "x": 12,
-            "y": 38
+            "y": 33
           },
-          "id": 12,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
+              "refId": "A",
               "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
+            }
+          ],
+          "title": "RPS by route",
+          "type": "timeseries",
+          "id": 16
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 41
+          },
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Value"
+              }
+            ]
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "victoriametrics-metrics-datasource",
+                "uid": "victoriametrics"
+              },
+              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))))",
+              "format": "table",
+              "instant": true,
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
               "refId": "A"
             }
           ],
-          "title": "Route request rate",
-          "type": "timeseries"
+          "title": "Top routes by p95 latency",
+          "transformations": [],
+          "type": "table",
+          "id": 17
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 50
+          },
+          "panels": [],
+          "title": "HTTP — Ошибки",
+          "type": "row",
+          "id": 18
         },
         {
           "datasource": {
@@ -4689,7 +5067,132 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "percent"
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 51
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}}"
+            }
+          ],
+          "title": "Requests in flight",
+          "type": "timeseries",
+          "id": 19
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 16,
+            "x": 8,
+            "y": 51
+          },
+          "options": {
+            "calculate": false,
+            "cellGap": 1,
+            "color": {
+              "mode": "scheme",
+              "scheme": "Spectral",
+              "steps": 64
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-9
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "show": true,
+              "yHistogram": true
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "s"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m]))",
+              "format": "heatmap",
+              "refId": "A"
+            }
+          ],
+          "title": "Latency heatmap (all routes)",
+          "type": "heatmap",
+          "id": 20
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
@@ -4697,29 +5200,206 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 45
+            "y": 58
           },
-          "id": 13,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
+              "refId": "A",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
+            }
+          ],
+          "title": "5xx errors/sec by route",
+          "type": "timeseries",
+          "id": 21
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 58
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[5m]))",
+              "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
+            }
+          ],
+          "title": "4xx errors/sec by route",
+          "type": "timeseries",
+          "id": 22
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 65
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "(100 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
+            }
+          ],
+          "title": "5xx error ratio by route",
+          "type": "timeseries",
+          "id": 23
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 72
+          },
+          "panels": [],
+          "title": "CPU",
+          "type": "row",
+          "id": 24
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 73
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
               "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}",
-              "refId": "A"
+              "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}"
             }
           ],
-          "title": ".NET CPU usage",
-          "type": "timeseries"
+          "title": "CPU usage",
+          "type": "timeseries",
+          "id": 25
         },
         {
           "datasource": {
@@ -4728,7 +5408,20 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "bytes"
+              "unit": "bytes",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
@@ -4736,73 +5429,52 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 45
+            "y": 73
           },
-          "id": 14,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}",
-              "refId": "A"
-            }
-          ],
-          "title": ".NET working set memory",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 52
-          },
-          "id": 15,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
+              "refId": "A",
               "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} allocated bytes/s",
-              "refId": "A"
+              "legendFormat": "{{`{{service_name}}`}} allocated/sec"
             },
             {
-              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} pause seconds/s",
-              "refId": "B"
+              "refId": "B",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} committed"
             }
           ],
-          "title": ".NET GC allocations and pause",
-          "type": "timeseries"
+          "title": "Heap allocation rate and committed memory",
+          "type": "timeseries",
+          "id": 26
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 80
+          },
+          "panels": [],
+          "title": "Memory / Garbage Collection",
+          "type": "row",
+          "id": 27
         },
         {
           "datasource": {
@@ -4811,37 +5483,338 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "bytes"
+              "unit": "bytes",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 52
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 81
           },
-          "id": 16,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
+              "refId": "A",
+              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} working set"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} GC committed"
+            }
+          ],
+          "title": "Memory use",
+          "type": "timeseries",
+          "id": 28
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 81
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
+            }
+          ],
+          "title": "Heap size by generation",
+          "type": "timeseries",
+          "id": 29
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 81
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) * 100",
+              "legendFormat": "{{`{{service_name}}`}} pause %"
+            }
+          ],
+          "title": "GC pause ratio",
+          "type": "timeseries",
+          "id": 30
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "bars",
+                "fillOpacity": 30,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 89
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
+            }
+          ],
+          "title": "GC collections/sec",
+          "type": "timeseries",
+          "id": 31
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": {
+                "drawStyle": "bars",
+                "fillOpacity": 30,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 89
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} alloc bytes"
+            }
+          ],
+          "title": "Bytes allocated/sec",
+          "type": "timeseries",
+          "id": 32
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 89
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
               "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}",
-              "refId": "A"
+              "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
-          "title": ".NET GC fragmentation",
-          "type": "timeseries"
+          "title": "GC fragmentation by generation",
+          "type": "timeseries",
+          "id": 33
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 96
+          },
+          "panels": [],
+          "title": "Thread pool",
+          "type": "row",
+          "id": 34
         },
         {
           "datasource": {
@@ -4850,47 +5823,51 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "short"
+              "unit": "short",
+              "custom": {
+                "drawStyle": "bars",
+                "fillOpacity": 20,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
             "h": 7,
-            "w": 12,
+            "w": 8,
             "x": 0,
-            "y": 59
+            "y": 97
           },
-          "id": 17,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} threads",
-              "refId": "A"
-            },
-            {
+              "refId": "A",
               "expr": "dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} queue",
-              "refId": "B"
-            },
-            {
-              "expr": "rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\"}[5m])",
-              "legendFormat": "{{`{{service_name}}`}} work items/s",
-              "refId": "C"
+              "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
-          "title": ".NET thread pool",
-          "type": "timeseries"
+          "title": "Thread pool queue length",
+          "type": "timeseries",
+          "id": 35
         },
         {
           "datasource": {
@@ -4899,37 +5876,51 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "ops"
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
             "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 59
+            "w": 8,
+            "x": 8,
+            "y": 97
           },
-          "id": 18,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{error_type}}`}}",
-              "refId": "A"
+              "refId": "A",
+              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
-          "title": ".NET exceptions by type",
-          "type": "timeseries"
+          "title": "Thread pool threads",
+          "type": "timeseries",
+          "id": 36
         },
         {
           "datasource": {
@@ -4938,86 +5929,51 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "ops"
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
           "gridPos": {
             "h": 7,
-            "w": 12,
-            "x": 0,
-            "y": 66
+            "w": 8,
+            "x": 16,
+            "y": 97
           },
-          "id": 19,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} jit seconds/s",
-              "refId": "A"
-            },
-            {
-              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\"}[5m]))",
-              "legendFormat": "{{`{{service_name}}`}} lock contentions/s",
-              "refId": "B"
-            }
-          ],
-          "title": ".NET JIT and lock contention",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-metrics-datasource",
-            "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 66
-          },
-          "id": 20,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
+              "refId": "A",
               "expr": "dotnet_timer_count{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} timers",
-              "refId": "A"
-            },
-            {
-              "expr": "dotnet_assembly_count{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} assemblies",
-              "refId": "B"
+              "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
-          "title": ".NET timers and assemblies",
-          "type": "timeseries"
+          "title": "Thread timers",
+          "type": "timeseries",
+          "id": 37
         },
         {
           "datasource": {
@@ -5026,7 +5982,20 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
@@ -5034,73 +6003,47 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 73
+            "y": 104
           },
-          "id": 21,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{db_system_name}}`}}",
-              "refId": "A"
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
-          "title": "DB client operation latency p95",
-          "type": "timeseries"
+          "title": "Thread pool work items/sec",
+          "type": "timeseries",
+          "id": 38
         },
         {
+          "collapsed": false,
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
             "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "short"
-            },
-            "overrides": []
           },
           "gridPos": {
-            "h": 7,
-            "w": 12,
-            "x": 12,
-            "y": 73
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 111
           },
-          "id": 22,
-          "options": {
-            "legend": {
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{db_client_connection_state}}`}}",
-              "refId": "A"
-            },
-            {
-              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\"})",
-              "legendFormat": "{{`{{service_name}}`}} max",
-              "refId": "B"
-            }
-          ],
-          "title": "DB connection pool usage",
-          "type": "timeseries"
+          "panels": [],
+          "title": "JIT compilation",
+          "type": "row",
+          "id": 39
         },
         {
           "datasource": {
@@ -5109,7 +6052,20 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "s"
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
@@ -5117,29 +6073,30 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 80
+            "y": 112
           },
-          "id": 23,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}}`}} {{`{{server_address}}`}}",
-              "refId": "A"
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compiled_methods_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
-          "title": "HTTP client latency p95",
-          "type": "timeseries"
+          "title": "Methods compiled/sec",
+          "type": "timeseries",
+          "id": 40
         },
         {
           "datasource": {
@@ -5148,7 +6105,20 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "short"
+              "unit": "percent",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
             },
             "overrides": []
           },
@@ -5156,34 +6126,542 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 80
+            "y": 112
           },
-          "id": 24,
           "options": {
             "legend": {
+              "calcs": [],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
             },
             "tooltip": {
               "mode": "multi",
-              "sort": "desc"
+              "sort": "none"
             }
           },
           "targets": [
             {
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) * 100",
+              "legendFormat": "{{`{{service_name}}`}}"
+            }
+          ],
+          "title": "JIT CPU usage",
+          "type": "timeseries",
+          "id": 41
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 119
+          },
+          "panels": [],
+          "title": "Contention",
+          "type": "row",
+          "id": 42
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "always",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 120
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}}"
+            }
+          ],
+          "title": "Locks contended/sec",
+          "type": "timeseries",
+          "id": 43
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 127
+          },
+          "panels": [],
+          "title": "Exceptions",
+          "type": "row",
+          "id": 44
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 128
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{error_type}}`}}"
+            }
+          ],
+          "title": "Exceptions/sec by type",
+          "type": "timeseries",
+          "id": 45
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 136
+          },
+          "panels": [],
+          "title": "Sockets and connections",
+          "type": "row",
+          "id": 46
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 137
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
               "expr": "kestrel_active_connections{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} active",
-              "refId": "A"
+              "legendFormat": "{{`{{service_name}}`}} active"
             },
             {
+              "refId": "B",
               "expr": "kestrel_queued_connections{service_name=~\"${service:regex}\"}",
-              "legendFormat": "{{`{{service_name}}`}} queued",
-              "refId": "B"
+              "legendFormat": "{{`{{service_name}}`}} queued"
             }
           ],
           "title": "Kestrel connections",
-          "type": "timeseries"
+          "type": "timeseries",
+          "id": 47
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 137
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "http_client_open_connections{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{network_peer_address}}`}} open"
+            },
+            {
+              "refId": "B",
+              "expr": "http_client_active_requests{service_name=~\"${service:regex}\"}",
+              "legendFormat": "{{`{{service_name}}`}} active requests"
+            }
+          ],
+          "title": "HTTP client connections",
+          "type": "timeseries",
+          "id": 48
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 144
+          },
+          "panels": [],
+          "title": "Database and outbound clients",
+          "type": "row",
+          "id": 49
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 145
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{db_system_name}}`}}"
+            }
+          ],
+          "title": "DB client operation latency p95",
+          "type": "timeseries",
+          "id": 50
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 145
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{db_client_connection_state}}`}}"
+            },
+            {
+              "refId": "B",
+              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} max"
+            }
+          ],
+          "title": "DB connection pool usage",
+          "type": "timeseries",
+          "id": 51
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 152
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}}`}} {{`{{server_address}}`}}"
+            }
+          ],
+          "title": "HTTP client latency p95",
+          "type": "timeseries",
+          "id": 52
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 152
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_read_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} read"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_written_total{service_name=~\"${service:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}}`}} write"
+            }
+          ],
+          "title": "DB client bytes read/write",
+          "type": "timeseries",
+          "id": 53
         }
       ],
       "refresh": "30s",
@@ -5197,9 +6675,9 @@ data:
           {
             "allValue": ".*",
             "current": {
-              "selected": true,
-              "text": "All",
-              "value": "$__all"
+              "selected": false,
+              "text": "dotnet-template-api-development",
+              "value": "dotnet-template-api-development"
             },
             "datasource": {
               "type": "victoriametrics-metrics-datasource",
@@ -5227,7 +6705,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 1,
+      "version": 20,
       "weekStart": ""
     }
 
