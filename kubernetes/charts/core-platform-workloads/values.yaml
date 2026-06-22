@@ -56,7 +56,7 @@ grafana:
   enabled: true
   namespace: observability
   host: grafana.panixida.ru
-  image: grafana/grafana-oss:13.0.1
+  image: grafana/grafana-oss:13.0.2
   secretName: grafana-secrets
   replicas: 1
   resources:
