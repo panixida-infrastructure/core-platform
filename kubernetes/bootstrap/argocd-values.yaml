@@ -24,3 +24,18 @@ configs:
       g, platform-admins, role:admin
       g, /platform-admins, role:admin
       g, oidc:platform-admins, role:admin
+
+repoServer:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  livenessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    timeoutSeconds: 5
+    failureThreshold: 6
