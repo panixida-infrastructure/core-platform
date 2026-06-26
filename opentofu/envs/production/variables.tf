@@ -42,9 +42,9 @@ variable "k8s_network_driver" {
 }
 
 variable "k8s_master_preset_id" {
-  description = "Timeweb Managed Kubernetes master preset id. 2947 is Promo MSK."
+  description = "Timeweb Managed Kubernetes master preset id for the current cluster control plane."
   type        = number
-  default     = 2947
+  default     = 1673
 }
 
 variable "k8s_worker_preset_id" {
