@@ -4828,7 +4828,7 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (http_url) (httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev\\.)?api\\.dotnet-template\\.panixida\\.ru/health\"})",
+              "expr": "max by (http_url) (httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health\"})",
               "legendFormat": "{{`{{http_url}}`}}",
               "refId": "A"
             }
