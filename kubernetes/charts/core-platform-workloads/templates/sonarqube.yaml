@@ -39,7 +39,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: sysctl
-          image: busybox:1.37
+          image: public.ecr.aws/docker/library/busybox:1.37
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - sh
@@ -49,7 +49,7 @@ spec:
             privileged: true
             runAsUser: 0
         - name: volume-permissions
-          image: busybox:1.37
+          image: public.ecr.aws/docker/library/busybox:1.37
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - sh
@@ -330,7 +330,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: sonarqube-configure
-          image: curlimages/curl:8.13.0
+          image: quay.io/curl/curl:8.13.0
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - sh

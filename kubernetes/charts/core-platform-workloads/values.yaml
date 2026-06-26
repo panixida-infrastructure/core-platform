@@ -70,7 +70,7 @@ sonarqube:
   enabled: true
   namespace: quality
   host: sonar.panixida.ru
-  image: sonarqube:26.5.0.122743-community
+  image: public.ecr.aws/docker/library/sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
   javaOpts:
     web: -Xms128m -Xmx384m

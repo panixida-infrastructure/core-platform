@@ -4277,7 +4277,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4338,7 +4338,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4399,7 +4399,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4520,7 +4520,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4642,7 +4642,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4703,7 +4703,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -4764,7 +4764,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1\", \"service_name\", \"dotnet-template-api-(.*)\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
