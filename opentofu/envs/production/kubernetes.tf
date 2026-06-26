@@ -51,15 +51,11 @@ resource "twc_k8s_node_group" "core_platform_infrastructure_v2" {
   node_count        = var.k8s_infrastructure_v2_worker_node_count
   is_autoscaling    = false
   is_autohealing    = true
-  public_ip_enabled = false
+  public_ip_enabled = true
   virtual_router_id = twc_router.core_platform_msk.id
 
   labels {
     key   = "panixida.ru/node-pool"
     value = "core-platform"
-  }
-
-  lifecycle {
-    prevent_destroy = true
   }
 }
