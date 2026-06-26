@@ -74,7 +74,10 @@ jobs:
         run: bash ../../scripts/reconcile-production-state.sh
 
       - name: Remove retired SSH key from state
-        run: tofu state rm twc_ssh_key.oldstrategyforge_245799 || true
+        run: |
+          if tofu state list | grep -Fxq twc_ssh_key.oldstrategyforge_245799; then
+            tofu state rm twc_ssh_key.oldstrategyforge_245799
+          fi
 
       - name: Plan
         run: |
