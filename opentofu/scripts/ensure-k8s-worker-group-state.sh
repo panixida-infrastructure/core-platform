@@ -6,8 +6,8 @@ resource_name="${K8S_WORKER_GROUP_RESOURCE_NAME:-core_platform_default}"
 cluster_id="${CORE_PLATFORM_CLUSTER_ID:-1091532}"
 worker_group_id="${CORE_PLATFORM_WORKER_GROUP_ID:-113109}"
 worker_group_name="${CORE_PLATFORM_WORKER_GROUP_NAME:-core-platform-infrastructure}"
-worker_group_node_count="${CORE_PLATFORM_WORKER_GROUP_NODE_COUNT:-3}"
-worker_group_preset_id="${CORE_PLATFORM_WORKER_GROUP_PRESET_ID:-2951}"
+worker_group_node_count="${CORE_PLATFORM_WORKER_GROUP_NODE_COUNT:-4}"
+worker_group_preset_id="${CORE_PLATFORM_WORKER_GROUP_PRESET_ID:-1681}"
 router_id="${CORE_PLATFORM_ROUTER_ID:-1c056bf0-6095-433d-ad06-f76c70eafc92}"
 
 state_id() {

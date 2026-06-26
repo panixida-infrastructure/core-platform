@@ -43,3 +43,23 @@ resource "twc_k8s_node_group" "core_platform_default" {
     prevent_destroy = true
   }
 }
+
+resource "twc_k8s_node_group" "core_platform_infrastructure_v2" {
+  cluster_id        = twc_k8s_cluster.core_platform.id
+  name              = "core-platform-infrastructure-v2"
+  preset_id         = var.k8s_infrastructure_v2_worker_preset_id
+  node_count        = var.k8s_infrastructure_v2_worker_node_count
+  is_autoscaling    = false
+  is_autohealing    = true
+  public_ip_enabled = false
+  virtual_router_id = twc_router.core_platform_msk_v2.id
+
+  labels {
+    key   = "panixida.ru/node-pool"
+    value = "core-platform"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}

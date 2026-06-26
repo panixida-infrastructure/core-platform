@@ -48,15 +48,27 @@ variable "k8s_master_preset_id" {
 }
 
 variable "k8s_worker_preset_id" {
-  description = "Timeweb Managed Kubernetes worker preset id. 2951 is Promo MSK 2 CPU / 2 GB / 40 GB."
+  description = "Timeweb Managed Kubernetes worker preset id for the current private router-backed worker node group."
   type        = number
-  default     = 2951
+  default     = 1681
 }
 
 variable "k8s_worker_node_count" {
-  description = "Static worker node count for the private router-backed worker node group."
+  description = "Static worker node count for the current private router-backed worker node group."
   type        = number
-  default     = 3
+  default     = 4
+}
+
+variable "k8s_infrastructure_v2_worker_preset_id" {
+  description = "Timeweb Managed Kubernetes worker preset id for the replacement infrastructure node group."
+  type        = number
+  default     = 1685
+}
+
+variable "k8s_infrastructure_v2_worker_node_count" {
+  description = "Static worker node count for the replacement infrastructure node group."
+  type        = number
+  default     = 2
 }
 
 variable "tags" {

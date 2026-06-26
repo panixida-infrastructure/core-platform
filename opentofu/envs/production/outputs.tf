@@ -17,17 +17,20 @@ output "timeweb_inventory" {
     }
 
     routers = {
-      core_platform_msk      = twc_router.core_platform_msk.id
-      core_platform_msk_ipv4 = twc_floating_ip.core_platform_router_ipv4_msk.ip
+      core_platform_msk         = twc_router.core_platform_msk.id
+      core_platform_msk_ipv4    = twc_floating_ip.core_platform_router_ipv4_msk.ip
+      core_platform_msk_v2      = twc_router.core_platform_msk_v2.id
+      core_platform_msk_v2_ipv4 = twc_floating_ip.core_platform_router_v2_ipv4_msk.ip
     }
 
     kubernetes = {
-      id                    = twc_k8s_cluster.core_platform.id
-      version               = twc_k8s_cluster.core_platform.version
-      status                = twc_k8s_cluster.core_platform.status
-      network_driver        = var.k8s_network_driver
-      worker_node_group_id  = twc_k8s_node_group.core_platform_default.id
-      default_node_group_id = twc_k8s_node_group.core_platform_default.id
+      id                              = twc_k8s_cluster.core_platform.id
+      version                         = twc_k8s_cluster.core_platform.version
+      status                          = twc_k8s_cluster.core_platform.status
+      network_driver                  = var.k8s_network_driver
+      worker_node_group_id            = twc_k8s_node_group.core_platform_default.id
+      default_node_group_id           = twc_k8s_node_group.core_platform_default.id
+      infrastructure_v2_node_group_id = twc_k8s_node_group.core_platform_infrastructure_v2.id
     }
 
     postgres_database = {
