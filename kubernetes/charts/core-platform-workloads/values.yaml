@@ -67,7 +67,7 @@ grafana:
       memory: 768Mi
 
 sonarqube:
-  enabled: false
+  enabled: true
   namespace: quality
   host: sonar.panixida.ru
   image: sonarqube:26.5.0.122743-community
@@ -103,6 +103,7 @@ observability:
     - https://identity.panixida.ru
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru
+    - https://sonar.panixida.ru
     - https://dev.api.dotnet-template.panixida.ru/health
     - https://api.dotnet-template.panixida.ru/health
   alerts:

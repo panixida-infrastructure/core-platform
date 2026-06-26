@@ -97,7 +97,7 @@ SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
-SonarQube has Kubernetes manifests and a managed PostgreSQL database, but the workload is currently disabled until the larger worker group has enough sustained headroom for a reliable SonarQube deployment.
+SonarQube has Kubernetes manifests and a managed PostgreSQL database, and runs on the larger worker group.
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
@@ -128,7 +128,7 @@ The `infrastructure` server can stay destroyed when all of these remain true:
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
 3. DNS records point to that IP.
-4. Keycloak, OpenBao, Grafana, Argo CD, and Headlamp are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana. SonarQube is intentionally disabled until the cluster has enough sustained headroom.
+4. Keycloak, OpenBao, Grafana, Argo CD, Headlamp, and SonarQube are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```

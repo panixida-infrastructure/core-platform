@@ -125,4 +125,4 @@ If an application uses OTLP/HTTP instead of OTLP/gRPC, use port `4318` and proto
 Kubernetes stdout/stderr logs are not tailed from every node after removing `vlagent`.
 Application logs should be exported through OTLP by the application runtime.
 
-SonarQube uses managed PostgreSQL for application data, but the Kubernetes workload is disabled while the cluster stays on the free 2 GB worker preset. Keycloak SSO for SonarQube is kept in code and uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
+SonarQube uses managed PostgreSQL for application data. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.

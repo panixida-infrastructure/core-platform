@@ -9,7 +9,7 @@ grafana.panixida.ru    Grafana
 argocd.panixida.ru     Argo CD
 k8s.panixida.ru        Headlamp
 kargo.panixida.ru      Kargo
-sonar.panixida.ru      SonarQube, currently disabled on the free Kubernetes worker preset
+sonar.panixida.ru      SonarQube
 ```
 
 Application endpoints:
