@@ -299,6 +299,24 @@ data:
               summary: Platform endpoint is not reachable.
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: PlatformEndpointSlow
+            expr: max by (http_url) (httpcheck_duration_milliseconds) > 2000
+            for: 3m
+            labels:
+              severity: warning
+            annotations:
+              summary: Platform endpoint is slow.
+              description: One public platform endpoint has responded slower than 2 seconds for at least 3 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: SslCertificateExpiringSoon
+            expr: min by (http_url) (httpcheck_tls_cert_remaining_seconds) < 1209600
+            for: 30m
+            labels:
+              severity: warning
+            annotations:
+              summary: TLS certificate expires soon.
+              description: A public endpoint TLS certificate has less than 14 days remaining.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: TimewebPostgresExporterDown
             expr: up{service_name="timeweb-dbaas-postgres"} == 0
             for: 5m
@@ -344,33 +362,87 @@ data:
               summary: Managed PostgreSQL connection usage is high.
               description: PostgreSQL connection usage has stayed above 80 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
-          - alert: KubernetesNodeHighCpu
-            expr: 100 * (1 - avg by (k8s_node_name) (rate(node_cpu_seconds_total{service_name="linux-node-exporter",mode="idle"}[5m]))) > 85
+          - alert: HostHighCpu
+            expr: 100 * (1 - avg by (service_name, service_instance_id, k8s_node_name) (rate(node_cpu_seconds_total{service_name=~"linux-node-exporter|timeweb-dbaas-node",mode="idle"}[5m]))) > 85
             for: 10m
             labels:
               severity: warning
             annotations:
-              summary: Kubernetes node CPU usage is high.
-              description: Node CPU usage has stayed above 85 percent for at least 10 minutes.
+              summary: Host CPU usage is high.
+              description: Host CPU usage has stayed above 85 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
-          - alert: KubernetesNodeHighMemory
-            expr: 100 * (1 - (node_memory_MemAvailable_bytes{service_name="linux-node-exporter"} / node_memory_MemTotal_bytes{service_name="linux-node-exporter"})) > 90
+          - alert: HostHighMemory
+            expr: 100 * (1 - (sum by (service_name, service_instance_id, k8s_node_name) (node_memory_MemAvailable_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node"}) / sum by (service_name, service_instance_id, k8s_node_name) (node_memory_MemTotal_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node"}))) > 90
             for: 10m
             labels:
               severity: warning
             annotations:
-              summary: Kubernetes node memory usage is high.
-              description: Node memory usage has stayed above 90 percent for at least 10 minutes.
+              summary: Host memory usage is high.
+              description: Host memory usage has stayed above 90 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
-          - alert: KubernetesNodeRootFilesystemHighUsage
-            expr: 100 * (1 - (node_filesystem_avail_bytes{service_name="linux-node-exporter",mountpoint="/"} / node_filesystem_size_bytes{service_name="linux-node-exporter",mountpoint="/"})) > 85
+          - alert: HostFilesystemHighUsage
+            expr: 100 * (1 - (sum by (service_name, service_instance_id, k8s_node_name, mountpoint) (node_filesystem_avail_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node",fstype!~"tmpfs|overlay|squashfs|fuse.*",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"}) / sum by (service_name, service_instance_id, k8s_node_name, mountpoint) (node_filesystem_size_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node",fstype!~"tmpfs|overlay|squashfs|fuse.*",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"}))) > 85
             for: 10m
             labels:
               severity: warning
             annotations:
-              summary: Kubernetes node root filesystem usage is high.
-              description: Node root filesystem usage has stayed above 85 percent for at least 10 minutes.
+              summary: Host filesystem usage is high.
+              description: Host filesystem usage has stayed above 85 percent for at least 10 minutes.
               dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
+          - alert: ApplicationSlowHttpRequests
+            expr: histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=""}[5m]))) > 2
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application HTTP route is slow.
+              description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+          - alert: ApplicationHigh5xxErrorRate
+            expr: (sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5..",http_route!=""}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_route!=""}[5m]))) > 0.05
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: Application 5xx error rate is high.
+              description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute.
+              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+          - alert: ApplicationHighGcPause
+            expr: sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total[5m])) > 0.10
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application GC pause ratio is high.
+              description: .NET GC pause time has stayed above 10 percent of wall time for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+          - alert: ApplicationHighCpu
+            expr: 100 * sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count) > 80
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application CPU usage is high.
+              description: Application process CPU usage has stayed above 80 percent for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+          - alert: ApplicationHighMemoryUsage
+            expr: 100 * (sum by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~".*-(development|production)",container!="",container!="POD",pod!=""}) / sum by (namespace, pod, container) (container_spec_memory_limit_bytes{namespace=~".*-(development|production)",container!="",container!="POD",pod!=""} > 0)) > 85
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application container memory usage is high.
+              description: Application container memory usage has stayed above 85 percent of its Kubernetes limit for at least 10 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+          - alert: ApplicationHighExceptionRate
+            expr: sum by (service_name) (rate(dotnet_exceptions_total[5m])) > 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: Application exception rate is high.
+              description: .NET exception rate has stayed above 1 exception per second for at least 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
 ---
 apiVersion: v1
 kind: ConfigMap
