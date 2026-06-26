@@ -39,7 +39,8 @@ keycloak
 sonar
 grafana
 openbao
-dotnet_template
+dotnet_template_dev
+dotnet_template_prod
 ```
 
 The workflow writes service connection settings to:
@@ -62,15 +63,14 @@ GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo C
 kubernetes/charts/core-platform-workloads
 ```
 
-Application deployment is also pull-based through Argo CD. The root `core-platform` application currently creates the development `dotnet-template` child application:
+Application deployment is also pull-based through Argo CD. The root `core-platform` application creates the development and production `dotnet-template` child applications:
 
 ```text
 dotnet-template-development   development branch dev.api.dotnet-template.panixida.ru
+dotnet-template-production    main branch        api.dotnet-template.panixida.ru
 ```
 
-The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is not enabled until the Helm chart is merged into `dotnet-template/main`.
-
-The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images, writes the new tags to `images-development.yaml`, and pushes that Git change. Argo CD then pulls the updated chart state and syncs the development environment.
+The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images. Kargo watches `development-*` image tags for the development stage and `production-*` image tags for the production stage, writes promoted tags to the matching `images-*.yaml` file, and asks Argo CD to sync the target application.
 
 Application runtime secrets are pulled by External Secrets Operator from OpenBao. The chart creates a namespace-scoped `SecretStore` that authenticates through OpenBao Kubernetes auth and syncs `dotnet-template-api-env` from:
 
@@ -79,7 +79,7 @@ secret/applications/dotnet-template/development
 secret/applications/dotnet-template/production
 ```
 
-Both environments currently use the same managed PostgreSQL database credentials from `dotnet_template`. The chart also expects registry pull credentials in:
+Development uses `dotnet_template_dev` with `dotnet_template_user_dev`. Production uses `dotnet_template_prod` with `dotnet_template_user_prod`. The chart also expects registry pull credentials in:
 
 ```text
 secret/applications/dotnet-template/registry

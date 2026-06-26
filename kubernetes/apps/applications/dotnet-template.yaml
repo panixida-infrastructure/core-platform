@@ -33,3 +33,39 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dotnet-template-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: dotnet-template
+    app.kubernetes.io/part-of: dotnet-template
+    environment: production
+  annotations:
+    kargo.akuity.io/authorized-stage: dotnet-template:production
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/panixida-infrastructure/ci-cd.git
+      targetRevision: main
+      path: charts/application
+      helm:
+        releaseName: dotnet-template-production
+        valueFiles:
+          - $values/deploy/helm/dotnet-template/values.yaml
+          - $values/deploy/helm/dotnet-template/values-production.yaml
+          - $values/deploy/helm/dotnet-template/images-production.yaml
+    - repoURL: https://github.com/panixida-templates/dotnet-backend-template.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dotnet-template-production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

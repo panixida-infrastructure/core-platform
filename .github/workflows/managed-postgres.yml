@@ -65,5 +65,5 @@ jobs:
           MIGRATE_LEGACY_DATABASES: ${{ inputs.migrate_legacy_databases }}
           FORCE_RESTORE: ${{ inputs.force_restore }}
           TARGET_POSTGRES_SSH_TUNNEL: "false"
-          RECREATE_TARGET_DB_USERS: ${{ inputs.recreate_target_users != '' && inputs.recreate_target_users || (inputs.migrate_legacy_databases && 'dotnet_template_user keycloak_user' || '') }}
+          RECREATE_TARGET_DB_USERS: ${{ inputs.recreate_target_users != '' && inputs.recreate_target_users || (inputs.migrate_legacy_databases && 'dotnet_template_user_dev dotnet_template_user_prod keycloak_user' || '') }}
         run: bash scripts/timeweb/reconcile-managed-postgres.sh

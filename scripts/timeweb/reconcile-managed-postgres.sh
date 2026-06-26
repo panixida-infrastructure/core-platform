@@ -427,10 +427,12 @@ grafana_user="$(jq -r '.GRAFANA_DB_USERNAME // "grafana_user"' <<<"$observabilit
 grafana_password="$(secret_or_generate "$(jq -r '.GRAFANA_DB_PASSWORD // empty' <<<"$observability_secret")")"
 openbao_user="$(jq -r '.OPENBAO_DB_USERNAME // "openbao_user"' <<<"$openbao_secret")"
 openbao_password="$(secret_or_generate "$(jq -r '.OPENBAO_DB_PASSWORD // empty' <<<"$openbao_secret")")"
-dotnet_template_user="$(jq -r '.DOTNET_TEMPLATE_DB_USERNAME // "dotnet_template_user"' <<<"$applications_secret")"
-dotnet_template_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_DB_PASSWORD // empty' <<<"$applications_secret")")"
+dotnet_template_dev_user="$(jq -r '.DOTNET_TEMPLATE_DEV_DB_USERNAME // "dotnet_template_user_dev"' <<<"$applications_secret")"
+dotnet_template_dev_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_DEV_DB_PASSWORD // empty' <<<"$applications_secret")")"
+dotnet_template_prod_user="$(jq -r '.DOTNET_TEMPLATE_PROD_DB_USERNAME // "dotnet_template_user_prod"' <<<"$applications_secret")"
+dotnet_template_prod_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_PROD_DB_PASSWORD // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_user dotnet_template_password; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -473,9 +475,12 @@ target_privileges[grafana]="$common_privileges"
 target_users[openbao]="$openbao_user"
 target_passwords[openbao]="$openbao_password"
 target_privileges[openbao]="$common_privileges"
-target_users[dotnet_template]="$dotnet_template_user"
-target_passwords[dotnet_template]="$dotnet_template_password"
-target_privileges[dotnet_template]="$common_privileges"
+target_users[dotnet_template_dev]="$dotnet_template_dev_user"
+target_passwords[dotnet_template_dev]="$dotnet_template_dev_password"
+target_privileges[dotnet_template_dev]="$common_privileges"
+target_users[dotnet_template_prod]="$dotnet_template_prod_user"
+target_passwords[dotnet_template_prod]="$dotnet_template_prod_password"
+target_privileges[dotnet_template_prod]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
   legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
@@ -585,13 +590,31 @@ openbao_secret="$(jq \
 applications_secret="$(jq \
   --arg host "$target_host" \
   --arg port "$target_port" \
-  --arg user "$dotnet_template_user" \
-  --arg password "$dotnet_template_password" \
-  '. + {DOTNET_TEMPLATE_DB_HOST: $host, DOTNET_TEMPLATE_DB_PORT: $port, DOTNET_TEMPLATE_DB_NAME: "dotnet_template", DOTNET_TEMPLATE_DB_USERNAME: $user, DOTNET_TEMPLATE_DB_PASSWORD: $password}' \
+  --arg dev_user "$dotnet_template_dev_user" \
+  --arg dev_password "$dotnet_template_dev_password" \
+  --arg prod_user "$dotnet_template_prod_user" \
+  --arg prod_password "$dotnet_template_prod_password" \
+  '. + {
+    DOTNET_TEMPLATE_DB_HOST: $host,
+    DOTNET_TEMPLATE_DB_PORT: $port,
+    DOTNET_TEMPLATE_DB_NAME: "dotnet_template_dev",
+    DOTNET_TEMPLATE_DB_USERNAME: $dev_user,
+    DOTNET_TEMPLATE_DB_PASSWORD: $dev_password,
+    DOTNET_TEMPLATE_DEV_DB_NAME: "dotnet_template_dev",
+    DOTNET_TEMPLATE_DEV_DB_USERNAME: $dev_user,
+    DOTNET_TEMPLATE_DEV_DB_PASSWORD: $dev_password,
+    DOTNET_TEMPLATE_PROD_DB_NAME: "dotnet_template_prod",
+    DOTNET_TEMPLATE_PROD_DB_USERNAME: $prod_user,
+    DOTNET_TEMPLATE_PROD_DB_PASSWORD: $prod_password
+  }' \
   <<<"$applications_secret")"
-dotnet_template_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template;Username=${dotnet_template_user};Password=${dotnet_template_password};SSL Mode=Require;Trust Server Certificate=true"
-dotnet_template_app_secret="$(jq -n \
-  --arg connection_string "$dotnet_template_connection_string" \
+dotnet_template_dev_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template_dev;Username=${dotnet_template_dev_user};Password=${dotnet_template_dev_password};SSL Mode=Require;Trust Server Certificate=true"
+dotnet_template_prod_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template_prod;Username=${dotnet_template_prod_user};Password=${dotnet_template_prod_password};SSL Mode=Require;Trust Server Certificate=true"
+dotnet_template_dev_app_secret="$(jq -n \
+  --arg connection_string "$dotnet_template_dev_connection_string" \
+  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
+dotnet_template_prod_app_secret="$(jq -n \
+  --arg connection_string "$dotnet_template_prod_connection_string" \
   '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
@@ -599,8 +622,8 @@ bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
 bao_write "$openbao_token" core-platform/observability "$observability_secret"
 bao_write "$openbao_token" core-platform/openbao "$openbao_secret"
 bao_write "$openbao_token" core-platform/applications "$applications_secret"
-bao_write "$openbao_token" applications/dotnet-template/development "$dotnet_template_app_secret"
-bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_template_app_secret"
+bao_write "$openbao_token" applications/dotnet-template/development "$dotnet_template_dev_app_secret"
+bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_template_prod_app_secret"
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"

@@ -104,6 +104,7 @@ observability:
     - https://secrets.panixida.ru
     - https://grafana.panixida.ru
     - https://dev.api.dotnet-template.panixida.ru/health
+    - https://api.dotnet-template.panixida.ru/health
   alerts:
     telegram:
       chatId: "-1003738995665"

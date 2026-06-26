@@ -4617,7 +4617,7 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 8,
+            "w": 6,
             "x": 0,
             "y": 5
           },
@@ -4677,8 +4677,8 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 8,
-            "x": 8,
+            "w": 6,
+            "x": 6,
             "y": 5
           },
           "options": {
@@ -4737,8 +4737,8 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 8,
-            "x": 16,
+            "w": 6,
+            "x": 12,
             "y": 5
           },
           "options": {
@@ -4765,6 +4765,77 @@ data:
           "title": "Max RPS",
           "type": "stat",
           "id": 10
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "text": "DOWN"
+                    },
+                    "1": {
+                      "color": "green",
+                      "text": "UP"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 18,
+            "y": 5
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "targets": [
+            {
+              "expr": "max by (http_url) (httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev\\.)?api\\.dotnet-template\\.panixida\\.ru/health\"})",
+              "legendFormat": "{{`{{http_url}}`}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Application endpoint availability",
+          "type": "stat",
+          "id": 54
         },
         {
           "collapsed": false,

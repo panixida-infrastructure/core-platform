@@ -54,7 +54,7 @@ After Argo CD is available, workload deployment is pull-based from this reposito
 kubernetes/charts/core-platform-workloads
 ```
 
-Application deployment follows the same GitOps model. The root application currently creates `dotnet-template-development`, which pulls the Helm chart from `panixida-templates/dotnet-backend-template` and tracks the `development` branch. The production DNS record and Gateway certificate are prepared, but `dotnet-template-production` is enabled only after the Helm chart is merged into `dotnet-template/main`.
+Application deployment follows the same GitOps model. The root application creates `dotnet-template-development` and `dotnet-template-production`. Development pulls values from the `development` branch and production pulls values from `main` in `panixida-templates/dotnet-backend-template`. Kargo promotes matching image tags into the environment-specific `images-*.yaml` files and asks Argo CD to sync the target application.
 
 Application runtime secrets are synchronized by External Secrets Operator from OpenBao. The application chart creates namespace-scoped SecretStores and ExternalSecrets; Git only stores the remote OpenBao paths and never stores secret values.
 
