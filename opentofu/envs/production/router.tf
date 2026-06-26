@@ -37,36 +37,3 @@ resource "twc_router" "core_platform_msk" {
     prevent_destroy = true
   }
 }
-
-resource "twc_floating_ip" "core_platform_router_v2_ipv4_msk" {
-  availability_zone = "msk-1"
-  ddos_guard        = false
-  comment           = "core-platform Kubernetes router v2"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "twc_router" "core_platform_msk_v2" {
-  name       = "core-platform-router-v2"
-  preset_id  = data.twc_router_preset.core_platform_minimal.id
-  project_id = twc_project.infrastructure.id
-
-  networks {
-    id              = twc_vpc.infrastructure_msk.id
-    is_dhcp_enabled = true
-  }
-
-  ips {
-    ip = twc_floating_ip.core_platform_router_v2_ipv4_msk.ip
-
-    nat {
-      id = twc_vpc.infrastructure_msk.id
-    }
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}

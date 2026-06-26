@@ -52,7 +52,7 @@ resource "twc_k8s_node_group" "core_platform_infrastructure_v2" {
   is_autoscaling    = false
   is_autohealing    = true
   public_ip_enabled = false
-  virtual_router_id = twc_router.core_platform_msk_v2.id
+  virtual_router_id = twc_router.core_platform_msk.id
 
   labels {
     key   = "panixida.ru/node-pool"
