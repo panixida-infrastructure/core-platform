@@ -19,9 +19,8 @@ The manual `OpenTofu Apply` workflow reconciles Timeweb resources from `opentofu
 
 ```text
 core-platform-network       Timeweb VPC in MSK-1
-core-platform-router        Timeweb virtual router for Kubernetes worker egress in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
-core-platform-infrastructure Private router-backed infrastructure node group
+core-platform-infrastructure Infrastructure worker node group with public worker IPv4 for registry/API egress
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 panixida.ru DNS records     Platform UI records pointing to Envoy Gateway
@@ -55,7 +54,7 @@ secret/core-platform/applications
 
 ## Managed Kubernetes
 
-OpenTofu creates the Timeweb Managed Kubernetes cluster, a virtual router for worker egress, and one private worker node group without public worker IPs. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.
+OpenTofu creates the Timeweb Managed Kubernetes cluster and one infrastructure worker node group. Workers currently use public IPv4 for reliable registry and Timeweb API egress; public application traffic still enters through the Envoy Gateway LoadBalancer. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.
 
 GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo CD application deploys the Helm chart at:
 

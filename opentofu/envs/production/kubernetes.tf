@@ -22,8 +22,8 @@ resource "twc_k8s_cluster" "core_platform" {
   }
 }
 
-# Keep the Terraform address for state compatibility; the live worker group
-# was migrated away from the retired core-platform-default group.
+# Keep the historical Terraform address for state compatibility; the live
+# worker group is core-platform-infrastructure.
 resource "twc_k8s_node_group" "core_platform_default" {
   cluster_id        = twc_k8s_cluster.core_platform.id
   name              = "core-platform-infrastructure"
@@ -31,8 +31,7 @@ resource "twc_k8s_node_group" "core_platform_default" {
   node_count        = var.k8s_worker_node_count
   is_autoscaling    = false
   is_autohealing    = true
-  public_ip_enabled = false
-  virtual_router_id = twc_router.core_platform_msk.id
+  public_ip_enabled = true
 
   labels {
     key   = "panixida.ru/node-pool"
@@ -41,21 +40,5 @@ resource "twc_k8s_node_group" "core_platform_default" {
 
   lifecycle {
     prevent_destroy = true
-  }
-}
-
-resource "twc_k8s_node_group" "core_platform_infrastructure_v2" {
-  cluster_id        = twc_k8s_cluster.core_platform.id
-  name              = "core-platform-infrastructure-v2"
-  preset_id         = var.k8s_infrastructure_v2_worker_preset_id
-  node_count        = var.k8s_infrastructure_v2_worker_node_count
-  is_autoscaling    = false
-  is_autohealing    = true
-  public_ip_enabled = true
-  virtual_router_id = twc_router.core_platform_msk.id
-
-  labels {
-    key   = "panixida.ru/node-pool"
-    value = "core-platform"
   }
 }

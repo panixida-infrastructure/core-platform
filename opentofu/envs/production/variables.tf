@@ -48,25 +48,13 @@ variable "k8s_master_preset_id" {
 }
 
 variable "k8s_worker_preset_id" {
-  description = "Timeweb Managed Kubernetes worker preset id for the current private router-backed worker node group."
-  type        = number
-  default     = 1681
-}
-
-variable "k8s_worker_node_count" {
-  description = "Static worker node count for the current private router-backed worker node group."
-  type        = number
-  default     = 4
-}
-
-variable "k8s_infrastructure_v2_worker_preset_id" {
-  description = "Timeweb Managed Kubernetes worker preset id for the replacement infrastructure node group."
+  description = "Timeweb Managed Kubernetes worker preset id for the current infrastructure worker node group."
   type        = number
   default     = 1685
 }
 
-variable "k8s_infrastructure_v2_worker_node_count" {
-  description = "Static worker node count for the replacement infrastructure node group."
+variable "k8s_worker_node_count" {
+  description = "Static worker node count for the current infrastructure worker node group."
   type        = number
   default     = 2
 }

@@ -49,5 +49,8 @@ import_or_replace() {
 }
 
 remove_if_present twc_project.common
+remove_if_present twc_k8s_node_group.core_platform_infrastructure_v2
+remove_if_present twc_router.core_platform_msk
+remove_if_present twc_floating_ip.core_platform_router_ipv4_msk
 import_or_replace twc_project.infrastructure "$core_platform_project_id"
 bash "$(dirname "$0")/ensure-k8s-worker-group-state.sh"

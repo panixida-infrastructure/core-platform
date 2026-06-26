@@ -8,9 +8,8 @@ OpenTofu owns cloud resources:
 
 ```text
 core-platform-network       Timeweb VPC in MSK-1
-core-platform-router        Timeweb virtual router for Kubernetes worker egress in MSK-1
 core-platform               Timeweb Managed Kubernetes cluster in MSK-1
-core-platform-infrastructure Private router-backed infrastructure node group
+core-platform-infrastructure Infrastructure worker node group with public worker IPv4 for registry/API egress
 postgres                    Managed PostgreSQL cluster in MSK-1
 panixida-storage            S3 bucket for OpenTofu state and platform storage
 ```
@@ -21,15 +20,15 @@ Cluster defaults:
 
 ```text
 Kubernetes version: v1.35.4+k0s.0
-Master preset:      2947, Promo MSK
-Worker preset:      2951, Promo MSK 2 CPU / 2 GB / 40 GB
-Worker count:       3 static nodes
-Worker networking:  private worker IPs with egress through Timeweb virtual router
+Master preset:      1673
+Worker preset:      1685, 4 CPU / 8 GB / 120 GB
+Worker count:       2 static nodes
+Worker networking:  public worker IPv4 for registry/API egress
 CNI:                cilium
 Built-in ingress:   disabled
 ```
 
-Worker public IPs were used only during the first cluster creation and recovery steps. The production worker group uses private worker IPs with outbound internet access through a Timeweb virtual router. Public platform traffic still enters through the Envoy Gateway LoadBalancer.
+The router-backed private worker setup was tested but caused unstable outbound access to external registries and Timeweb APIs. The production worker group therefore uses public worker IPv4 for node egress. Public platform traffic still enters through the Envoy Gateway LoadBalancer.
 
 Labels are lightweight key/value metadata attached to nodes. They are used by Kubernetes scheduling, selectors, and operational grouping. The worker node group receives `panixida.ru/node-pool=core-platform`.
 
@@ -98,7 +97,7 @@ SonarQube     -> Kubernetes workload with managed PostgreSQL
 Victoria*     -> Kubernetes workloads with retained PVCs
 ```
 
-SonarQube has Kubernetes manifests and a managed PostgreSQL database, but the workload is currently disabled because the free 2 GB worker preset is too constrained for a reliable SonarQube deployment.
+SonarQube has Kubernetes manifests and a managed PostgreSQL database, but the workload is currently disabled until the larger worker group has enough sustained headroom for a reliable SonarQube deployment.
 
 During migration Keycloak runs as a single replica with `KC_CACHE=local`. This avoids JDBC/JGroups discovery against the old Docker Keycloak instance that still shares the same managed PostgreSQL database. Switch back to distributed cache only after the old instance is stopped and the Kubernetes replica topology is finalized.
 
@@ -129,7 +128,7 @@ The `infrastructure` server can stay destroyed when all of these remain true:
 1. Kubernetes cluster is active.
 2. Envoy Gateway has a public LoadBalancer IP.
 3. DNS records point to that IP.
-4. Keycloak, OpenBao, Grafana, Argo CD, and Headlamp are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana. SonarQube is intentionally disabled until the cluster has a larger worker preset.
+4. Keycloak, OpenBao, Grafana, Argo CD, and Headlamp are reachable through Envoy Gateway. Raw observability endpoints stay internal and are consumed through Grafana. SonarQube is intentionally disabled until the cluster has enough sustained headroom.
 5. OpenBao data has been migrated from file storage to PostgreSQL and unseal/bootstrap material is verified outside Git.
 6. Local Docker volumes that still contain unique data have been migrated or explicitly discarded.
 ```

@@ -4,9 +4,9 @@ timeweb_project_name = "core-platform"
 
 k8s_version           = "v1.35.4+k0s.0"
 k8s_network_driver    = "cilium"
-k8s_master_preset_id  = 2947
-k8s_worker_preset_id  = 2951
-k8s_worker_node_count = 3
+k8s_master_preset_id  = 1673
+k8s_worker_preset_id  = 1685
+k8s_worker_node_count = 2
 
 tags = {
   managed_by = "opentofu"
