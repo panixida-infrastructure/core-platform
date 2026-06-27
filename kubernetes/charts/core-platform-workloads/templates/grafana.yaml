@@ -4814,9 +4814,9 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 6,
-            "x": 18,
-            "y": 5
+            "w": 24,
+            "x": 0,
+            "y": 9
           },
           "options": {
             "colorMode": "background",
@@ -4835,8 +4835,8 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (http_url) (httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health\"})",
-              "legendFormat": "{{`{{http_url}}`}}",
+              "expr": "max by (service_name, http_url) (label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "legendFormat": "{{`{{service_name}}`}}",
               "refId": "A"
             }
           ],
@@ -4854,7 +4854,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 9
+            "y": 13
           },
           "panels": [],
           "title": "Logs and traces",
@@ -4874,7 +4874,7 @@ data:
             "h": 12,
             "w": 24,
             "x": 0,
-            "y": 10
+            "y": 14
           },
           "options": {
             "dedupStrategy": "none",
@@ -4929,7 +4929,7 @@ data:
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 22
+            "y": 26
           },
           "options": {
             "cellHeight": "sm",
@@ -4980,7 +4980,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 32
+            "y": 36
           },
           "panels": [],
           "title": "HTTP — Производительность",
@@ -5015,7 +5015,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 33
+            "y": 37
           },
           "options": {
             "legend": {
@@ -5068,7 +5068,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 33
+            "y": 37
           },
           "options": {
             "legend": {
@@ -5106,7 +5106,7 @@ data:
             "h": 9,
             "w": 24,
             "x": 0,
-            "y": 41
+            "y": 45
           },
           "fieldConfig": {
             "defaults": {},
@@ -5191,7 +5191,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 50
+            "y": 54
           },
           "panels": [],
           "title": "HTTP — Ошибки",
@@ -5226,7 +5226,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 51
+            "y": 55
           },
           "options": {
             "legend": {
@@ -5266,7 +5266,7 @@ data:
             "h": 7,
             "w": 16,
             "x": 8,
-            "y": 51
+            "y": 55
           },
           "options": {
             "calculate": false,
@@ -5338,7 +5338,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 58
+            "y": 62
           },
           "options": {
             "legend": {
@@ -5391,7 +5391,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 58
+            "y": 62
           },
           "options": {
             "legend": {
@@ -5444,7 +5444,7 @@ data:
             "h": 7,
             "w": 24,
             "x": 0,
-            "y": 65
+            "y": 69
           },
           "options": {
             "legend": {
@@ -5479,7 +5479,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 72
+            "y": 76
           },
           "panels": [],
           "title": "CPU",
@@ -5514,7 +5514,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 73
+            "y": 77
           },
           "options": {
             "legend": {
@@ -5567,7 +5567,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 73
+            "y": 77
           },
           "options": {
             "legend": {
@@ -5607,7 +5607,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 80
+            "y": 84
           },
           "panels": [],
           "title": "Memory / Garbage Collection",
@@ -5642,7 +5642,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 81
+            "y": 85
           },
           "options": {
             "legend": {
@@ -5700,7 +5700,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 81
+            "y": 85
           },
           "options": {
             "legend": {
@@ -5753,7 +5753,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 81
+            "y": 85
           },
           "options": {
             "legend": {
@@ -5806,7 +5806,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 89
+            "y": 93
           },
           "options": {
             "legend": {
@@ -5859,7 +5859,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 8,
-            "y": 89
+            "y": 93
           },
           "options": {
             "legend": {
@@ -5912,7 +5912,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 16,
-            "y": 89
+            "y": 93
           },
           "options": {
             "legend": {
@@ -5947,7 +5947,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 96
+            "y": 100
           },
           "panels": [],
           "title": "Thread pool",
@@ -5982,7 +5982,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 0,
-            "y": 97
+            "y": 101
           },
           "options": {
             "legend": {
@@ -6035,7 +6035,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 8,
-            "y": 97
+            "y": 101
           },
           "options": {
             "legend": {
@@ -6088,7 +6088,7 @@ data:
             "h": 7,
             "w": 8,
             "x": 16,
-            "y": 97
+            "y": 101
           },
           "options": {
             "legend": {
@@ -6141,7 +6141,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 104
+            "y": 108
           },
           "options": {
             "legend": {
@@ -6176,7 +6176,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 111
+            "y": 115
           },
           "panels": [],
           "title": "JIT compilation",
@@ -6211,7 +6211,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 112
+            "y": 116
           },
           "options": {
             "legend": {
@@ -6264,7 +6264,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 112
+            "y": 116
           },
           "options": {
             "legend": {
@@ -6299,7 +6299,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 119
+            "y": 123
           },
           "panels": [],
           "title": "Contention",
@@ -6334,7 +6334,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 120
+            "y": 124
           },
           "options": {
             "legend": {
@@ -6369,7 +6369,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 127
+            "y": 131
           },
           "panels": [],
           "title": "Exceptions",
@@ -6404,7 +6404,7 @@ data:
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 128
+            "y": 132
           },
           "options": {
             "legend": {
@@ -6439,7 +6439,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 136
+            "y": 140
           },
           "panels": [],
           "title": "Sockets and connections",
@@ -6474,7 +6474,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 137
+            "y": 141
           },
           "options": {
             "legend": {
@@ -6532,7 +6532,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 137
+            "y": 141
           },
           "options": {
             "legend": {
@@ -6572,7 +6572,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 144
+            "y": 148
           },
           "panels": [],
           "title": "Database and outbound clients",
@@ -6607,7 +6607,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 145
+            "y": 149
           },
           "options": {
             "legend": {
@@ -6660,7 +6660,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 145
+            "y": 149
           },
           "options": {
             "legend": {
@@ -6718,7 +6718,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 152
+            "y": 156
           },
           "options": {
             "legend": {
@@ -6771,7 +6771,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 152
+            "y": 156
           },
           "options": {
             "legend": {
