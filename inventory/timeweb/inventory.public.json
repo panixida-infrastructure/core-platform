@@ -61,8 +61,8 @@
       "resource_id": "8034806"
     },
     {
-      "id": "fc66efd9-a4a1-4983-bbd4-40fdaa70c46f",
-      "ip": "85.239.41.107",
+      "id": "832c6c2d-a32b-47fd-9d48-0486dca60775",
+      "ip": "5.42.99.193",
       "resource_type": "dbaas",
       "resource_id": "4169562"
     }
@@ -98,7 +98,7 @@
     },
     {
       "address": "twc_floating_ip.postgres_database_ipv4_msk",
-      "import_id": "fc66efd9-a4a1-4983-bbd4-40fdaa70c46f"
+      "import_id": "832c6c2d-a32b-47fd-9d48-0486dca60775"
     }
   ]
 }

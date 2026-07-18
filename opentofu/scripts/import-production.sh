@@ -50,4 +50,4 @@ import_or_replace twc_project.infrastructure 1152653
 import_or_replace twc_k8s_cluster.core_platform 1091532
 bash "$(dirname "$0")/ensure-k8s-worker-group-state.sh"
 
-import_or_replace twc_floating_ip.postgres_database_ipv4_msk fc66efd9-a4a1-4983-bbd4-40fdaa70c46f
+import_or_replace twc_floating_ip.postgres_database_ipv4_msk 832c6c2d-a32b-47fd-9d48-0486dca60775

@@ -57,6 +57,8 @@ secret/core-platform/applications
 
 OpenTofu creates the Timeweb Managed Kubernetes cluster and one infrastructure worker node group. Workers currently use public IPv4 for reliable registry and Timeweb API egress; public application traffic still enters through the Envoy Gateway LoadBalancer. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.
 
+The bootstrap also pins the Timeweb-managed Cilium agent and operator to the direct Kubernetes API endpoint from kubeconfig. This prevents a Cilium restart from depending on the unavailable in-cluster API service route while the node network is still initializing.
+
 GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo CD application deploys the Helm chart at:
 
 ```text
@@ -112,6 +114,8 @@ VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept interna
 Linux host metrics for Kubernetes worker nodes are collected by a `node-exporter` DaemonSet and scraped by OpenTelemetry Collector with the `linux-node-exporter` job. Kubelet `/metrics` remains enabled for Kubernetes node/kubelet metrics, while kubelet cAdvisor remains the source for pod and container CPU, memory, filesystem, and network usage.
 
 Managed PostgreSQL metrics are collected from the Timeweb DBaaS Prometheus exporter. OpenTelemetry Collector scrapes both the PostgreSQL exporter endpoint for database metrics and the DB host `node_exporter` endpoint for server metrics, then stores them in VictoriaMetrics. The exporter id and basic-auth credentials live in the OpenBao `secret/core-platform/observability` path and are synced into the `observability/observability-secrets` Kubernetes secret.
+
+Kubernetes workloads connect to Managed PostgreSQL through its private VPC address. The public floating IP remains available only for external administration and database migration, so replacing that IP does not require changing workload connection strings.
 
 Applications should send OTLP traffic to the in-cluster collector:
 

@@ -217,15 +217,8 @@ if ! bao auth list -format=json | grep -q "\"${kubernetes_auth_path}/\""; then
   bao auth enable -path="$kubernetes_auth_path" kubernetes
 fi
 
-if [ -r /var/run/secrets/kubernetes.io/serviceaccount/token ] && [ -r /var/run/secrets/kubernetes.io/serviceaccount/ca.crt ]; then
-  bao write "auth/${kubernetes_auth_path}/config" \
-    kubernetes_host=https://kubernetes.default.svc:443 \
-    kubernetes_ca_cert="$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)" \
-    token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
-else
-  bao write "auth/${kubernetes_auth_path}/config" \
-    kubernetes_host=https://kubernetes.default.svc:443
-fi
+bao write "auth/${kubernetes_auth_path}/config" \
+  kubernetes_host=https://kubernetes.default.svc:443
 
 bao write "auth/${kubernetes_auth_path}/role/dotnet-template-development" \
   bound_service_account_names=dotnet-template-external-secrets \

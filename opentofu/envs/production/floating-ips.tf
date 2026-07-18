@@ -1,7 +1,7 @@
 resource "twc_floating_ip" "postgres_database_ipv4_msk" {
   availability_zone = "msk-1"
   ddos_guard        = false
-  comment           = ""
+  comment           = "Managed PostgreSQL public endpoint"
 
   resource {
     type = "dbaas"

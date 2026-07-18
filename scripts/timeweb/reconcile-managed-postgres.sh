@@ -149,11 +149,18 @@ wait_cluster_started() {
   exit 1
 }
 
-cluster_host() {
+cluster_public_host() {
   local cluster_id="$1"
 
   twc GET "/api/v1/databases/${cluster_id}" \
     | jq -r '.db.domains[0].fqdn // (.db.networks[]? | select(.type == "public") | .ips[0].ip) // empty'
+}
+
+cluster_private_host() {
+  local cluster_id="$1"
+
+  twc GET "/api/v1/databases/${cluster_id}" \
+    | jq -r '(.db.networks[]? | select(.type == "local") | .ips[0].ip) // empty'
 }
 
 ensure_public_endpoint() {
@@ -452,10 +459,15 @@ fi
 
 wait_cluster_started "$target_cluster_id"
 ensure_public_endpoint "$target_cluster_id"
-target_host="$(cluster_host "$target_cluster_id")"
-if [ -z "$target_host" ]; then
+target_public_host="$(cluster_public_host "$target_cluster_id")"
+if [ -z "$target_public_host" ]; then
   echo "::error::Target cluster ${target_cluster_id} has no public endpoint"
   exit 1
+fi
+target_host="$(cluster_private_host "$target_cluster_id")"
+if [ -z "$target_host" ]; then
+  echo "::warning::Target cluster ${target_cluster_id} has no private endpoint; using the public endpoint for workloads"
+  target_host="$target_public_host"
 fi
 
 echo "Ensuring target databases and users in ${target_cluster_name}"
@@ -627,8 +639,8 @@ bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_temp
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"
-  legacy_host="$(cluster_host "$legacy_cluster_id")"
-  migration_target_host="$target_host"
+  legacy_host="$(cluster_public_host "$legacy_cluster_id")"
+  migration_target_host="$target_public_host"
   migration_target_port="$target_port"
 
   if [ -z "$legacy_host" ]; then
@@ -636,7 +648,7 @@ if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id
     exit 1
   fi
 
-  start_target_ssh_tunnel "$target_host" "$target_port"
+  start_target_ssh_tunnel "$target_public_host" "$target_port"
   if [ "$target_ssh_tunnel" = "true" ]; then
     migration_target_host="127.0.0.1"
     migration_target_port="$target_ssh_tunnel_port"
