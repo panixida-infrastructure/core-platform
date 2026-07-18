@@ -22,21 +22,37 @@ twc() {
   local method="$1"
   local path="$2"
   local body="${3:-}"
+  local response status
+
+  response="$(mktemp)"
 
   if [ -n "$body" ]; then
-    curl -fsS \
+    status="$(curl -sS \
+      -o "$response" \
+      -w '%{http_code}' \
       -X "$method" \
       -H "Authorization: Bearer ${TIMEWEB_TOKEN}" \
       -H "Content-Type: application/json" \
       -d "$body" \
-      "${timeweb_api}${path}"
+      "${timeweb_api}${path}")"
   else
-    curl -fsS \
+    status="$(curl -sS \
+      -o "$response" \
+      -w '%{http_code}' \
       -X "$method" \
       -H "Authorization: Bearer ${TIMEWEB_TOKEN}" \
       -H "Content-Type: application/json" \
-      "${timeweb_api}${path}"
+      "${timeweb_api}${path}")"
   fi
+
+  if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+    jq '{status_code, error_code, message, response_id}' "$response" >&2 || true
+    rm -f "$response"
+    return 1
+  fi
+
+  cat "$response"
+  rm -f "$response"
 }
 
 openbao_login() {
