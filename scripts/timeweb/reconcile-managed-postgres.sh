@@ -656,14 +656,86 @@ dotnet_template_prod_app_secret="$(jq -n \
   '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
 tactical_heroes_dev_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_dev;Username=${tactical_heroes_dev_user};Password=${tactical_heroes_dev_password};SSL Mode=Require;Trust Server Certificate=true"
 tactical_heroes_prod_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_prod;Username=${tactical_heroes_prod_user};Password=${tactical_heroes_prod_password};SSL Mode=Require;Trust Server Certificate=true"
+tactical_heroes_common_app_config="$(jq -n '{
+  "ASPNETCORE_HTTP_PORTS": "8080",
+  "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+  "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector.observability.svc.cluster.local:4317",
+  "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+  "Logging__LogLevel__Default": "Information",
+  "Logging__LogLevel__Microsoft": "Warning",
+  "Logging__LogLevel__Microsoft.Hosting.Lifetime": "Information",
+  "AllowedHosts": "*",
+  "ScalarConfiguration__Title": "Tactical Heroes API Reference",
+  "Identity__Provider__Audience": "tactical-heroes-api",
+  "Identity__Provider__AccessTokenLifetime": "00:15:00",
+  "Identity__Provider__RefreshTokenLifetime": "30.00:00:00",
+  "Identity__Provider__RefreshTokenReuseLeeway": "00:00:30",
+  "Identity__Provider__AuthorizationCodeLifetime": "00:05:00",
+  "Identity__Provider__IdentityTokenLifetime": "00:05:00",
+  "Identity__Provider__EmailConfirmationTokenLifetime": "1.00:00:00",
+  "Identity__Provider__PasswordResetTokenLifetime": "01:00:00",
+  "Identity__Provider__User__RequireUniqueEmail": "true",
+  "Identity__Provider__Password__RequiredLength": "8",
+  "Identity__Provider__Password__RequiredUniqueChars": "1",
+  "Identity__Provider__Password__RequireDigit": "true",
+  "Identity__Provider__Password__RequireLowercase": "true",
+  "Identity__Provider__Password__RequireNonAlphanumeric": "true",
+  "Identity__Provider__Password__RequireUppercase": "true",
+  "Identity__Provider__Lockout__MaxFailedAccessAttempts": "5",
+  "Identity__Provider__Lockout__DefaultLockoutTimeSpan": "00:05:00",
+  "Identity__Provider__TokenProviders__EmailConfirmation": "email_confirmation",
+  "Identity__Provider__TokenProviders__PasswordReset": "password_reset",
+  "Identity__Provider__Clients__0__ClientId": "tactical-heroes-web",
+  "Identity__Provider__Clients__0__ClientType": "public",
+  "Identity__Provider__Clients__0__DisplayName": "Tactical Heroes Web",
+  "Identity__Provider__Clients__0__GrantTypes__0": "authorization_code",
+  "Identity__Provider__Clients__0__GrantTypes__1": "refresh_token",
+  "Identity__Provider__Clients__0__RedirectUris__0": "https://localhost:5173/oauth/callback",
+  "Identity__Provider__Clients__0__PostLogoutRedirectUris__0": "https://localhost:5173/",
+  "Identity__Provider__Clients__0__Scopes__0": "openid",
+  "Identity__Provider__Clients__0__Scopes__1": "offline_access",
+  "Identity__Provider__Clients__0__Scopes__2": "profile",
+  "Identity__Provider__Clients__0__Scopes__3": "email",
+  "Identity__Provider__Clients__0__Scopes__4": "roles",
+  "Identity__Provider__Clients__1__ClientId": "tactical-heroes-service",
+  "Identity__Provider__Clients__1__ClientType": "confidential",
+  "Identity__Provider__Clients__1__DisplayName": "Tactical Heroes Service",
+  "Identity__Provider__Clients__1__GrantTypes__0": "client_credentials",
+  "Identity__Provider__Clients__1__GrantTypes__1": "urn:ietf:params:oauth:grant-type:token-exchange",
+  "Identity__Provider__Clients__1__Scopes__0": "profile",
+  "Identity__Provider__Clients__1__Scopes__1": "email",
+  "Identity__Provider__Clients__1__Scopes__2": "roles",
+  "Identity__Cleanup__PruneUnconfirmedUsersEnabled": "true",
+  "Identity__Cleanup__UnconfirmedUserRetention": "7.00:00:00",
+  "Identity__Cleanup__UnconfirmedUsersCronSchedule": "0 0 * * * ?",
+  "Identity__Messaging__EmailConfirmationUrlTemplate": "/api/v1/auth/confirm-email?userId={userId}&emailConfirmationToken={token}",
+  "Identity__Messaging__PasswordResetUrlTemplate": "/api/v1/auth/reset-password?userId={userId}&passwordResetToken={token}",
+  "OAuthSpa__LoginUrl": "https://localhost:5173/login"
+}')"
 tactical_heroes_dev_app_secret="$(jq -n \
+  --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_dev_connection_string" \
   --arg client_secret "$tactical_heroes_dev_client_secret" \
-  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string, Identity__Provider__Clients__1__ClientSecret: $client_secret}')"
+  '$common + {
+    ASPNETCORE_ENVIRONMENT: "Development",
+    DOTNET_ENVIRONMENT: "Development",
+    OTEL_SERVICE_NAME: "tactical-heroes-api-development",
+    Identity__Provider__Issuer: "https://dev.api.tactical-heroes.panixida.ru/",
+    ConnectionStrings__PostgreSqlConnectionString: $connection_string,
+    Identity__Provider__Clients__1__ClientSecret: $client_secret
+  }')"
 tactical_heroes_prod_app_secret="$(jq -n \
+  --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_prod_connection_string" \
   --arg client_secret "$tactical_heroes_prod_client_secret" \
-  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string, Identity__Provider__Clients__1__ClientSecret: $client_secret}')"
+  '$common + {
+    ASPNETCORE_ENVIRONMENT: "Production",
+    DOTNET_ENVIRONMENT: "Production",
+    OTEL_SERVICE_NAME: "tactical-heroes-api-production",
+    Identity__Provider__Issuer: "https://api.tactical-heroes.panixida.ru/",
+    ConnectionStrings__PostgreSqlConnectionString: $connection_string,
+    Identity__Provider__Clients__1__ClientSecret: $client_secret
+  }')"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
 bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
