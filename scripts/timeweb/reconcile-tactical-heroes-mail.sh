@@ -170,11 +170,13 @@ if [ -z "$smtp_password" ]; then
   smtp_password="$(generate_password)"
 fi
 
+# The live API validates login while the generated SDK still names the field mailbox.
 mailbox_payload="$(jq -nc \
   --arg mailbox "$mailbox" \
   --arg password "$smtp_password" \
   '{
     mailbox: $mailbox,
+    login: $mailbox,
     password: $password,
     comment: "Tactical Heroes application notifications",
     owner_full_name: "Tactical Heroes",
