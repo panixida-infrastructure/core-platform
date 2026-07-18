@@ -65,11 +65,13 @@ GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo C
 kubernetes/charts/core-platform-workloads
 ```
 
-Application deployment is also pull-based through Argo CD. The root `core-platform` application creates the development and production `dotnet-template` child applications:
+Application deployment is also pull-based through Argo CD. The root `core-platform` application creates development and production child applications:
 
 ```text
 dotnet-template-development   development branch dev.api.dotnet-template.panixida.ru
 dotnet-template-production    main branch        api.dotnet-template.panixida.ru
+tactical-heroes-development  development branch dev.api.tactical-heroes.panixida.ru
+tactical-heroes-production   main branch        api.tactical-heroes.panixida.ru
 ```
 
 The application chart lives in the application repository at `deploy/helm/dotnet-template`. GitHub Actions builds API and EF migrator images. Kargo watches `development-*` image tags for the development stage and `production-*` image tags for the production stage, writes promoted tags to the matching `images-*.yaml` file, and asks Argo CD to sync the target application.
@@ -89,6 +91,8 @@ secret/applications/dotnet-template/registry
 
 The application repository CI updates this registry path through the `dotnet-template-github-actions` OpenBao JWT role. That role is scoped only to registry pull credentials and cannot read application database secrets.
 
+Tactical Heroes follows the same flow with values under `deploy/helm/tactical-heroes-api`, Kargo project `tactical-heroes`, OpenBao paths under `secret/applications/tactical-heroes-api`, and separate `tactical_heroes_dev` and `tactical_heroes_prod` databases.
+
 The manual `Kubernetes Secrets Sync` workflow copies runtime secrets from OpenBao into Kubernetes secrets, syncs the OpenBao static seal key from the `OPENBAO_STATIC_SEAL_KEY` GitHub secret, and reapplies OpenBao auth/SSO configuration from this repository. It does not write secret values to GitHub logs or repository files. Run it after `Managed PostgreSQL` has reconciled database users and before relying on the Kubernetes workload chart.
 
 Platform SSO uses Keycloak as the OIDC provider. OpenTofu configures Timeweb Kubernetes OIDC for the `kubernetes` client, Argo CD is configured through the bootstrap Helm values, and the workload chart reconciles Keycloak clients for Argo CD, Kubernetes/Headlamp, Grafana, OpenBao, and Kargo.
@@ -107,6 +111,8 @@ kargo.panixida.ru
 sonar.panixida.ru
 api.dotnet-template.panixida.ru
 dev.api.dotnet-template.panixida.ru
+api.tactical-heroes.panixida.ru
+dev.api.tactical-heroes.panixida.ru
 ```
 
 VictoriaMetrics, VictoriaLogs, VictoriaTraces, and Alertmanager are kept internal to the cluster and are consumed through Grafana, OpenTelemetry Collector, and vmalert. OpenTelemetry Collector receives application OTLP metrics/logs/traces, scrapes kubelet and cAdvisor metrics through Kubernetes service discovery, and runs HTTP endpoint checks through the `http_check` receiver. Their runtime state is stored on Timeweb NVMe network-drive PVCs created through the Kubernetes CSI storage class. Grafana dashboards are provisioned from the workload chart and cover endpoint health, Kubernetes resource usage, observability pipeline health, application OpenTelemetry metrics, logs, and traces.

@@ -5,6 +5,8 @@ resources:
   - applications/platform-workloads.yaml
   - applications/dotnet-template.yaml
   - applications/dotnet-template-kargo.yaml
+  - applications/tactical-heroes.yaml
+  - applications/tactical-heroes-kargo.yaml
   - platform/namespaces.yaml
   - platform/coredns.yaml
   - platform/envoy-gateway-config.yaml

@@ -133,3 +133,29 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-tactical-heroes-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: api-tactical-heroes-panixida-ru-tls
+  dnsNames:
+    - api.tactical-heroes.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-dev-tactical-heroes-panixida-ru
+  namespace: envoy-gateway-system
+spec:
+  secretName: api-dev-tactical-heroes-panixida-ru-tls
+  dnsNames:
+    - dev.api.tactical-heroes.panixida.ru
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer

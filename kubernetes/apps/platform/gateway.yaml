@@ -124,3 +124,25 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: api-tactical-heroes-https
+      protocol: HTTPS
+      port: 443
+      hostname: "api.tactical-heroes.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-tactical-heroes-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: api-dev-tactical-heroes-https
+      protocol: HTTPS
+      port: 443
+      hostname: "dev.api.tactical-heroes.panixida.ru"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-dev-tactical-heroes-panixida-ru-tls
+      allowedRoutes:
+        namespaces:
+          from: All

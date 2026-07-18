@@ -1,0 +1,217 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tactical-heroes
+  labels:
+    kargo.akuity.io/project: "true"
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: tactical-heroes
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: tactical-heroes
+  namespace: tactical-heroes
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  promotionPolicies:
+    - stageSelector:
+        name: development
+      autoPromotionEnabled: true
+    - stageSelector:
+        name: production
+      autoPromotionEnabled: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: update-helm-images
+  namespace: tactical-heroes
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  vars:
+    - name: gitRepo
+    - name: targetBranch
+    - name: valuesFile
+    - name: argocdApp
+    - name: apiImageRepo
+    - name: migratorImageRepo
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+    - uses: yaml-update
+      as: update-api-image
+      config:
+        path: ./repo/${{ vars.valuesFile }}
+        updates:
+          - key: image.tag
+            value: ${{ imageFrom(vars.apiImageRepo).Tag }}
+    - uses: yaml-update
+      as: update-migrator-image
+      config:
+        path: ./repo/${{ vars.valuesFile }}
+        updates:
+          - key: migrations.image.tag
+            value: ${{ imageFrom(vars.migratorImageRepo).Tag }}
+    - uses: git-commit
+      as: commit
+      config:
+        path: ./repo
+        message: "chore: promote ${{ ctx.stage }} images"
+    - uses: git-push
+      config:
+        path: ./repo
+    - uses: argocd-update
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tactical-heroes-development
+  namespace: tactical-heroes
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  interval: 2m0s
+  freightCreationPolicy: Automatic
+  freightCreationCriteria:
+    expression: |
+      imageFrom("ghcr.io/panixida/tactical-heroes/api") != nil &&
+      imageFrom("ghcr.io/panixida/tactical-heroes/ef-migrator") != nil &&
+      imageFrom("ghcr.io/panixida/tactical-heroes/api").Tag == imageFrom("ghcr.io/panixida/tactical-heroes/ef-migrator").Tag
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/panixida/tactical-heroes/api
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^development-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/panixida/tactical-heroes/ef-migrator
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^development-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: tactical-heroes-production
+  namespace: tactical-heroes
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  interval: 2m0s
+  freightCreationPolicy: Automatic
+  freightCreationCriteria:
+    expression: |
+      imageFrom("ghcr.io/panixida/tactical-heroes/api") != nil &&
+      imageFrom("ghcr.io/panixida/tactical-heroes/ef-migrator") != nil &&
+      imageFrom("ghcr.io/panixida/tactical-heroes/api").Tag == imageFrom("ghcr.io/panixida/tactical-heroes/ef-migrator").Tag
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/panixida/tactical-heroes/api
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^production-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/panixida/tactical-heroes/ef-migrator
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^production-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: development
+  namespace: tactical-heroes
+  labels:
+    environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: tactical-heroes-development
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-helm-images
+          vars:
+            - name: gitRepo
+              value: https://github.com/tactical-heroes/api.git
+            - name: targetBranch
+              value: development
+            - name: valuesFile
+              value: deploy/helm/tactical-heroes-api/images-development.yaml
+            - name: argocdApp
+              value: tactical-heroes-development
+            - name: apiImageRepo
+              value: ghcr.io/panixida/tactical-heroes/api
+            - name: migratorImageRepo
+              value: ghcr.io/panixida/tactical-heroes/ef-migrator
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: production
+  namespace: tactical-heroes
+  labels:
+    environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: tactical-heroes-production
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-helm-images
+          vars:
+            - name: gitRepo
+              value: https://github.com/tactical-heroes/api.git
+            - name: targetBranch
+              value: main
+            - name: valuesFile
+              value: deploy/helm/tactical-heroes-api/images-production.yaml
+            - name: argocdApp
+              value: tactical-heroes-production
+            - name: apiImageRepo
+              value: ghcr.io/panixida/tactical-heroes/api
+            - name: migratorImageRepo
+              value: ghcr.io/panixida/tactical-heroes/ef-migrator

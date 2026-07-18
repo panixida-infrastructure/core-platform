@@ -4835,7 +4835,7 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (service_name, http_url) (label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "expr": "max by (service_name, http_url) (label_replace(label_replace(label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.](dotnet-template|tactical-heroes)[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-development\", \"http_url\", \"https://dev[.]api[.]tactical-heroes[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-production\", \"http_url\", \"https://api[.]tactical-heroes[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}}",
               "refId": "A"
             }

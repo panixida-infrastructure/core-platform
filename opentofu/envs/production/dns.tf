@@ -64,3 +64,17 @@ resource "twc_dns_rr" "dotnet_template_api_dev" {
   type    = "A"
   value   = var.kubernetes_gateway_public_ipv4
 }
+
+resource "twc_dns_rr" "tactical_heroes_api" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "api.tactical-heroes"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}
+
+resource "twc_dns_rr" "tactical_heroes_api_dev" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "dev.api.tactical-heroes"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}

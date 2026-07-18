@@ -211,6 +211,13 @@ metadata:
   name: dotnet-template
   labels:
     kargo.akuity.io/project: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tactical-heroes
+  labels:
+    kargo.akuity.io/project: "true"
 EOF
 
 openbao_token="$(openbao_login)"
@@ -222,6 +229,7 @@ observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
+tactical_heroes_registry_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/registry)"
 
 apply_argocd_repository_secret \
   core-platform-repo \
@@ -233,9 +241,16 @@ apply_argocd_repository_secret \
   https://github.com/panixida-templates/dotnet-backend-template.git \
   "$github_secret"
 
+apply_argocd_repository_secret \
+  tactical-heroes-api-repo \
+  https://github.com/tactical-heroes/api.git \
+  "$github_secret"
+
 server_gh_pat="$(jq -r '.SERVER_GH_PAT // empty' <<<"$github_secret")"
 registry_user="$(jq -r '.REGISTRY_USER // empty' <<<"$dotnet_template_registry_secret")"
 registry_token="$(jq -r '.REGISTRY_TOKEN // empty' <<<"$dotnet_template_registry_secret")"
+tactical_heroes_registry_user="$(jq -r '.REGISTRY_USER // empty' <<<"$tactical_heroes_registry_secret")"
+tactical_heroes_registry_token="$(jq -r '.REGISTRY_TOKEN // empty' <<<"$tactical_heroes_registry_secret")"
 
 if [ -z "$server_gh_pat" ]; then
   echo "::error::missing required secret key SERVER_GH_PAT"
@@ -244,6 +259,11 @@ fi
 
 if [ -z "$registry_user" ] || [ -z "$registry_token" ]; then
   echo "::error::missing required dotnet-template registry credentials"
+  exit 1
+fi
+
+if [ -z "$tactical_heroes_registry_user" ] || [ -z "$tactical_heroes_registry_token" ]; then
+  echo "::error::missing required tactical-heroes registry credentials"
   exit 1
 fi
 
@@ -270,6 +290,30 @@ apply_kargo_repository_secret \
   ghcr.io/panixida-templates/dotnet-backend-template/ef-migrator \
   "$registry_user" \
   "$registry_token"
+
+apply_kargo_repository_secret \
+  tactical-heroes \
+  tactical-heroes-git \
+  git \
+  https://github.com/tactical-heroes/api.git \
+  x-access-token \
+  "$server_gh_pat"
+
+apply_kargo_repository_secret \
+  tactical-heroes \
+  tactical-heroes-api-image \
+  image \
+  ghcr.io/panixida/tactical-heroes/api \
+  "$tactical_heroes_registry_user" \
+  "$tactical_heroes_registry_token"
+
+apply_kargo_repository_secret \
+  tactical-heroes \
+  tactical-heroes-migrator-image \
+  image \
+  ghcr.io/panixida/tactical-heroes/ef-migrator \
+  "$tactical_heroes_registry_user" \
+  "$tactical_heroes_registry_token"
 
 apply_secret identity keycloak-secrets "$identity_secret" \
   KEYCLOAK_DB_HOST \

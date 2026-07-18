@@ -17,6 +17,8 @@ Application endpoints:
 ```text
 api.dotnet-template.panixida.ru       dotnet-template production API, DNS/Gateway prepared
 dev.api.dotnet-template.panixida.ru   dotnet-template development API
+api.tactical-heroes.panixida.ru       Tactical Heroes production API
+dev.api.tactical-heroes.panixida.ru   Tactical Heroes development API
 ```
 
 Retired platform endpoints:

@@ -43,6 +43,8 @@ output "timeweb_inventory" {
       sonar                   = "sonar.panixida.ru"
       dotnet_template_api     = "api.dotnet-template.panixida.ru"
       dotnet_template_api_dev = "dev.api.dotnet-template.panixida.ru"
+      tactical_heroes_api     = "api.tactical-heroes.panixida.ru"
+      tactical_heroes_api_dev = "dev.api.tactical-heroes.panixida.ru"
     }
   }
 }

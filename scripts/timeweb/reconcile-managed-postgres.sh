@@ -438,8 +438,14 @@ dotnet_template_dev_user="$(jq -r '.DOTNET_TEMPLATE_DEV_DB_USERNAME // "dotnette
 dotnet_template_dev_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_DEV_DB_PASSWORD // empty' <<<"$applications_secret")")"
 dotnet_template_prod_user="$(jq -r '.DOTNET_TEMPLATE_PROD_DB_USERNAME // "dotnet_template_user_prod"' <<<"$applications_secret")"
 dotnet_template_prod_password="$(secret_or_generate "$(jq -r '.DOTNET_TEMPLATE_PROD_DB_PASSWORD // empty' <<<"$applications_secret")")"
+tactical_heroes_dev_user="$(jq -r '.TACTICAL_HEROES_DEV_DB_USERNAME // "tacticalheroesdev"' <<<"$applications_secret")"
+tactical_heroes_dev_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_DEV_DB_PASSWORD // empty' <<<"$applications_secret")")"
+tactical_heroes_prod_user="$(jq -r '.TACTICAL_HEROES_PROD_DB_USERNAME // "tacticalheroesprod"' <<<"$applications_secret")"
+tactical_heroes_prod_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_DB_PASSWORD // empty' <<<"$applications_secret")")"
+tactical_heroes_dev_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_DEV_CLIENT_SECRET // empty' <<<"$applications_secret")")"
+tactical_heroes_prod_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_CLIENT_SECRET // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password tactical_heroes_dev_user tactical_heroes_dev_password tactical_heroes_prod_user tactical_heroes_prod_password tactical_heroes_dev_client_secret tactical_heroes_prod_client_secret; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -493,6 +499,12 @@ target_privileges[dotnet_template_dev]="$common_privileges"
 target_users[dotnet_template_prod]="$dotnet_template_prod_user"
 target_passwords[dotnet_template_prod]="$dotnet_template_prod_password"
 target_privileges[dotnet_template_prod]="$common_privileges"
+target_users[tactical_heroes_dev]="$tactical_heroes_dev_user"
+target_passwords[tactical_heroes_dev]="$tactical_heroes_dev_password"
+target_privileges[tactical_heroes_dev]="$common_privileges"
+target_users[tactical_heroes_prod]="$tactical_heroes_prod_user"
+target_passwords[tactical_heroes_prod]="$tactical_heroes_prod_password"
+target_privileges[tactical_heroes_prod]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
   legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
@@ -606,6 +618,12 @@ applications_secret="$(jq \
   --arg dev_password "$dotnet_template_dev_password" \
   --arg prod_user "$dotnet_template_prod_user" \
   --arg prod_password "$dotnet_template_prod_password" \
+  --arg tactical_dev_user "$tactical_heroes_dev_user" \
+  --arg tactical_dev_password "$tactical_heroes_dev_password" \
+  --arg tactical_prod_user "$tactical_heroes_prod_user" \
+  --arg tactical_prod_password "$tactical_heroes_prod_password" \
+  --arg tactical_dev_client_secret "$tactical_heroes_dev_client_secret" \
+  --arg tactical_prod_client_secret "$tactical_heroes_prod_client_secret" \
   '. + {
     DOTNET_TEMPLATE_DB_HOST: $host,
     DOTNET_TEMPLATE_DB_PORT: $port,
@@ -617,7 +635,15 @@ applications_secret="$(jq \
     DOTNET_TEMPLATE_DEV_DB_PASSWORD: $dev_password,
     DOTNET_TEMPLATE_PROD_DB_NAME: "dotnet_template_prod",
     DOTNET_TEMPLATE_PROD_DB_USERNAME: $prod_user,
-    DOTNET_TEMPLATE_PROD_DB_PASSWORD: $prod_password
+    DOTNET_TEMPLATE_PROD_DB_PASSWORD: $prod_password,
+    TACTICAL_HEROES_DEV_DB_NAME: "tactical_heroes_dev",
+    TACTICAL_HEROES_DEV_DB_USERNAME: $tactical_dev_user,
+    TACTICAL_HEROES_DEV_DB_PASSWORD: $tactical_dev_password,
+    TACTICAL_HEROES_PROD_DB_NAME: "tactical_heroes_prod",
+    TACTICAL_HEROES_PROD_DB_USERNAME: $tactical_prod_user,
+    TACTICAL_HEROES_PROD_DB_PASSWORD: $tactical_prod_password,
+    TACTICAL_HEROES_DEV_CLIENT_SECRET: $tactical_dev_client_secret,
+    TACTICAL_HEROES_PROD_CLIENT_SECRET: $tactical_prod_client_secret
   }' \
   <<<"$applications_secret")"
 dotnet_template_dev_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template_dev;Username=${dotnet_template_dev_user};Password=${dotnet_template_dev_password};SSL Mode=Require;Trust Server Certificate=true"
@@ -628,6 +654,16 @@ dotnet_template_dev_app_secret="$(jq -n \
 dotnet_template_prod_app_secret="$(jq -n \
   --arg connection_string "$dotnet_template_prod_connection_string" \
   '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
+tactical_heroes_dev_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_dev;Username=${tactical_heroes_dev_user};Password=${tactical_heroes_dev_password};SSL Mode=Require;Trust Server Certificate=true"
+tactical_heroes_prod_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_prod;Username=${tactical_heroes_prod_user};Password=${tactical_heroes_prod_password};SSL Mode=Require;Trust Server Certificate=true"
+tactical_heroes_dev_app_secret="$(jq -n \
+  --arg connection_string "$tactical_heroes_dev_connection_string" \
+  --arg client_secret "$tactical_heroes_dev_client_secret" \
+  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string, Identity__Provider__Clients__1__ClientSecret: $client_secret}')"
+tactical_heroes_prod_app_secret="$(jq -n \
+  --arg connection_string "$tactical_heroes_prod_connection_string" \
+  --arg client_secret "$tactical_heroes_prod_client_secret" \
+  '{ConnectionStrings__PostgreSqlConnectionString: $connection_string, Identity__Provider__Clients__1__ClientSecret: $client_secret}')"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"
 bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
@@ -636,6 +672,8 @@ bao_write "$openbao_token" core-platform/openbao "$openbao_secret"
 bao_write "$openbao_token" core-platform/applications "$applications_secret"
 bao_write "$openbao_token" applications/dotnet-template/development "$dotnet_template_dev_app_secret"
 bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_template_prod_app_secret"
+bao_write "$openbao_token" applications/tactical-heroes-api/development "$tactical_heroes_dev_app_secret"
+bao_write "$openbao_token" applications/tactical-heroes-api/production "$tactical_heroes_prod_app_secret"
 
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"

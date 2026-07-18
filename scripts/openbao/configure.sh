@@ -7,6 +7,8 @@ github_audience="${OPENBAO_GITHUB_AUDIENCE:-https://github.com/panixida-infrastr
 github_repository="${OPENBAO_GITHUB_REPOSITORY:-panixida-infrastructure/core-platform}"
 dotnet_template_github_audience="${OPENBAO_DOTNET_TEMPLATE_GITHUB_AUDIENCE:-https://github.com/panixida-templates/dotnet-backend-template}"
 dotnet_template_github_repository="${OPENBAO_DOTNET_TEMPLATE_GITHUB_REPOSITORY:-panixida-templates/dotnet-backend-template}"
+tactical_heroes_github_audience="${OPENBAO_TACTICAL_HEROES_GITHUB_AUDIENCE:-https://github.com/tactical-heroes/api}"
+tactical_heroes_github_repository="${OPENBAO_TACTICAL_HEROES_GITHUB_REPOSITORY:-tactical-heroes/api}"
 kubernetes_auth_path="${OPENBAO_KUBERNETES_AUTH_PATH:-kubernetes}"
 
 if [ -z "${OPENBAO_OIDC_CLIENT_SECRET:-}" ]; then
@@ -65,6 +67,14 @@ path "secret/metadata/applications/dotnet-template/*" {
   capabilities = ["read", "list"]
 }
 
+path "secret/data/applications/tactical-heroes-api/*" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/metadata/applications/tactical-heroes-api/*" {
+  capabilities = ["read", "list"]
+}
+
 path "sys/mounts" {
   capabilities = ["read", "list"]
 }
@@ -120,6 +130,14 @@ path "sys/policies/acl/dotnet-template-app" {
 path "sys/policies/acl/dotnet-template-github-actions" {
   capabilities = ["create", "read", "update"]
 }
+
+path "sys/policies/acl/tactical-heroes-api-app" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "sys/policies/acl/tactical-heroes-api-github-actions" {
+  capabilities = ["create", "read", "update"]
+}
 EOF
 
 bao policy write dotnet-template-app - <<'EOF'
@@ -138,6 +156,26 @@ path "secret/data/applications/dotnet-template/registry" {
 }
 
 path "secret/metadata/applications/dotnet-template/registry" {
+  capabilities = ["read", "list"]
+}
+EOF
+
+bao policy write tactical-heroes-api-app - <<'EOF'
+path "secret/data/applications/tactical-heroes-api/*" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/applications/tactical-heroes-api/*" {
+  capabilities = ["read", "list"]
+}
+EOF
+
+bao policy write tactical-heroes-api-github-actions - <<'EOF'
+path "secret/data/applications/tactical-heroes-api/registry" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/metadata/applications/tactical-heroes-api/registry" {
   capabilities = ["read", "list"]
 }
 EOF
@@ -213,6 +251,22 @@ EOF
 bao write auth/jwt/role/dotnet-template-github-actions @/tmp/dotnet-template-github-actions-role.json
 rm -f /tmp/dotnet-template-github-actions-role.json
 
+cat >/tmp/tactical-heroes-api-github-actions-role.json <<EOF
+{
+  "role_type": "jwt",
+  "user_claim": "repository",
+  "bound_audiences": ["${tactical_heroes_github_audience}"],
+  "bound_claims": {
+    "repository": "${tactical_heroes_github_repository}"
+  },
+  "policies": ["tactical-heroes-api-github-actions"],
+  "ttl": "15m"
+}
+EOF
+
+bao write auth/jwt/role/tactical-heroes-api-github-actions @/tmp/tactical-heroes-api-github-actions-role.json
+rm -f /tmp/tactical-heroes-api-github-actions-role.json
+
 if ! bao auth list -format=json | grep -q "\"${kubernetes_auth_path}/\""; then
   bao auth enable -path="$kubernetes_auth_path" kubernetes
 fi
@@ -230,4 +284,16 @@ bao write "auth/${kubernetes_auth_path}/role/dotnet-template-production" \
   bound_service_account_names=dotnet-template-external-secrets \
   bound_service_account_namespaces=dotnet-template-production \
   policies=dotnet-template-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/tactical-heroes-api-development" \
+  bound_service_account_names=tactical-heroes-api-external-secrets \
+  bound_service_account_namespaces=tactical-heroes-development \
+  policies=tactical-heroes-api-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/tactical-heroes-api-production" \
+  bound_service_account_names=tactical-heroes-api-external-secrets \
+  bound_service_account_namespaces=tactical-heroes-production \
+  policies=tactical-heroes-api-app \
   ttl=1h
