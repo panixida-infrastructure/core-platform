@@ -136,8 +136,10 @@ generate_password() {
 }
 
 require_env TIMEWEB_TOKEN
+echo "Authenticating to OpenBao"
 openbao_token="$(openbao_login)"
 
+echo "Reading Tactical Heroes configuration from OpenBao"
 applications_secret="$(bao_read_optional "$openbao_token" core-platform/applications)"
 development_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/development)"
 production_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/production)"
@@ -164,6 +166,7 @@ mailbox_payload="$(jq -nc \
     filter_action: "directory"
   }')"
 
+echo "Inspecting mailbox ${mail_address}"
 if mailbox_exists; then
   echo "Reconciling existing mailbox ${mail_address}"
   twc PATCH "/api/v2/mail/domains/${mail_domain}/mailboxes/${mailbox}" \
