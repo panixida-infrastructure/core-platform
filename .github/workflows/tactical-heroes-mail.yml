@@ -1,0 +1,35 @@
+name: Tactical Heroes Mail
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type reconcile-tactical-heroes-mail to create or update the paid mailbox
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: tactical-heroes-mail
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "reconcile-tactical-heroes-mail" ]; then
+            echo "::error::Confirmation must be exactly reconcile-tactical-heroes-mail"
+            exit 1
+          fi
+
+      - name: Reconcile mailbox and OpenBao configuration
+        env:
+          TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
+        run: bash scripts/timeweb/reconcile-tactical-heroes-mail.sh

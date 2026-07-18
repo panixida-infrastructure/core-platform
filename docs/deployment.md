@@ -53,6 +53,8 @@ secret/core-platform/openbao
 secret/core-platform/applications
 ```
 
+The manual `Tactical Heroes Mail` workflow reconciles the single paid `tactical-heroes@panixida.ru` mailbox through the Timeweb API. It preserves the mailbox password in `secret/core-platform/applications` and merges SMTP settings into both Tactical Heroes application paths in OpenBao. The current Timeweb provider has no mail resource, and keeping this operation outside OpenTofu also prevents the mailbox password from entering its state.
+
 ## Managed Kubernetes
 
 OpenTofu creates the Timeweb Managed Kubernetes cluster and one infrastructure worker node group. Workers currently use public IPv4 for reliable registry and Timeweb API egress; public application traffic still enters through the Envoy Gateway LoadBalancer. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.

@@ -110,7 +110,25 @@ DOTNET_TEMPLATE_DB_PORT
 DOTNET_TEMPLATE_DB_NAME
 DOTNET_TEMPLATE_DB_USERNAME
 DOTNET_TEMPLATE_DB_PASSWORD
+TACTICAL_HEROES_DEV_DB_NAME
+TACTICAL_HEROES_DEV_DB_USERNAME
+TACTICAL_HEROES_DEV_DB_PASSWORD
+TACTICAL_HEROES_PROD_DB_NAME
+TACTICAL_HEROES_PROD_DB_USERNAME
+TACTICAL_HEROES_PROD_DB_PASSWORD
+TACTICAL_HEROES_DEV_CLIENT_SECRET
+TACTICAL_HEROES_PROD_CLIENT_SECRET
+TACTICAL_HEROES_SMTP_PASSWORD
 ```
+
+`Tactical Heroes Mail` creates or updates the Timeweb mailbox and writes the complete SMTP overlay to both application paths:
+
+```text
+secret/applications/tactical-heroes-api/development
+secret/applications/tactical-heroes-api/production
+```
+
+External Secrets Operator extracts each complete path into the environment secret, so individual keys do not need to be listed in the application manifest.
 
 ## SSO
 

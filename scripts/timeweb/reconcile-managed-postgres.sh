@@ -444,8 +444,9 @@ tactical_heroes_prod_user="$(jq -r '.TACTICAL_HEROES_PROD_DB_USERNAME // "tactic
 tactical_heroes_prod_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_DB_PASSWORD // empty' <<<"$applications_secret")")"
 tactical_heroes_dev_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_DEV_CLIENT_SECRET // empty' <<<"$applications_secret")")"
 tactical_heroes_prod_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_CLIENT_SECRET // empty' <<<"$applications_secret")")"
+tactical_heroes_smtp_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_SMTP_PASSWORD // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password tactical_heroes_dev_user tactical_heroes_dev_password tactical_heroes_prod_user tactical_heroes_prod_password tactical_heroes_dev_client_secret tactical_heroes_prod_client_secret; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password tactical_heroes_dev_user tactical_heroes_dev_password tactical_heroes_prod_user tactical_heroes_prod_password tactical_heroes_dev_client_secret tactical_heroes_prod_client_secret tactical_heroes_smtp_password; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -624,6 +625,7 @@ applications_secret="$(jq \
   --arg tactical_prod_password "$tactical_heroes_prod_password" \
   --arg tactical_dev_client_secret "$tactical_heroes_dev_client_secret" \
   --arg tactical_prod_client_secret "$tactical_heroes_prod_client_secret" \
+  --arg tactical_smtp_password "$tactical_heroes_smtp_password" \
   '. + {
     DOTNET_TEMPLATE_DB_HOST: $host,
     DOTNET_TEMPLATE_DB_PORT: $port,
@@ -643,7 +645,8 @@ applications_secret="$(jq \
     TACTICAL_HEROES_PROD_DB_USERNAME: $tactical_prod_user,
     TACTICAL_HEROES_PROD_DB_PASSWORD: $tactical_prod_password,
     TACTICAL_HEROES_DEV_CLIENT_SECRET: $tactical_dev_client_secret,
-    TACTICAL_HEROES_PROD_CLIENT_SECRET: $tactical_prod_client_secret
+    TACTICAL_HEROES_PROD_CLIENT_SECRET: $tactical_prod_client_secret,
+    TACTICAL_HEROES_SMTP_PASSWORD: $tactical_smtp_password
   }' \
   <<<"$applications_secret")"
 dotnet_template_dev_connection_string="Host=${target_host};Port=${target_port};Database=dotnet_template_dev;Username=${dotnet_template_dev_user};Password=${dotnet_template_dev_password};SSL Mode=Require;Trust Server Certificate=true"
@@ -710,31 +713,42 @@ tactical_heroes_common_app_config="$(jq -n '{
   "Identity__Cleanup__UnconfirmedUsersCronSchedule": "0 0 * * * ?",
   "Identity__Messaging__EmailConfirmationUrlTemplate": "/api/v1/auth/confirm-email?userId={userId}&emailConfirmationToken={token}",
   "Identity__Messaging__PasswordResetUrlTemplate": "/api/v1/auth/reset-password?userId={userId}&passwordResetToken={token}",
-  "OAuthSpa__LoginUrl": "https://localhost:5173/login"
+  "OAuthSpa__LoginUrl": "https://localhost:5173/login",
+  "Notifications__Email__Smtp__Host": "smtp.timeweb.ru",
+  "Notifications__Email__Smtp__Port": "587",
+  "Notifications__Email__Smtp__SocketOptions": "StartTls",
+  "Notifications__Email__Smtp__Username": "tactical-heroes@panixida.ru",
+  "Notifications__Email__Smtp__SenderEmail": "tactical-heroes@panixida.ru"
 }')"
 tactical_heroes_dev_app_secret="$(jq -n \
   --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_dev_connection_string" \
   --arg client_secret "$tactical_heroes_dev_client_secret" \
+  --arg smtp_password "$tactical_heroes_smtp_password" \
   '$common + {
     ASPNETCORE_ENVIRONMENT: "Development",
     DOTNET_ENVIRONMENT: "Development",
     OTEL_SERVICE_NAME: "tactical-heroes-api-development",
     Identity__Provider__Issuer: "https://dev.api.tactical-heroes.panixida.ru/",
     ConnectionStrings__PostgreSqlConnectionString: $connection_string,
-    Identity__Provider__Clients__1__ClientSecret: $client_secret
+    Identity__Provider__Clients__1__ClientSecret: $client_secret,
+    Notifications__Email__Smtp__Password: $smtp_password,
+    Notifications__Email__Smtp__SenderName: "Tactical Heroes Dev"
   }')"
 tactical_heroes_prod_app_secret="$(jq -n \
   --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_prod_connection_string" \
   --arg client_secret "$tactical_heroes_prod_client_secret" \
+  --arg smtp_password "$tactical_heroes_smtp_password" \
   '$common + {
     ASPNETCORE_ENVIRONMENT: "Production",
     DOTNET_ENVIRONMENT: "Production",
     OTEL_SERVICE_NAME: "tactical-heroes-api-production",
     Identity__Provider__Issuer: "https://api.tactical-heroes.panixida.ru/",
     ConnectionStrings__PostgreSqlConnectionString: $connection_string,
-    Identity__Provider__Clients__1__ClientSecret: $client_secret
+    Identity__Provider__Clients__1__ClientSecret: $client_secret,
+    Notifications__Email__Smtp__Password: $smtp_password,
+    Notifications__Email__Smtp__SenderName: "Tactical Heroes"
   }')"
 
 bao_write "$openbao_token" core-platform/identity "$identity_secret"

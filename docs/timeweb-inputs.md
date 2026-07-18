@@ -44,7 +44,8 @@ Do not add database passwords or server root passwords to GitHub unless a workfl
 
 These resources were discovered but are not yet managed as OpenTofu resources:
 
-- Domains and mailboxes: provider resources are not currently modeled in this repository.
+- Domains: provider resources are not currently modeled in this repository.
+- Mailboxes: the provider does not expose a mail resource. The manual `Tactical Heroes Mail` workflow reconciles the paid `tactical-heroes@panixida.ru` mailbox through the Timeweb API and stores its password in OpenBao so it never enters OpenTofu state.
 - Database users: service users are reconciled by the `Managed PostgreSQL` workflow because passwords must stay in OpenBao, not OpenTofu state.
 - The S3 state bucket as a resource: it is used by the backend and referenced as a data source first.
 - Server system disks as separate `twc_server_disk` resources: the provider resource is documented for additional disks, while system disks are already visible as read-only server attributes.
