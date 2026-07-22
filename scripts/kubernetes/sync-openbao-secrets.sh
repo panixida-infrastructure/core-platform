@@ -4,6 +4,12 @@ set -euo pipefail
 openbao_addr="${OPENBAO_ADDR:-https://secrets.panixida.ru}"
 openbao_role="${OPENBAO_ROLE:-core-platform-github-actions}"
 openbao_audience="${OPENBAO_AUDIENCE:-https://github.com/panixida-infrastructure/core-platform}"
+rotate_observability_password="${ROTATE_OBSERVABILITY_PASSWORD:-false}"
+
+if [ "$rotate_observability_password" != "true" ] && [ "$rotate_observability_password" != "false" ]; then
+  echo "::error::ROTATE_OBSERVABILITY_PASSWORD must be true or false"
+  exit 1
+fi
 
 require_env() {
   local name="$1"
@@ -248,6 +254,15 @@ github_secret="$(bao_read "$openbao_token" core-platform/github)"
 identity_secret="$(bao_read "$openbao_token" core-platform/identity)"
 openbao_secret="$(bao_read "$openbao_token" core-platform/openbao)"
 observability_secret="$(bao_read "$openbao_token" core-platform/observability)"
+
+if [ "$rotate_observability_password" = "true" ]; then
+  observability_password="$(openssl rand -base64 32 | tr -d '\n')"
+  observability_secret="$(jq --arg password "$observability_password" '.OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD = $password' <<<"$observability_secret")"
+  bao_write "$openbao_token" core-platform/observability "$observability_secret"
+  unset observability_password
+  echo "Rotated the observability basic-auth password in OpenBao"
+fi
+
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
