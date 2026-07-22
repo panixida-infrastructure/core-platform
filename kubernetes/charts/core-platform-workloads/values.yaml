@@ -108,6 +108,8 @@ observability:
     - https://api.dotnet-template.panixida.ru/health
     - https://dev.api.tactical-heroes.panixida.ru/health
     - https://api.tactical-heroes.panixida.ru/health
+    - https://dev.tactical-heroes.panixida.ru/health
+    - https://tactical-heroes.panixida.ru/health
   alerts:
     telegram:
       chatId: "-1003738995665"

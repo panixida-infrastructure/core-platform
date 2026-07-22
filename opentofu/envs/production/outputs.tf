@@ -34,17 +34,19 @@ output "timeweb_inventory" {
     tofu_state_bucket_id = data.twc_s3_bucket.tofu_state.id
 
     dns_records = {
-      identity                = "identity.panixida.ru"
-      secrets                 = "secrets.panixida.ru"
-      grafana                 = "grafana.panixida.ru"
-      argocd                  = "argocd.panixida.ru"
-      k8s                     = "k8s.panixida.ru"
-      kargo                   = "kargo.panixida.ru"
-      sonar                   = "sonar.panixida.ru"
-      dotnet_template_api     = "api.dotnet-template.panixida.ru"
-      dotnet_template_api_dev = "dev.api.dotnet-template.panixida.ru"
-      tactical_heroes_api     = "api.tactical-heroes.panixida.ru"
-      tactical_heroes_api_dev = "dev.api.tactical-heroes.panixida.ru"
+      identity                  = "identity.panixida.ru"
+      secrets                   = "secrets.panixida.ru"
+      grafana                   = "grafana.panixida.ru"
+      argocd                    = "argocd.panixida.ru"
+      k8s                       = "k8s.panixida.ru"
+      kargo                     = "kargo.panixida.ru"
+      sonar                     = "sonar.panixida.ru"
+      dotnet_template_api       = "api.dotnet-template.panixida.ru"
+      dotnet_template_api_dev   = "dev.api.dotnet-template.panixida.ru"
+      tactical_heroes_api       = "api.tactical-heroes.panixida.ru"
+      tactical_heroes_api_dev   = "dev.api.tactical-heroes.panixida.ru"
+      tactical_heroes_admin     = "tactical-heroes.panixida.ru"
+      tactical_heroes_admin_dev = "dev.tactical-heroes.panixida.ru"
     }
   }
 }

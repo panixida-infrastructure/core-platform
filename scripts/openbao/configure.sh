@@ -75,6 +75,14 @@ path "secret/metadata/applications/tactical-heroes-api/*" {
   capabilities = ["read", "list"]
 }
 
+path "secret/data/applications/tactical-heroes-admin/*" {
+  capabilities = ["create", "read", "update"]
+}
+
+path "secret/metadata/applications/tactical-heroes-admin/*" {
+  capabilities = ["read", "list"]
+}
+
 path "sys/mounts" {
   capabilities = ["read", "list"]
 }
@@ -135,6 +143,10 @@ path "sys/policies/acl/tactical-heroes-api-app" {
   capabilities = ["create", "read", "update"]
 }
 
+path "sys/policies/acl/tactical-heroes-admin-app" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "sys/policies/acl/tactical-heroes-api-github-actions" {
   capabilities = ["create", "read", "update"]
 }
@@ -166,6 +178,16 @@ path "secret/data/applications/tactical-heroes-api/*" {
 }
 
 path "secret/metadata/applications/tactical-heroes-api/*" {
+  capabilities = ["read", "list"]
+}
+EOF
+
+bao policy write tactical-heroes-admin-app - <<'EOF'
+path "secret/data/applications/tactical-heroes-admin/*" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/applications/tactical-heroes-admin/*" {
   capabilities = ["read", "list"]
 }
 EOF
@@ -296,4 +318,16 @@ bao write "auth/${kubernetes_auth_path}/role/tactical-heroes-api-production" \
   bound_service_account_names=tactical-heroes-api-external-secrets \
   bound_service_account_namespaces=tactical-heroes-production \
   policies=tactical-heroes-api-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/tactical-heroes-admin-development" \
+  bound_service_account_names=tactical-heroes-admin-external-secrets \
+  bound_service_account_namespaces=tactical-heroes-admin-development \
+  policies=tactical-heroes-admin-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/tactical-heroes-admin-production" \
+  bound_service_account_names=tactical-heroes-admin-external-secrets \
+  bound_service_account_namespaces=tactical-heroes-admin-production \
+  policies=tactical-heroes-admin-app \
   ttl=1h

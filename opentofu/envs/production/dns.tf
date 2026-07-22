@@ -78,3 +78,17 @@ resource "twc_dns_rr" "tactical_heroes_api_dev" {
   type    = "A"
   value   = var.kubernetes_gateway_public_ipv4
 }
+
+resource "twc_dns_rr" "tactical_heroes_admin" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "tactical-heroes"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}
+
+resource "twc_dns_rr" "tactical_heroes_admin_dev" {
+  zone_id = data.twc_dns_zone.panixida_ru.id
+  name    = "dev.tactical-heroes"
+  type    = "A"
+  value   = var.kubernetes_gateway_public_ipv4
+}

@@ -19,6 +19,8 @@ api.dotnet-template.panixida.ru       dotnet-template production API, DNS/Gatewa
 dev.api.dotnet-template.panixida.ru   dotnet-template development API
 api.tactical-heroes.panixida.ru       Tactical Heroes production API
 dev.api.tactical-heroes.panixida.ru   Tactical Heroes development API
+tactical-heroes.panixida.ru           Tactical Heroes production admin
+dev.tactical-heroes.panixida.ru       Tactical Heroes development admin
 ```
 
 Retired platform endpoints:

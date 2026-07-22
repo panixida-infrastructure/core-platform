@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tactical-heroes-admin-development
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: tactical-heroes-admin
+    app.kubernetes.io/part-of: tactical-heroes
+    environment: development
+  annotations:
+    kargo.akuity.io/authorized-stage: tactical-heroes-admin:development
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/panixida-infrastructure/ci-cd.git
+      targetRevision: main
+      path: charts/application
+      helm:
+        releaseName: tactical-heroes-admin-development
+        valueFiles:
+          - $values/deploy/helm/tactical-heroes-admin/values.yaml
+          - $values/deploy/helm/tactical-heroes-admin/values-development.yaml
+          - $values/deploy/helm/tactical-heroes-admin/images-development.yaml
+    - repoURL: https://github.com/tactical-heroes/admin.git
+      targetRevision: development
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tactical-heroes-admin-development
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tactical-heroes-admin-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: tactical-heroes-admin
+    app.kubernetes.io/part-of: tactical-heroes
+    environment: production
+  annotations:
+    kargo.akuity.io/authorized-stage: tactical-heroes-admin:production
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/panixida-infrastructure/ci-cd.git
+      targetRevision: main
+      path: charts/application
+      helm:
+        releaseName: tactical-heroes-admin-production
+        valueFiles:
+          - $values/deploy/helm/tactical-heroes-admin/values.yaml
+          - $values/deploy/helm/tactical-heroes-admin/values-production.yaml
+          - $values/deploy/helm/tactical-heroes-admin/images-production.yaml
+    - repoURL: https://github.com/tactical-heroes/admin.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tactical-heroes-admin-production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

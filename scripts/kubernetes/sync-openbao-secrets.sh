@@ -48,6 +48,21 @@ bao_read() {
     "${openbao_addr}/v1/secret/data/${path}" | jq '.data.data // {}'
 }
 
+bao_write() {
+  local token="$1"
+  local path="$2"
+  local data="$3"
+  local payload
+
+  payload="$(jq -nc --argjson data "$data" '{data: $data}')"
+  curl -fsS \
+    -X POST \
+    -H "X-Vault-Token: ${token}" \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    "${openbao_addr}/v1/secret/data/${path}" >/dev/null
+}
+
 apply_secret() {
   local namespace="$1"
   local name="$2"
@@ -218,6 +233,13 @@ metadata:
   name: tactical-heroes
   labels:
     kargo.akuity.io/project: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tactical-heroes-admin
+  labels:
+    kargo.akuity.io/project: "true"
 EOF
 
 openbao_token="$(openbao_login)"
@@ -230,6 +252,7 @@ sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
 tactical_heroes_registry_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/registry)"
+bao_write "$openbao_token" applications/tactical-heroes-admin/registry "$tactical_heroes_registry_secret"
 
 apply_argocd_repository_secret \
   core-platform-repo \
@@ -244,6 +267,11 @@ apply_argocd_repository_secret \
 apply_argocd_repository_secret \
   tactical-heroes-api-repo \
   https://github.com/tactical-heroes/api.git \
+  "$github_secret"
+
+apply_argocd_repository_secret \
+  tactical-heroes-admin-repo \
+  https://github.com/tactical-heroes/admin.git \
   "$github_secret"
 
 server_gh_pat="$(jq -r '.SERVER_GH_PAT // empty' <<<"$github_secret")"
@@ -312,6 +340,22 @@ apply_kargo_repository_secret \
   tactical-heroes-migrator-image \
   image \
   ghcr.io/panixida/tactical-heroes/ef-migrator \
+  "$tactical_heroes_registry_user" \
+  "$tactical_heroes_registry_token"
+
+apply_kargo_repository_secret \
+  tactical-heroes-admin \
+  tactical-heroes-admin-git \
+  git \
+  https://github.com/tactical-heroes/admin.git \
+  x-access-token \
+  "$server_gh_pat"
+
+apply_kargo_repository_secret \
+  tactical-heroes-admin \
+  tactical-heroes-admin-image \
+  image \
+  ghcr.io/panixida/tactical-heroes/admin \
   "$tactical_heroes_registry_user" \
   "$tactical_heroes_registry_token"
 

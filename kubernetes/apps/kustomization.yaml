@@ -7,6 +7,8 @@ resources:
   - applications/dotnet-template-kargo.yaml
   - applications/tactical-heroes.yaml
   - applications/tactical-heroes-kargo.yaml
+  - applications/tactical-heroes-admin.yaml
+  - applications/tactical-heroes-admin-kargo.yaml
   - platform/namespaces.yaml
   - platform/coredns.yaml
   - platform/envoy-gateway-config.yaml
