@@ -266,7 +266,24 @@ fi
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
+tactical_heroes_development_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/development)"
+tactical_heroes_production_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/production)"
 tactical_heroes_registry_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/registry)"
+
+if [ "$(jq 'length' <<<"$tactical_heroes_development_secret")" -lt 10 ] || [ "$(jq 'length' <<<"$tactical_heroes_production_secret")" -lt 10 ]; then
+  echo "::error::Tactical Heroes application configuration is missing in OpenBao"
+  exit 1
+fi
+
+tactical_heroes_development_secret="$(jq \
+  '.OAuthSpa__LoginUrl = "https://dev.tactical-heroes.panixida.ru/login"' \
+  <<<"$tactical_heroes_development_secret")"
+tactical_heroes_production_secret="$(jq \
+  '.OAuthSpa__LoginUrl = "https://tactical-heroes.panixida.ru/login"' \
+  <<<"$tactical_heroes_production_secret")"
+
+bao_write "$openbao_token" applications/tactical-heroes-api/development "$tactical_heroes_development_secret"
+bao_write "$openbao_token" applications/tactical-heroes-api/production "$tactical_heroes_production_secret"
 bao_write "$openbao_token" applications/tactical-heroes-admin/registry "$tactical_heroes_registry_secret"
 
 apply_argocd_repository_secret \
