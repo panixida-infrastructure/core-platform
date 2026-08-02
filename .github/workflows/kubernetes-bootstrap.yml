@@ -95,7 +95,7 @@ jobs:
           kubectl version --client=true
           kubectl get nodes -o wide
 
-      - name: Ensure Cilium uses the direct Kubernetes API endpoint
+      - name: Ensure Cilium can reach the Kubernetes API
         run: bash scripts/kubernetes/repair-timeweb-cilium.sh
 
       - name: Install Kubernetes controllers
