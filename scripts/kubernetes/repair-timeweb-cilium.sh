@@ -58,3 +58,20 @@ kubectl -n kube-system set env deployment/cilium-operator \
 
 kubectl -n kube-system rollout status daemonset/cilium --timeout=5m
 kubectl -n kube-system rollout status deployment/cilium-operator --timeout=5m
+
+mapfile -t cilium_pods < <(
+  kubectl -n kube-system get pods \
+    -l k8s-app=cilium \
+    -o name
+)
+
+if [ "${#cilium_pods[@]}" -eq 0 ]; then
+  echo "::error::No Cilium agent pods were found"
+  exit 1
+fi
+
+for pod in "${cilium_pods[@]}"; do
+  kubectl -n kube-system exec "$pod" \
+    -c cilium-agent \
+    -- cilium-dbg status --brief --require-k8s-connectivity
+done
