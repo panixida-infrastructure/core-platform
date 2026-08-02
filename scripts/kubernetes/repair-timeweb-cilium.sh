@@ -6,6 +6,9 @@ api_endpoint="${api_server#*://}"
 api_host="${api_endpoint%%:*}"
 api_port="${api_endpoint##*:}"
 
+api_host="${KUBERNETES_API_HOST_OVERRIDE:-$api_host}"
+api_port="${KUBERNETES_API_PORT_OVERRIDE:-$api_port}"
+
 if [ -z "$api_host" ]; then
   echo "::error::Kubernetes API host is empty"
   exit 1
@@ -50,8 +53,8 @@ kubectl -n kube-system patch daemonset cilium \
   --type=strategic \
   --patch "$cilium_patch"
 kubectl -n kube-system set env deployment/cilium-operator \
-  KUBERNETES_SERVICE_HOST- \
-  KUBERNETES_SERVICE_PORT-
+  "KUBERNETES_SERVICE_HOST=${api_host}" \
+  "KUBERNETES_SERVICE_PORT=${api_port}"
 
 kubectl -n kube-system rollout status daemonset/cilium --timeout=5m
 kubectl -n kube-system rollout status deployment/cilium-operator --timeout=5m

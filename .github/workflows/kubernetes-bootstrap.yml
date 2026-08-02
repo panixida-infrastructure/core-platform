@@ -96,6 +96,9 @@ jobs:
           kubectl get nodes -o wide
 
       - name: Ensure Cilium can reach the Kubernetes API
+        env:
+          KUBERNETES_API_HOST_OVERRIDE: 192.168.10.5
+          KUBERNETES_API_PORT_OVERRIDE: "6443"
         run: bash scripts/kubernetes/repair-timeweb-cilium.sh
 
       - name: Install Kubernetes controllers
