@@ -76,6 +76,17 @@ secret/core-platform/sso
 secret/core-platform/timeweb
 ```
 
+The SonarQube path also stores the GitHub App credentials used for repository import:
+
+```text
+SONAR_GITHUB_APP_ID
+SONAR_GITHUB_CLIENT_ID
+SONAR_GITHUB_CLIENT_SECRET
+SONAR_GITHUB_PRIVATE_KEY
+```
+
+The GitHub App registration is a one-time account-owner bootstrap because GitHub requires an interactive ownership and installation approval. Its declarative manifest is stored at `scripts/github/sonarqube-app-manifest.json`. Store the generated credentials directly in OpenBao. The `Kubernetes Secrets Sync` workflow then syncs the Kubernetes secret and forces an Argo CD reconciliation so the SonarQube PostSync job creates or updates the GitHub integration.
+
 The managed PostgreSQL DBaaS exporter credentials also live in `secret/core-platform/observability`:
 
 ```text

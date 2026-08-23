@@ -86,12 +86,6 @@ apply_secret() {
     --arg name "$name" \
     --argjson data "$data" \
     --argjson keys "$keys_json" '
-      def required($key):
-        if (($data[$key] // "") | tostring | length) > 0 then
-          $data[$key] | tostring
-        else
-          error("missing required secret key " + $key)
-        end;
       {
         apiVersion: "v1",
         kind: "Secret",
@@ -100,7 +94,18 @@ apply_secret() {
           namespace: $namespace
         },
         type: "Opaque",
-        stringData: (reduce $keys[] as $key ({}; .[$key] = required($key)))
+        stringData: (reduce $keys[] as $entry ({};
+          ($entry | startswith("?")) as $optional
+          | (if $optional then $entry[1:] else $entry end) as $key
+          | (($data[$key] // "") | tostring) as $value
+          | if $optional and ($value | length) == 0 then
+              .
+            elif ($value | length) > 0 then
+              .[$key] = $value
+            else
+              error("missing required secret key " + $key)
+            end
+        ))
       }' >"$manifest"
 
   kubectl apply --server-side --field-manager=core-platform-secrets-sync --force-conflicts -f "$manifest" >/dev/null
@@ -435,7 +440,11 @@ apply_secret quality sonarqube-secrets "$sonarqube_secret" \
   SONAR_DB_NAME \
   SONAR_DB_USERNAME \
   SONAR_DB_PASSWORD \
-  SONAR_ADMIN_PASSWORD
+  SONAR_ADMIN_PASSWORD \
+  '?SONAR_GITHUB_APP_ID' \
+  '?SONAR_GITHUB_CLIENT_ID' \
+  '?SONAR_GITHUB_CLIENT_SECRET' \
+  '?SONAR_GITHUB_PRIVATE_KEY'
 
 headlamp_oidc_secret="$(jq -n \
   --argjson sso "$sso_secret" \
