@@ -15,8 +15,9 @@ The reconciliation workflow:
 2. binds it to the existing global GitHub integration;
 3. assigns the `Sonar way` quality gate;
 4. creates a project analysis token when required;
-5. writes `SONAR_TOKEN`, `SONAR_HOST_URL`, and `SONAR_PROJECT_KEY` to the
-   repository.
+5. writes `SONAR_TOKEN` and `SONAR_PROJECT_KEY` to the repository;
+6. writes `SONAR_HOST_URL` once per GitHub organization with visibility for all
+   repositories and removes obsolete repository-level copies.
 
 Existing analysis tokens are retained. Use the workflow's `rotate_tokens`
 input only when token rotation is required. Consumer workflow changes are made

@@ -186,6 +186,7 @@ mapfile -t repository_entries < <(jq -c \
   --arg repository "$repository_filter" \
   '.repositories[] | select($repository == "" or ((.repository | ascii_downcase) == ($repository | ascii_downcase)))' \
   "$inventory_file")
+declare -A configured_organizations=()
 
 for entry in "${repository_entries[@]}"; do
   repository="$(jq -r '.repository' <<<"$entry")"
@@ -216,6 +217,22 @@ for entry in "${repository_entries[@]}"; do
   if [[ "${actual_repository,,}" != "${repository,,}" ]]; then
     echo "::error::GitHub repository identity mismatch for ${repository}"
     exit 1
+  fi
+
+  if [[ -z "${configured_organizations[$repository_owner]+x}" ]]; then
+    GH_TOKEN="$installation_token" gh variable set SONAR_HOST_URL \
+      --body "$sonar_url" \
+      --org "$repository_owner" \
+      --visibility all
+    organization_sonar_url="$(GH_TOKEN="$installation_token" gh api \
+      "orgs/${repository_owner}/actions/variables/SONAR_HOST_URL" \
+      --jq '.value')"
+    if [[ "$organization_sonar_url" != "$sonar_url" ]]; then
+      echo "::error::Organization SONAR_HOST_URL mismatch for ${repository_owner}"
+      exit 1
+    fi
+    configured_organizations[$repository_owner]=true
+    echo "Reconciled organization SONAR_HOST_URL for ${repository_owner}"
   fi
 
   curl -fsS -u "admin:${sonar_admin_password}" -X POST \
@@ -309,12 +326,16 @@ for entry in "${repository_entries[@]}"; do
     echo "Kept existing SONAR_TOKEN for ${repository}"
   fi
 
-  GH_TOKEN="$installation_token" gh variable set SONAR_HOST_URL \
-    --body "$sonar_url" --repo "$repository"
   GH_TOKEN="$installation_token" gh variable set SONAR_PROJECT_KEY \
     --body "$project_key" --repo "$repository"
 
-  unset installation_token token_search bound_project_payload bound_project_response binding_repository
+  if GH_TOKEN="$installation_token" gh api \
+    "repos/${repository}/actions/variables/SONAR_HOST_URL" >/dev/null 2>&1; then
+    GH_TOKEN="$installation_token" gh variable delete SONAR_HOST_URL --repo "$repository"
+    echo "Removed repository-level SONAR_HOST_URL from ${repository}"
+  fi
+
+  unset installation_token token_search bound_project_payload bound_project_response binding_repository organization_sonar_url
   echo "Reconciled ${repository}"
 done
 
