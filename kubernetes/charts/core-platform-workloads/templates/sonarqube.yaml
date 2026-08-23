@@ -1,6 +1,6 @@
 {{- if .Values.sonarqube.enabled }}
 apiVersion: apps/v1
-kind: {{ ternary "StatefulSet" "Deployment" .Values.sonarqube.persistence.enabled }}
+kind: Deployment
 metadata:
   name: sonarqube
   namespace: {{ .Values.sonarqube.namespace }}
@@ -8,14 +8,9 @@ metadata:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: sonarqube
 spec:
-  {{- if .Values.sonarqube.persistence.enabled }}
-  serviceName: sonarqube
-  {{- end }}
   replicas: 1
-  {{- if not .Values.sonarqube.persistence.enabled }}
   strategy:
     type: Recreate
-  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: sonarqube
@@ -109,6 +104,11 @@ spec:
               value: {{ .Values.sonarqube.javaOpts.search | quote }}
             - name: SONAR_CORE_SERVERBASEURL
               value: https://{{ .Values.sonarqube.host }}
+            - name: SONAR_AUTH_JWTBASE64HS256SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sonarqube.secretName }}
+                  key: SONAR_AUTH_JWTBASE64HS256SECRET
           ports:
             - name: http
               containerPort: 9000
@@ -145,23 +145,32 @@ spec:
               subPath: logs
           resources:
             {{- toYaml .Values.sonarqube.resources | nindent 12 }}
-      {{- if not .Values.sonarqube.persistence.enabled }}
       volumes:
         - name: sonarqube-data
+          {{- if .Values.sonarqube.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: sonarqube-data
+          {{- else }}
           emptyDir: {}
-      {{- end }}
-  {{- if .Values.sonarqube.persistence.enabled }}
-  volumeClaimTemplates:
-    - metadata:
-        name: sonarqube-data
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        storageClassName: {{ .Values.sonarqube.storageClassName }}
-        resources:
-          requests:
-            storage: {{ .Values.sonarqube.storageSize }}
-  {{- end }}
+          {{- end }}
+{{- if .Values.sonarqube.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-data
+  namespace: {{ .Values.sonarqube.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: sonarqube
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.sonarqube.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.sonarqube.storageSize }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
