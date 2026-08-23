@@ -166,6 +166,22 @@ if ! curl -fsS -u "admin:${sonar_admin_password}" \
   exit 1
 fi
 
+dop_settings="$(curl -fsS -u "admin:${sonar_admin_password}" \
+  "${sonar_url}/api/v2/dop-translation/dop-settings")"
+github_dop_setting_count="$(jq -r \
+  --arg key "$sonar_github_integration_key" \
+  '[.dopSettings[] | select(.type == "github" and .key == $key)] | length' \
+  <<<"$dop_settings")"
+if [[ "$github_dop_setting_count" != "1" ]]; then
+  echo "::error::Expected exactly one GitHub DevOps Platform setting named ${sonar_github_integration_key}"
+  exit 1
+fi
+github_dop_setting_id="$(jq -r \
+  --arg key "$sonar_github_integration_key" \
+  '.dopSettings[] | select(.type == "github" and .key == $key) | .id' \
+  <<<"$dop_settings")"
+unset dop_settings github_dop_setting_count
+
 mapfile -t repository_entries < <(jq -c \
   --arg repository "$repository_filter" \
   '.repositories[] | select($repository == "" or ((.repository | ascii_downcase) == ($repository | ascii_downcase)))' \
@@ -202,30 +218,53 @@ for entry in "${repository_entries[@]}"; do
     exit 1
   fi
 
-  project_count="$(curl -fsS -u "admin:${sonar_admin_password}" --get \
-    "${sonar_url}/api/projects/search" \
-    --data-urlencode "projects=${project_key}" | jq -r '.paging.total')"
-  if [[ "$project_count" == "0" ]]; then
-    curl -fsS -u "admin:${sonar_admin_password}" -X POST \
-      "${sonar_url}/api/projects/create" \
-      --data-urlencode "project=${project_key}" \
-      --data-urlencode "name=${project_name}" \
-      --data-urlencode "visibility=private" >/dev/null
-    echo "Created SonarQube project ${project_key}"
+  curl -fsS -u "admin:${sonar_admin_password}" -X POST \
+    "${sonar_url}/api/alm_integrations/set_pat" \
+    --data-urlencode "almSetting=${sonar_github_integration_key}" \
+    --data-urlencode "pat=${installation_token}" >/dev/null
+
+  bound_project_payload="$(jq -nc \
+    --arg project_key "$project_key" \
+    --arg project_name "$project_name" \
+    --arg dop_setting_id "$github_dop_setting_id" \
+    --arg repository "$repository" \
+    '{
+      projectKey: $project_key,
+      projectName: $project_name,
+      devOpsPlatformSettingId: $dop_setting_id,
+      repositoryIdentifier: $repository,
+      projectIdentifier: null,
+      newCodeDefinitionType: "REFERENCE_BRANCH",
+      newCodeDefinitionValue: null,
+      monorepo: false
+    }')"
+  bound_project_response="$(curl -fsS -u "admin:${sonar_admin_password}" -X PUT \
+    -H "Content-Type: application/json" \
+    -d "$bound_project_payload" \
+    "${sonar_url}/api/v2/dop-translation/bound-projects")"
+  if [[ "$(jq -r '.newProjectCreated' <<<"$bound_project_response")" == "true" ]]; then
+    echo "Created and bound SonarQube project ${project_key}"
+  else
+    echo "Updated GitHub binding for SonarQube project ${project_key}"
   fi
 
   curl -fsS -u "admin:${sonar_admin_password}" -X POST \
-    "${sonar_url}/api/alm_settings/set_github_binding" \
-    --data-urlencode "almSetting=${sonar_github_integration_key}" \
+    "${sonar_url}/api/projects/update_visibility" \
     --data-urlencode "project=${project_key}" \
-    --data-urlencode "repository=${repository}" \
-    --data-urlencode "summaryCommentEnabled=true" \
-    --data-urlencode "monorepo=false" >/dev/null
+    --data-urlencode "visibility=private" >/dev/null
 
   curl -fsS -u "admin:${sonar_admin_password}" -X POST \
     "${sonar_url}/api/qualitygates/select" \
     --data-urlencode "gateName=${sonar_quality_gate}" \
     --data-urlencode "projectKey=${project_key}" >/dev/null
+
+  binding_repository="$(curl -fsS -u "admin:${sonar_admin_password}" --get \
+    "${sonar_url}/api/alm_settings/get_binding" \
+    --data-urlencode "project=${project_key}" | jq -r '.repository // empty')"
+  if [[ "${binding_repository,,}" != "${repository,,}" ]]; then
+    echo "::error::SonarQube binding mismatch for ${project_key}"
+    exit 1
+  fi
 
   token_search="$(curl -fsS -u "admin:${sonar_admin_password}" \
     "${sonar_url}/api/user_tokens/search")"
@@ -275,7 +314,7 @@ for entry in "${repository_entries[@]}"; do
   GH_TOKEN="$installation_token" gh variable set SONAR_PROJECT_KEY \
     --body "$project_key" --repo "$repository"
 
-  unset installation_token token_search
+  unset installation_token token_search bound_project_payload bound_project_response binding_repository
   echo "Reconciled ${repository}"
 done
 
