@@ -1,0 +1,23 @@
+{
+  "name": "PANiXiDA SonarQube",
+  "url": "https://sonar.panixida.ru",
+  "description": "Imports PANiXiDA GitHub repositories into SonarQube.",
+  "redirect_url": "https://sonar.panixida.ru/",
+  "callback_urls": [
+    "https://sonar.panixida.ru/"
+  ],
+  "hook_attributes": {
+    "url": "https://sonar.panixida.ru/",
+    "active": false
+  },
+  "public": true,
+  "request_oauth_on_install": false,
+  "default_permissions": {
+    "checks": "write",
+    "contents": "read",
+    "metadata": "read",
+    "members": "read",
+    "organization_projects": "read"
+  },
+  "default_events": []
+}

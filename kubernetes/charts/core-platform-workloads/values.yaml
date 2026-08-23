@@ -72,6 +72,10 @@ sonarqube:
   host: sonar.panixida.ru
   image: public.ecr.aws/docker/library/sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
+  githubIntegration:
+    enabled: true
+    key: GitHub
+    apiUrl: https://api.github.com
   javaOpts:
     web: -Xms128m -Xmx384m
     ce: -Xms128m -Xmx384m
