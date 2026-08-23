@@ -786,7 +786,7 @@ data:
     {{ "{{" }}- with .Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with index .Labels "k8s.container.name" {{ "}}" }}
+    {{ "{{" }}- with .Labels.k8s_container_name {{ "}}" }}
     📦 <code>{{ "{{" }} . {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- with .Annotations.summary {{ "}}" }}
