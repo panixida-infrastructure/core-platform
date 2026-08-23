@@ -107,6 +107,18 @@ observability:
   enabled: true
   namespace: observability
   secretName: observability-secrets
+  externalSecrets:
+    enabled: true
+    refreshInterval: 1h
+    serviceAccountName: observability-external-secrets
+    secretStoreName: observability
+    openbao:
+      server: http://openbao.secrets.svc.cluster.local:8200
+      path: secret
+      version: v2
+      authMountPath: kubernetes
+      role: observability
+      remoteKey: core-platform/observability
   nodeExporter:
     enabled: true
   persistence:

@@ -112,6 +112,8 @@ OBSERVABILITY_TELEGRAM_BOT_TOKEN
 OBSERVABILITY_WIREGUARD_CONF
 ```
 
+External Secrets Operator synchronizes the complete `core-platform/observability` path into `observability/observability-secrets` through a namespace-scoped read-only OpenBao role. This keeps the Telegram token, WireGuard configuration, and telemetry credentials out of GitHub workflows and removes the need for external Kubernetes API access during normal refreshes.
+
 Managed PostgreSQL connection settings are stored in OpenBao with the service secrets:
 
 ```text

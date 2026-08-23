@@ -135,6 +135,10 @@ path "sys/policies/acl/sonarqube-app" {
   capabilities = ["create", "read", "update"]
 }
 
+path "sys/policies/acl/observability-app" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "sys/policies/acl/dotnet-template-app" {
   capabilities = ["create", "read", "update"]
 }
@@ -162,6 +166,16 @@ path "secret/data/core-platform/sonarqube" {
 }
 
 path "secret/metadata/core-platform/sonarqube" {
+  capabilities = ["read"]
+}
+EOF
+
+bao policy write observability-app - <<'EOF'
+path "secret/data/core-platform/observability" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/core-platform/observability" {
   capabilities = ["read"]
 }
 EOF
@@ -314,6 +328,12 @@ bao write "auth/${kubernetes_auth_path}/role/sonarqube" \
   bound_service_account_names=sonarqube-external-secrets \
   bound_service_account_namespaces=quality \
   policies=sonarqube-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/observability" \
+  bound_service_account_names=observability-external-secrets \
+  bound_service_account_namespaces=observability \
+  policies=observability-app \
   ttl=1h
 
 bao write "auth/${kubernetes_auth_path}/role/dotnet-template-development" \
