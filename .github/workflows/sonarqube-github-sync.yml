@@ -1,0 +1,33 @@
+name: SonarQube GitHub Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type sync-sonarqube-github to configure SonarQube from OpenBao
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sonarqube-github-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "sync-sonarqube-github" ]; then
+            echo "::error::Confirmation must be exactly sync-sonarqube-github"
+            exit 1
+          fi
+
+      - name: Reconcile SonarQube GitHub integration
+        run: bash scripts/sonarqube/reconcile-github-integration.sh
