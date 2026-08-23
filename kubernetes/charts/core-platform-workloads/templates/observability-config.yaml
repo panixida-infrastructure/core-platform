@@ -426,8 +426,8 @@ data:
 
     cache deny all
     cache_mem 16 MB
-    cache_log /var/log/squid/cache.log
-    access_log stdio:/var/log/squid/access.log squid
+    cache_log /dev/stderr
+    access_log stdio:/dev/stdout squid
     cache_store_log none
     pid_filename /tmp/squid.pid
     coredump_dir /tmp
