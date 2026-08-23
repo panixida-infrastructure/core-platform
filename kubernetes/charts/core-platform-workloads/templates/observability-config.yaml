@@ -160,6 +160,7 @@ data:
             enabled: true
         targets:
           - method: GET
+            disable_keep_alives: true
             endpoints:
               {{- range .Values.observability.httpCheckTargets }}
               - {{ . | quote }}
@@ -494,8 +495,6 @@ data:
             send_resolved: true
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-            http_config:
-              proxy_url: http://telegram-egress.observability.svc.cluster.local:8888
   telegram.tmpl: |
     {{ "{{" }} define "telegram.panixida.message" {{ "}}" -}}
     {{ "{{" }}- if gt (len .Alerts.Firing) 0 {{ "}}" -}}
