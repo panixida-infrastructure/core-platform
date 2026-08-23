@@ -407,9 +407,11 @@ data:
 
     ensure_group platform-admins
     ensure_group platform-viewers
+    ensure_group sonar-administrators
 
     for platform_admin_user in ${KEYCLOAK_PLATFORM_ADMIN_USERS:-}; do
       ensure_user_group "$platform_admin_user" platform-admins
+      ensure_user_group "$platform_admin_user" sonar-administrators
     done
 
     for platform_viewer_user in ${KEYCLOAK_PLATFORM_VIEWER_USERS:-}; do
