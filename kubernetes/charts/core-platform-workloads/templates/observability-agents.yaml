@@ -265,13 +265,19 @@ spec:
             - name: proxy
               containerPort: 8888
           readinessProbe:
-            tcpSocket:
-              port: proxy
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - test -s /tmp/squid.pid && kill -0 "$(cat /tmp/squid.pid)"
             initialDelaySeconds: 5
             periodSeconds: 5
           livenessProbe:
-            tcpSocket:
-              port: proxy
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - test -s /tmp/squid.pid && kill -0 "$(cat /tmp/squid.pid)"
             initialDelaySeconds: 15
             periodSeconds: 10
           securityContext:
@@ -300,7 +306,7 @@ spec:
           args:
             - |
               touch /var/log/squid/access.log /var/log/squid/cache.log
-              tail -n +1 -F /var/log/squid/access.log /var/log/squid/cache.log
+              tail -q -n +1 -F /var/log/squid/access.log /var/log/squid/cache.log
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
