@@ -142,7 +142,7 @@ observability:
     telegram:
       chatId: "-1003738995665"
   telegramEgress:
-    vpnReplicas: 0
+    vpnReplicas: 1
     proxyReplicas: 2
   images:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
