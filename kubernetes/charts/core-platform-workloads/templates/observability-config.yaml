@@ -425,6 +425,7 @@ data:
     shutdown_lifetime 1 second
 
     cache deny all
+    cache_mem 16 MB
     cache_log /var/log/squid/cache.log
     access_log stdio:/var/log/squid/access.log squid
     cache_store_log none

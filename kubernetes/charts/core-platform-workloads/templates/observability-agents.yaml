@@ -276,6 +276,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+              add:
+                - SETGID
+                - SETUID
           volumeMounts:
             - name: config
               mountPath: /etc/squid/squid.conf
