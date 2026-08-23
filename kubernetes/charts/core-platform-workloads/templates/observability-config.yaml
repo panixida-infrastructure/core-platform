@@ -694,7 +694,7 @@ data:
         interval: 1m
         rules:
           - alert: KubernetesErrorLogs
-            expr: 'error OR ERROR OR exception OR Exception OR fatal OR FATAL | stats count() as error_logs | filter error_logs:>0'
+            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats count() as error_logs | filter error_logs:>0'
             labels:
               severity: warning
             annotations:
