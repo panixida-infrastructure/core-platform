@@ -412,7 +412,7 @@ data:
     http_access allow telegram_domains
     http_access deny all
 
-    cache_peer telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local parent 8888 0 no-query default name=vpn connect-timeout=3 connect-fail-limit=3
+    cache_peer telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local parent 8888 0 no-query name=vpn connect-timeout=3
     cache_peer_access vpn deny direct_route
     cache_peer_access vpn allow telegram_domains
     cache_peer_access vpn deny all
@@ -420,7 +420,6 @@ data:
     always_direct allow direct_route
     nonhierarchical_direct off
     prefer_direct off
-    dead_peer_timeout 2 minutes
     connect_timeout 5 seconds
     forward_timeout 15 seconds
     request_timeout 30 seconds
@@ -757,7 +756,7 @@ data:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+              proxy_url: http://telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local:8888
             send_resolved: false
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'

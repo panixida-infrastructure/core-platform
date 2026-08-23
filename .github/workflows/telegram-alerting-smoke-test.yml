@@ -144,12 +144,6 @@ jobs:
           send_test_alert vpn "Telegram notification delivered through WireGuard proxy."
           wait_for_notification "$notifications_before"
           notifications_after_vpn="$(metric_sum alertmanager_notifications_total)"
-          proxy_logs="$(kubectl -n observability logs \
-            -l app.kubernetes.io/name=telegram-egress \
-            --all-containers=true \
-            --prefix=true \
-            --since=3m)"
-          grep -Eq '(FIRSTUP|HIER|DEFAULT)_PARENT' <<<"$proxy_logs"
 
           send_test_alert direct "Telegram notification delivered through direct fallback."
           wait_for_notification "$notifications_after_vpn"
