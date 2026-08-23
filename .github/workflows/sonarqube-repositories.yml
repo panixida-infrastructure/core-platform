@@ -1,0 +1,45 @@
+name: SonarQube Repositories Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type sync-sonarqube-repositories to reconcile repository integrations
+        required: true
+        type: string
+      repository:
+        description: Optional owner/name filter; empty reconciles the complete inventory
+        required: false
+        type: string
+      rotate_tokens:
+        description: Rotate SonarQube project analysis tokens
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sonarqube-repositories-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "sync-sonarqube-repositories" ]; then
+            echo "::error::Confirmation must be exactly sync-sonarqube-repositories"
+            exit 1
+          fi
+
+      - name: Reconcile SonarQube repositories
+        env:
+          REPOSITORY_FILTER: ${{ inputs.repository }}
+          ROTATE_SONAR_TOKENS: ${{ inputs.rotate_tokens }}
+        run: bash scripts/sonarqube/reconcile-repositories.sh
