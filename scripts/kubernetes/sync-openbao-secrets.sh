@@ -446,19 +446,6 @@ apply_secret observability observability-secrets "$observability_secret" \
   OBSERVABILITY_TELEGRAM_BOT_TOKEN \
   OBSERVABILITY_WIREGUARD_CONF
 
-apply_secret quality sonarqube-secrets "$sonarqube_secret" \
-  SONAR_DB_HOST \
-  SONAR_DB_PORT \
-  SONAR_DB_NAME \
-  SONAR_DB_USERNAME \
-  SONAR_DB_PASSWORD \
-  SONAR_ADMIN_PASSWORD \
-  SONAR_AUTH_JWTBASE64HS256SECRET \
-  '?SONAR_GITHUB_APP_ID' \
-  '?SONAR_GITHUB_CLIENT_ID' \
-  '?SONAR_GITHUB_CLIENT_SECRET' \
-  '?SONAR_GITHUB_PRIVATE_KEY'
-
 headlamp_oidc_secret="$(jq -n \
   --argjson sso "$sso_secret" \
   '

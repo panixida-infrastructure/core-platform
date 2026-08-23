@@ -131,6 +131,10 @@ path "sys/policies/acl/github-actions" {
   capabilities = ["create", "read", "update"]
 }
 
+path "sys/policies/acl/sonarqube-app" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "sys/policies/acl/dotnet-template-app" {
   capabilities = ["create", "read", "update"]
 }
@@ -149,6 +153,16 @@ path "sys/policies/acl/tactical-heroes-admin-app" {
 
 path "sys/policies/acl/tactical-heroes-api-github-actions" {
   capabilities = ["create", "read", "update"]
+}
+EOF
+
+bao policy write sonarqube-app - <<'EOF'
+path "secret/data/core-platform/sonarqube" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/core-platform/sonarqube" {
+  capabilities = ["read"]
 }
 EOF
 
@@ -295,6 +309,12 @@ fi
 
 bao write "auth/${kubernetes_auth_path}/config" \
   kubernetes_host=https://kubernetes.default.svc:443
+
+bao write "auth/${kubernetes_auth_path}/role/sonarqube" \
+  bound_service_account_names=sonarqube-external-secrets \
+  bound_service_account_namespaces=quality \
+  policies=sonarqube-app \
+  ttl=1h
 
 bao write "auth/${kubernetes_auth_path}/role/dotnet-template-development" \
   bound_service_account_names=dotnet-template-external-secrets \

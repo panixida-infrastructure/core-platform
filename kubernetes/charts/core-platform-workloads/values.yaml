@@ -72,6 +72,18 @@ sonarqube:
   host: sonar.panixida.ru
   image: public.ecr.aws/docker/library/sonarqube:26.5.0.122743-community
   secretName: sonarqube-secrets
+  externalSecrets:
+    enabled: true
+    refreshInterval: 1h
+    serviceAccountName: sonarqube-external-secrets
+    secretStoreName: sonarqube
+    openbao:
+      server: http://openbao.secrets.svc.cluster.local:8200
+      path: secret
+      version: v2
+      authMountPath: kubernetes
+      role: sonarqube
+      remoteKey: core-platform/sonarqube
   githubIntegration:
     enabled: true
     key: GitHub
