@@ -354,6 +354,7 @@ data:
       transform/kubernetes:
         error_mode: ignore
         log_statements:
+          - 'replace_pattern(log.body, "bot[0-9]{8,}:[A-Za-z0-9_-]{20,}", "bot[REDACTED]") where IsString(log.body)'
           - 'set(resource.attributes["service.name"], resource.attributes["k8s.container.name"]) where resource.attributes["service.name"] == nil and resource.attributes["k8s.container.name"] != nil'
           - 'set(resource.attributes["deployment.environment"], resource.attributes["k8s.namespace.name"]) where resource.attributes["deployment.environment"] == nil and resource.attributes["k8s.namespace.name"] != nil'
           - 'set(resource.attributes["platform.name"], "core-platform")'
