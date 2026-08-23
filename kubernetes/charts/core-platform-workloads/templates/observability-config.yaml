@@ -522,7 +522,7 @@ data:
               description: A public endpoint TLS certificate has less than 14 days remaining.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: TelegramVpnProxyDown
-            expr: max(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx"})
+            expr: httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx",http_status_code=""} == 0 or absent(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx",http_status_code=""})
             for: 2m
             labels:
               severity: warning
@@ -532,7 +532,7 @@ data:
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: TelegramEgressDown
-            expr: max(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx"})
+            expr: httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=""} == 0 or absent(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=""})
             for: 2m
             labels:
               severity: critical
