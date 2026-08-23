@@ -67,6 +67,7 @@ Active OpenBao secret paths:
 
 ```text
 secret/core-platform/github
+secret/core-platform/github-provisioner
 secret/core-platform/applications
 secret/core-platform/identity
 secret/core-platform/observability
@@ -85,7 +86,16 @@ SONAR_GITHUB_CLIENT_SECRET
 SONAR_GITHUB_PRIVATE_KEY
 ```
 
-The GitHub App registration is a one-time account-owner bootstrap because GitHub requires an interactive ownership and installation approval. Its declarative manifest is stored at `scripts/github/sonarqube-app-manifest.json`. After creating the app, enable **Allow wildcard matching** for the `https://sonar.panixida.ru/` callback URL. SonarQube appends the project creation path and query parameters to this callback, while GitHub App manifests do not currently expose the wildcard setting. Store the generated credentials directly in OpenBao. The `Kubernetes Secrets Sync` workflow then syncs the Kubernetes secret and forces an Argo CD reconciliation so the SonarQube PostSync job creates or updates the GitHub integration.
+GitHub App registrations are one-time account-owner bootstraps because GitHub requires interactive ownership and installation approval. App registration metadata, names, manifests, permissions, and installation state are not managed from this repository. Store generated credentials directly in OpenBao. For the SonarQube App, enable **Allow wildcard matching** for the `https://sonar.panixida.ru/` callback URL. SonarQube appends the project creation path and query parameters to this callback. The `Kubernetes Secrets Sync` workflow then syncs the Kubernetes secret and forces an Argo CD reconciliation so the SonarQube PostSync job creates or updates the GitHub integration.
+
+The repository provisioner credential contract is stored at `secret/core-platform/github-provisioner`:
+
+```text
+GITHUB_APP_ID
+GITHUB_APP_PRIVATE_KEY
+```
+
+The `SonarQube Repositories Sync` workflow reads this path and `secret/core-platform/sonarqube` through GitHub OIDC. It reconciles only repositories declared in `inventory/sonarqube/repositories.json`; it does not create or modify GitHub App registrations.
 
 If Kubernetes API access is unavailable, run the `SonarQube GitHub Sync` workflow with confirmation `sync-sonarqube-github`. It authenticates to OpenBao with GitHub OIDC, reads only `core-platform/sonarqube`, and idempotently creates or updates the global GitHub integration through the public SonarQube API. No SonarQube credentials are stored in GitHub secrets or workflow artifacts.
 

@@ -1,0 +1,9 @@
+{
+  "repositories": [
+    {
+      "repository": "tactical-heroes/api",
+      "projectKey": "tactical-heroes-api",
+      "projectName": "Tactical Heroes API"
+    }
+  ]
+}

@@ -18,6 +18,9 @@ jobs:
       - name: Syntax check
         run: find scripts opentofu/scripts -name '*.sh' -print0 | xargs -0 -n1 bash -n
 
+      - name: Validate SonarQube repository inventory
+        run: bash scripts/sonarqube/validate-repositories.sh
+
   opentofu:
     runs-on: ubuntu-latest
     defaults:
