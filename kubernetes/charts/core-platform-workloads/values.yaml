@@ -129,6 +129,9 @@ observability:
   alerts:
     telegram:
       chatId: "-1003738995665"
+  telegramEgress:
+    vpnReplicas: 1
+    proxyReplicas: 2
   images:
     victoriametrics: victoriametrics/victoria-metrics:v1.143.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0
@@ -137,6 +140,8 @@ observability:
     alertmanager: prom/alertmanager:v0.32.1
     nodeExporter: quay.io/prometheus/node-exporter:v1.11.1
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
+    gluetun: ghcr.io/qdm12/gluetun:v3.41.3
+    squid: ubuntu/squid:6.6-24.04_edge
   storage:
     victoriametrics: 20Gi
     victorialogs: 10Gi
@@ -185,3 +190,21 @@ observability:
         memory: 256Mi
       limits:
         memory: 768Mi
+    otelLogs:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    telegramVpn:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    telegramEgress:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 256Mi

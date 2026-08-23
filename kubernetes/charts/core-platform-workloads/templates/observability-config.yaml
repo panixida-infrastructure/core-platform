@@ -166,6 +166,22 @@ data:
               - {{ . | quote }}
               {{- end }}
 
+      httpcheck/telegram-vpn:
+        collection_interval: 30s
+        targets:
+          - method: GET
+            endpoint: https://api.telegram.org
+            proxy_url: http://telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            disable_keep_alives: true
+
+      httpcheck/telegram-egress:
+        collection_interval: 30s
+        targets:
+          - method: GET
+            endpoint: https://api.telegram.org
+            proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            disable_keep_alives: true
+
     processors:
       memory_limiter:
         check_interval: 5s
@@ -175,6 +191,22 @@ data:
         attributes:
           - key: platform.name
             value: core-platform
+            action: upsert
+      resource/telegram-vpn:
+        attributes:
+          - key: service.name
+            value: telegram-vpn-check
+            action: upsert
+          - key: telegram.route
+            value: vpn
+            action: upsert
+      resource/telegram-egress:
+        attributes:
+          - key: service.name
+            value: telegram-egress-check
+            action: upsert
+          - key: telegram.route
+            value: vpn-or-direct
             action: upsert
       transform/logs:
         error_mode: ignore
@@ -242,6 +274,14 @@ data:
           receivers: [otlp, prometheus/kubernetes, httpcheck/platform]
           processors: [memory_limiter, resource/core-platform, batch]
           exporters: [otlphttp/victoriametrics]
+        metrics/telegram-vpn:
+          receivers: [httpcheck/telegram-vpn]
+          processors: [memory_limiter, resource/core-platform, resource/telegram-vpn, batch]
+          exporters: [otlphttp/victoriametrics]
+        metrics/telegram-egress:
+          receivers: [httpcheck/telegram-egress]
+          processors: [memory_limiter, resource/core-platform, resource/telegram-egress, batch]
+          exporters: [otlphttp/victoriametrics]
         logs:
           receivers: [otlp]
           processors: [memory_limiter, resource/core-platform, transform/logs, batch]
@@ -250,6 +290,147 @@ data:
           receivers: [otlp]
           processors: [memory_limiter, resource/core-platform, batch]
           exporters: [otlphttp/victoriatraces]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: otel-logs
+data:
+  config.yml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      basicauth/victoria:
+        client_auth:
+          username: ${env:OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
+          password: ${env:OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD}
+      file_storage:
+        directory: /var/lib/otelcol/storage
+        create_directory: true
+
+    receivers:
+      filelog/kubernetes:
+        include:
+          - /var/log/pods/*/*/*.log
+        exclude:
+          - /var/log/pods/observability_otel-logs-*/*/*.log
+        start_at: end
+        include_file_name: false
+        include_file_path: true
+        storage: file_storage
+        operators:
+          - id: container-parser
+            type: container
+
+    processors:
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      k8sattributes:
+        auth_type: serviceAccount
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.container.name
+            - k8s.node.name
+            - k8s.deployment.name
+            - k8s.statefulset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+      transform/kubernetes:
+        error_mode: ignore
+        log_statements:
+          - 'set(resource.attributes["service.name"], resource.attributes["k8s.container.name"]) where resource.attributes["service.name"] == nil and resource.attributes["k8s.container.name"] != nil'
+          - 'set(resource.attributes["deployment.environment"], resource.attributes["k8s.namespace.name"]) where resource.attributes["deployment.environment"] == nil and resource.attributes["k8s.namespace.name"] != nil'
+          - 'set(resource.attributes["platform.name"], "core-platform")'
+      batch:
+        timeout: 5s
+        send_batch_size: 8192
+
+    exporters:
+      otlphttp/victorialogs:
+        compression: gzip
+        logs_endpoint: http://victorialogs.observability.svc.cluster.local:9428/insert/opentelemetry/v1/logs
+        headers:
+          VL-Stream-Fields: service.name,deployment.environment,platform.name
+        auth:
+          authenticator: basicauth/victoria
+
+    service:
+      extensions: [health_check, basicauth/victoria, file_storage]
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+                    without_type_suffix: true
+                    without_units: true
+      pipelines:
+        logs:
+          receivers: [filelog/kubernetes]
+          processors: [memory_limiter, k8sattributes, transform/kubernetes, batch]
+          exporters: [otlphttp/victorialogs]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegram-egress
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: telegram-egress
+data:
+  squid.conf: |
+    http_port 8888
+
+    acl CONNECT method CONNECT
+    acl SSL_ports port 443
+    acl telegram_domains dstdomain .telegram.org
+    acl direct_route req_header X-Panixida-Telegram-Route -i direct
+
+    http_access deny !CONNECT
+    http_access deny CONNECT !SSL_ports
+    http_access deny !telegram_domains
+    http_access allow telegram_domains
+    http_access deny all
+
+    cache_peer telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local parent 8888 0 no-query default name=vpn connect-timeout=3 connect-fail-limit=1
+    cache_peer_access vpn deny direct_route
+    cache_peer_access vpn allow telegram_domains
+    cache_peer_access vpn deny all
+
+    always_direct allow direct_route
+    nonhierarchical_direct off
+    prefer_direct off
+    connect_timeout 5 seconds
+    forward_timeout 15 seconds
+    request_timeout 30 seconds
+    shutdown_lifetime 1 second
+
+    cache deny all
+    cache_log /var/log/squid/cache.log
+    access_log stdio:/var/log/squid/access.log squid
+    cache_store_log none
+    pid_filename /tmp/squid.pid
+    coredump_dir /tmp
+    visible_hostname telegram-egress
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -282,6 +463,26 @@ data:
               summary: Kubernetes cAdvisor metrics are unavailable.
               description: Kubelet cAdvisor container metrics have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+          - alert: KubernetesLogCollectionDown
+            expr: count(up{service_name="kubernetes-nodes"} == 1) > count(up{app_kubernetes_io_name="otel-logs"} == 1) or absent(up{app_kubernetes_io_name="otel-logs"})
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: Kubernetes log collection is incomplete.
+              description: At least one Kubernetes node has no healthy OpenTelemetry filelog collector, so its container logs may be missing from VictoriaLogs.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
+          - alert: KubernetesLogExportFailures
+            expr: increase(otelcol_exporter_send_failed_log_records_total{app_kubernetes_io_name="otel-logs"}[5m]) > 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: Kubernetes logs cannot be exported to VictoriaLogs.
+              description: A node log collector failed to export one or more log records during the last 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: LinuxNodeExporterDown
             expr: up{service_name="linux-node-exporter"} == 0
             for: 5m
@@ -318,6 +519,36 @@ data:
               summary: TLS certificate expires soon.
               description: A public endpoint TLS certificate has less than 14 days remaining.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: TelegramVpnProxyDown
+            expr: max(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx"})
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: Telegram VPN proxy is unavailable.
+              description: Telegram is not reachable through the preferred WireGuard route; the direct fallback remains active.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
+          - alert: TelegramEgressDown
+            expr: max(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx"})
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: Telegram alert delivery route is unavailable.
+              description: Telegram is not reachable through either the WireGuard route or the direct fallback.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
+          - alert: TelegramNotificationFailures
+            expr: increase(alertmanager_notifications_failed_total{integration="telegram"}[5m]) > 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: Alertmanager failed to send a Telegram notification.
+              description: At least one Telegram delivery attempt has failed during the last 5 minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: TimewebPostgresExporterDown
             expr: up{service_name="timeweb-dbaas-postgres"} == 0
             for: 5m
@@ -465,8 +696,8 @@ data:
             labels:
               severity: warning
             annotations:
-              summary: Error-like application logs were detected.
-              description: VictoriaLogs found OTLP error-like log entries during the last evaluation window.
+              summary: Error-like Kubernetes logs were detected.
+              description: VictoriaLogs found error-like application or infrastructure container logs during the last evaluation window.
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
 ---
 apiVersion: v1
@@ -487,12 +718,48 @@ data:
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
+      routes:
+        - receiver: telegram-vpn-smoke
+          matchers:
+            - telegram_route_test="vpn"
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 1h
+        - receiver: telegram-direct-smoke
+          matchers:
+            - telegram_route_test="direct"
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 1h
     receivers:
       - name: telegram
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
             send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-vpn-smoke
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: false
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-direct-smoke
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+              proxy_connect_header:
+                X-Panixida-Telegram-Route:
+                  - direct
+            send_resolved: false
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
   telegram.tmpl: |

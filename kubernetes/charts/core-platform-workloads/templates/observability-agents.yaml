@@ -92,6 +92,221 @@ spec:
             name: vmalert-log-rules
 ---
 apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-vpn
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: telegram-vpn
+spec:
+  replicas: {{ .Values.observability.telegramEgress.vpnReplicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: telegram-vpn
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: telegram-vpn
+        app.kubernetes.io/part-of: core-platform
+    spec:
+      containers:
+        - name: gluetun
+          image: {{ .Values.observability.images.gluetun | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: custom
+            - name: VPN_TYPE
+              value: wireguard
+            - name: WIREGUARD_IMPLEMENTATION
+              value: userspace
+            - name: HTTPPROXY
+              value: "on"
+            - name: HTTPPROXY_LISTENING_ADDRESS
+              value: :8888
+            - name: HTTPPROXY_LOG
+              value: "on"
+            - name: HTTPPROXY_STEALTH
+              value: "on"
+            - name: FIREWALL_INPUT_PORTS
+              value: "8888,9999"
+            - name: HEALTH_SERVER_ADDRESS
+              value: 0.0.0.0:9999
+            - name: HEALTH_RESTART_VPN
+              value: "on"
+            - name: HEALTH_TARGET_ADDRESSES
+              value: api.telegram.org:443
+            - name: DNS_SERVER
+              value: "on"
+            - name: DNS_UPSTREAM_RESOLVER_TYPE
+              value: doh
+            - name: DNS_UPSTREAM_RESOLVERS
+              value: cloudflare,google
+            - name: LOG_LEVEL
+              value: info
+          ports:
+            - name: proxy
+              containerPort: 8888
+            - name: health
+              containerPort: 9999
+          startupProbe:
+            httpGet:
+              path: /
+              port: health
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            failureThreshold: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: wireguard
+              mountPath: /gluetun/wireguard/wg0.conf
+              subPath: wg0.conf
+              readOnly: true
+            - name: tun
+              mountPath: /dev/net/tun
+          resources:
+            {{- toYaml .Values.observability.resources.telegramVpn | nindent 12 }}
+      volumes:
+        - name: wireguard
+          secret:
+            secretName: {{ .Values.observability.secretName }}
+            items:
+              - key: OBSERVABILITY_WIREGUARD_CONF
+                path: wg0.conf
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegram-vpn
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: telegram-vpn
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: telegram-vpn
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: proxy
+      port: 8888
+      targetPort: proxy
+    - name: health
+      port: 9999
+      targetPort: health
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-egress
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: telegram-egress
+spec:
+  replicas: {{ .Values.observability.telegramEgress.proxyReplicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: telegram-egress
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: telegram-egress
+        app.kubernetes.io/part-of: core-platform
+      annotations:
+        checksum/observability-config: {{ include (print $.Template.BasePath "/observability-config.yaml") . | sha256sum }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: telegram-egress
+                    app.kubernetes.io/part-of: core-platform
+      containers:
+        - name: squid
+          image: {{ .Values.observability.images.squid | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -N
+            - -f
+            - /etc/squid/squid.conf
+          ports:
+            - name: proxy
+              containerPort: 8888
+          readinessProbe:
+            tcpSocket:
+              port: proxy
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: proxy
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config
+              mountPath: /etc/squid/squid.conf
+              subPath: squid.conf
+              readOnly: true
+          resources:
+            {{- toYaml .Values.observability.resources.telegramEgress | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: telegram-egress
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegram-egress
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: telegram-egress
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: telegram-egress
+    app.kubernetes.io/part-of: core-platform
+  ports:
+    - name: proxy
+      port: 8888
+      targetPort: proxy
+---
+apiVersion: apps/v1
 kind: {{ ternary "StatefulSet" "Deployment" .Values.observability.persistence.enabled }}
 metadata:
   name: alertmanager
