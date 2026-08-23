@@ -17,7 +17,8 @@
     "contents": "read",
     "metadata": "read",
     "members": "read",
-    "organization_projects": "read"
+    "organization_projects": "read",
+    "pull_requests": "write"
   },
   "default_events": []
 }
