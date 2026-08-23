@@ -154,6 +154,7 @@ observability:
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
     gluetun: ghcr.io/qdm12/gluetun:v3.41.3
     squid: ubuntu/squid:6.6-24.04_edge
+    busybox: busybox:1.37.0
   storage:
     victoriametrics: 20Gi
     victorialogs: 10Gi
@@ -220,3 +221,9 @@ observability:
         memory: 64Mi
       limits:
         memory: 256Mi
+    telegramEgressLogForwarder:
+      requests:
+        cpu: 5m
+        memory: 8Mi
+      limits:
+        memory: 32Mi

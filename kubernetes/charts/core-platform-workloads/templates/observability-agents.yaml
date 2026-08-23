@@ -240,6 +240,9 @@ spec:
       annotations:
         checksum/observability-config: {{ include (print $.Template.BasePath "/observability-config.yaml") . | sha256sum }}
     spec:
+      securityContext:
+        fsGroup: 13
+        fsGroupChangePolicy: OnRootMismatch
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -284,12 +287,40 @@ spec:
               mountPath: /etc/squid/squid.conf
               subPath: squid.conf
               readOnly: true
+            - name: logs
+              mountPath: /var/log/squid
           resources:
             {{- toYaml .Values.observability.resources.telegramEgress | nindent 12 }}
+        - name: log-forwarder
+          image: {{ .Values.observability.images.busybox | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              touch /var/log/squid/access.log /var/log/squid/cache.log
+              tail -n +1 -F /var/log/squid/access.log /var/log/squid/cache.log
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 13
+            runAsGroup: 13
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: logs
+              mountPath: /var/log/squid
+          resources:
+            {{- toYaml .Values.observability.resources.telegramEgressLogForwarder | nindent 12 }}
       volumes:
         - name: config
           configMap:
             name: telegram-egress
+        - name: logs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
