@@ -420,6 +420,7 @@ data:
     always_direct allow direct_route
     nonhierarchical_direct off
     prefer_direct off
+    dead_peer_timeout 2 minutes
     connect_timeout 5 seconds
     forward_timeout 15 seconds
     request_timeout 30 seconds
