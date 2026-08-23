@@ -136,7 +136,6 @@ observability:
     vmalert: victoriametrics/vmalert:v1.143.0
     alertmanager: prom/alertmanager:v0.32.1
     nodeExporter: quay.io/prometheus/node-exporter:v1.11.1
-    gluetun: ghcr.io/qdm12/gluetun:v3.40.0
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
   storage:
     victoriametrics: 20Gi
@@ -180,12 +179,6 @@ observability:
         memory: 32Mi
       limits:
         memory: 128Mi
-    telegramEgress:
-      requests:
-        cpu: 25m
-        memory: 64Mi
-      limits:
-        memory: 256Mi
     otelCollector:
       requests:
         cpu: 100m
