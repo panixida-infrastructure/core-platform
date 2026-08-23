@@ -269,6 +269,18 @@ if [ "$rotate_observability_password" = "true" ]; then
 fi
 
 sonarqube_secret="$(bao_read "$openbao_token" core-platform/sonarqube)"
+
+if [ -z "$(jq -r '.SONAR_AUTH_JWTBASE64HS256SECRET // empty' <<<"$sonarqube_secret")" ]; then
+  sonar_auth_jwt_secret="$(openssl rand -base64 32 | tr -d '\n')"
+  sonarqube_secret="$(jq \
+    --arg secret "$sonar_auth_jwt_secret" \
+    '.SONAR_AUTH_JWTBASE64HS256SECRET = $secret' \
+    <<<"$sonarqube_secret")"
+  bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
+  unset sonar_auth_jwt_secret
+  echo "Generated the SonarQube session JWT secret in OpenBao"
+fi
+
 sso_secret="$(bao_read "$openbao_token" core-platform/sso)"
 dotnet_template_registry_secret="$(bao_read "$openbao_token" applications/dotnet-template/registry)"
 tactical_heroes_development_secret="$(bao_read "$openbao_token" applications/tactical-heroes-api/development)"
@@ -441,6 +453,7 @@ apply_secret quality sonarqube-secrets "$sonarqube_secret" \
   SONAR_DB_USERNAME \
   SONAR_DB_PASSWORD \
   SONAR_ADMIN_PASSWORD \
+  SONAR_AUTH_JWTBASE64HS256SECRET \
   '?SONAR_GITHUB_APP_ID' \
   '?SONAR_GITHUB_CLIENT_ID' \
   '?SONAR_GITHUB_CLIENT_SECRET' \

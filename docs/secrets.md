@@ -77,14 +77,17 @@ secret/core-platform/sso
 secret/core-platform/timeweb
 ```
 
-The SonarQube path also stores the GitHub App credentials used for repository import:
+The SonarQube path stores the persistent session key and the GitHub App credentials used for repository import:
 
 ```text
+SONAR_AUTH_JWTBASE64HS256SECRET
 SONAR_GITHUB_APP_ID
 SONAR_GITHUB_CLIENT_ID
 SONAR_GITHUB_CLIENT_SECRET
 SONAR_GITHUB_PRIVATE_KEY
 ```
+
+`SONAR_AUTH_JWTBASE64HS256SECRET` keeps SonarQube user sessions valid across pod restarts. The Kubernetes secrets sync creates it once when missing, stores it in OpenBao, and reuses the same value on later runs.
 
 GitHub App registrations are one-time account-owner bootstraps because GitHub requires interactive ownership and installation approval. App registration metadata, names, manifests, permissions, and installation state are not managed from this repository. Store generated credentials directly in OpenBao. For the SonarQube App, enable **Allow wildcard matching** for the `https://sonar.panixida.ru/` callback URL. SonarQube appends the project creation path and query parameters to this callback. The `Kubernetes Secrets Sync` workflow then syncs the Kubernetes secret and forces an Argo CD reconciliation so the SonarQube PostSync job creates or updates the GitHub integration.
 
