@@ -694,9 +694,10 @@ data:
         interval: 1m
         rules:
           - alert: KubernetesErrorLogs
-            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats count() as error_logs | filter error_logs:>0'
+            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats by ("k8s.container.name") count() as error_logs | filter error_logs:>0'
             labels:
               severity: warning
+              source: victorialogs
             annotations:
               summary: Error-like Kubernetes logs were detected.
               description: VictoriaLogs found error-like application or infrastructure container logs during the last evaluation window.
@@ -721,6 +722,13 @@ data:
       group_interval: 5m
       repeat_interval: 4h
       routes:
+        - receiver: telegram
+          matchers:
+            - alertname="KubernetesErrorLogs"
+          group_by: ["alertname", "severity", "source"]
+          group_wait: 30s
+          group_interval: 1m
+          repeat_interval: 1h
         - receiver: telegram-vpn-smoke
           matchers:
             - telegram_route_test="vpn"
@@ -777,6 +785,9 @@ data:
     {{ "{{" }}- if eq .Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} .Labels.alertname {{ "}}" }}</b>
     {{ "{{" }}- with .Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with index .Labels "k8s.container.name" {{ "}}" }}
+    📦 <code>{{ "{{" }} . {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- with .Annotations.summary {{ "}}" }}
     📝 {{ "{{" }} . {{ "}}" }}
