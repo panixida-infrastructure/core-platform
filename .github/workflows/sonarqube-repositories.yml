@@ -1,6 +1,11 @@
 name: SonarQube Repositories Sync
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - inventory/sonarqube/repositories.json
   workflow_dispatch:
     inputs:
       confirm:
@@ -32,6 +37,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Check confirmation
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           if [ "${{ inputs.confirm }}" != "sync-sonarqube-repositories" ]; then
             echo "::error::Confirmation must be exactly sync-sonarqube-repositories"
@@ -40,6 +46,6 @@ jobs:
 
       - name: Reconcile SonarQube repositories
         env:
-          REPOSITORY_FILTER: ${{ inputs.repository }}
-          ROTATE_SONAR_TOKENS: ${{ inputs.rotate_tokens }}
+          REPOSITORY_FILTER: ${{ github.event_name == 'workflow_dispatch' && inputs.repository || '' }}
+          ROTATE_SONAR_TOKENS: ${{ github.event_name == 'workflow_dispatch' && inputs.rotate_tokens || false }}
         run: bash scripts/sonarqube/reconcile-repositories.sh

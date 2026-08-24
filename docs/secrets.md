@@ -98,7 +98,7 @@ GITHUB_APP_ID
 GITHUB_APP_PRIVATE_KEY
 ```
 
-The `SonarQube Repositories Sync` workflow reads this path and `secret/core-platform/sonarqube` through GitHub OIDC. It reconciles only repositories declared in `inventory/sonarqube/repositories.json`; it does not create or modify GitHub App registrations.
+The `SonarQube Repositories Sync` workflow reads this path and `secret/core-platform/sonarqube` through GitHub OIDC. A push to `main` that changes `inventory/sonarqube/repositories.json` automatically reconciles the complete inventory. The manual workflow dispatch remains available for a single-repository sync or token rotation. The workflow does not create or modify GitHub App registrations.
 
 If Kubernetes API access is unavailable, run the `SonarQube GitHub Sync` workflow with confirmation `sync-sonarqube-github`. It authenticates to OpenBao with GitHub OIDC, reads only `core-platform/sonarqube`, and idempotently creates or updates the global GitHub integration through the public SonarQube API. No SonarQube credentials are stored in GitHub secrets or workflow artifacts.
 
