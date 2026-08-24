@@ -1,6 +1,11 @@
 {
   "repositories": [
     {
+      "repository": "tactical-heroes/admin",
+      "projectKey": "tactical-heroes-admin",
+      "projectName": "Tactical Heroes Admin"
+    },
+    {
       "repository": "tactical-heroes/api",
       "projectKey": "tactical-heroes-api",
       "projectName": "Tactical Heroes API"
