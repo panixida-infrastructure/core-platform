@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - inventory/sonarqube/repositories.json
+      - scripts/sonarqube/reconcile-repositories.sh
   workflow_dispatch:
     inputs:
       confirm:

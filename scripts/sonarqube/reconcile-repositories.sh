@@ -251,7 +251,7 @@ for entry in "${repository_entries[@]}"; do
       devOpsPlatformSettingId: $dop_setting_id,
       repositoryIdentifier: $repository,
       projectIdentifier: null,
-      newCodeDefinitionType: "REFERENCE_BRANCH",
+      newCodeDefinitionType: "PREVIOUS_VERSION",
       newCodeDefinitionValue: null,
       monorepo: false
     }')"
