@@ -1,6 +1,16 @@
 {
   "repositories": [
     {
+      "repository": "panixida-templates/dotnet-backend-template",
+      "projectKey": "panixida-templates-dotnet-backend-template",
+      "projectName": "PANiXiDA .NET Backend Template"
+    },
+    {
+      "repository": "panixida-templates/nuget-package-template",
+      "projectKey": "panixida-templates-nuget-package-template",
+      "projectName": "PANiXiDA NuGet Package Template"
+    },
+    {
       "repository": "tactical-heroes/admin",
       "projectKey": "tactical-heroes-admin",
       "projectName": "Tactical Heroes Admin"
