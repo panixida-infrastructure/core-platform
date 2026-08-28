@@ -1,6 +1,51 @@
 {
   "repositories": [
     {
+      "repository": "panixida-dotnet-core/application",
+      "projectKey": "panixida-dotnet-core-application",
+      "projectName": "PANiXiDA Core Application"
+    },
+    {
+      "repository": "panixida-dotnet-core/domain",
+      "projectKey": "panixida-dotnet-core-domain",
+      "projectName": "PANiXiDA Core Domain"
+    },
+    {
+      "repository": "panixida-dotnet-core/ef-migrator",
+      "projectKey": "panixida-dotnet-core-ef-migrator",
+      "projectName": "PANiXiDA Core EF Migrator"
+    },
+    {
+      "repository": "panixida-dotnet-core/infrastructure-messaging-wolverine",
+      "projectKey": "panixida-dotnet-core-infrastructure-messaging-wolverine",
+      "projectName": "PANiXiDA Core Infrastructure Messaging Wolverine"
+    },
+    {
+      "repository": "panixida-dotnet-core/infrastructure-persistence-ef",
+      "projectKey": "panixida-dotnet-core-infrastructure-persistence-ef",
+      "projectName": "PANiXiDA Core Infrastructure Persistence EF"
+    },
+    {
+      "repository": "panixida-dotnet-core/observability",
+      "projectKey": "panixida-dotnet-core-observability",
+      "projectName": "PANiXiDA Core Observability"
+    },
+    {
+      "repository": "panixida-dotnet-core/presentation-http",
+      "projectKey": "panixida-dotnet-core-presentation-http",
+      "projectName": "PANiXiDA Core Presentation HTTP"
+    },
+    {
+      "repository": "panixida-dotnet-core/result-pattern",
+      "projectKey": "panixida-dotnet-core-result-pattern",
+      "projectName": "PANiXiDA Core Result Pattern"
+    },
+    {
+      "repository": "panixida-dotnet-core/specification-pattern",
+      "projectKey": "panixida-dotnet-core-specification-pattern",
+      "projectName": "PANiXiDA Core Specification Pattern"
+    },
+    {
       "repository": "panixida-templates/dotnet-backend-template",
       "projectKey": "panixida-templates-dotnet-backend-template",
       "projectName": "PANiXiDA .NET Backend Template"
