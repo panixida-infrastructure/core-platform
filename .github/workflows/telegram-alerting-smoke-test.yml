@@ -92,6 +92,14 @@ jobs:
                 '$1 ~ ("^" metric_name "\\{") && $1 ~ /integration="telegram"/ { total += $2 } END { printf "%.0f", total + 0 }'
           }
 
+          successful_notification_sum() {
+            local notifications
+            local failures
+            notifications="$(metric_sum alertmanager_notifications_total)"
+            failures="$(metric_sum alertmanager_notifications_failed_total)"
+            echo $((notifications - failures))
+          }
+
           send_test_alert() {
             local route="$1"
             local summary="$2"
@@ -127,10 +135,10 @@ jobs:
           }
 
           wait_for_notification() {
-            local previous_total="$1"
+            local previous_successful="$1"
             for _ in $(seq 1 60); do
-              current_total="$(metric_sum alertmanager_notifications_total)"
-              if [ "$current_total" -gt "$previous_total" ]; then
+              current_successful="$(successful_notification_sum)"
+              if [ "$current_successful" -gt "$previous_successful" ]; then
                 return 0
               fi
               sleep 2
@@ -138,20 +146,28 @@ jobs:
             return 1
           }
 
-          notifications_before="$(metric_sum alertmanager_notifications_total)"
+          successful_before="$(successful_notification_sum)"
           failures_before="$(metric_sum alertmanager_notifications_failed_total)"
 
+          vpn_test_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           send_test_alert vpn "Telegram notification delivered through WireGuard proxy."
-          wait_for_notification "$notifications_before"
-          notifications_after_vpn="$(metric_sum alertmanager_notifications_total)"
+          wait_for_notification "$successful_before"
+          successful_after_vpn="$(successful_notification_sum)"
+          proxy_logs="$(kubectl -n observability logs \
+            -l app.kubernetes.io/name=telegram-egress \
+            -c squid \
+            --prefix=true \
+            --since-time="$vpn_test_started_at")"
+          grep -Eq '(FIRSTUP|HIER|DEFAULT)_PARENT' <<<"$proxy_logs"
 
+          direct_test_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           send_test_alert direct "Telegram notification delivered through direct fallback."
-          wait_for_notification "$notifications_after_vpn"
+          wait_for_notification "$successful_after_vpn"
           direct_logs="$(kubectl -n observability logs \
             -l app.kubernetes.io/name=telegram-egress \
-            --all-containers=true \
+            -c squid \
             --prefix=true \
-            --since=3m)"
+            --since-time="$direct_test_started_at")"
           grep -q 'HIER_DIRECT' <<<"$direct_logs"
 
           failures_after="$(metric_sum alertmanager_notifications_failed_total)"
