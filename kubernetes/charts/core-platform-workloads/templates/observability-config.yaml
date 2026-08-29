@@ -456,6 +456,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: core-platform
+              environment: production
             annotations:
               summary: Kubernetes node metrics are unavailable.
               description: Kubelet node metrics have been unavailable for at least 5 minutes.
@@ -465,6 +467,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: core-platform
+              environment: production
             annotations:
               summary: Kubernetes cAdvisor metrics are unavailable.
               description: Kubelet cAdvisor container metrics have been unavailable for at least 5 minutes.
@@ -474,6 +478,8 @@ data:
             for: 5m
             labels:
               severity: critical
+              alert_owner: observability
+              environment: production
             annotations:
               summary: Kubernetes log collection is incomplete.
               description: At least one Kubernetes node has no healthy OpenTelemetry filelog collector, so its container logs may be missing from VictoriaLogs.
@@ -484,6 +490,8 @@ data:
             for: 1m
             labels:
               severity: critical
+              alert_owner: observability
+              environment: production
             annotations:
               summary: Kubernetes logs cannot be exported to VictoriaLogs.
               description: A node log collector failed to export one or more log records during the last 5 minutes.
@@ -494,6 +502,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: core-platform
+              environment: production
             annotations:
               summary: Linux node exporter metrics are unavailable.
               description: Host OS metrics from node-exporter have been unavailable for at least 5 minutes.
@@ -503,6 +513,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}dotnet-template{{ "{{" }} else if match "^https://(dev[.])?(api[.])?tactical-heroes[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "^https://dev[.]" $labels.http_url {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Platform endpoint is not reachable.
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
@@ -512,6 +524,8 @@ data:
             for: 3m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}dotnet-template{{ "{{" }} else if match "^https://(dev[.])?(api[.])?tactical-heroes[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "^https://dev[.]" $labels.http_url {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Platform endpoint is slow.
               description: One public platform endpoint has responded slower than 2 seconds for at least 3 minutes.
@@ -521,6 +535,8 @@ data:
             for: 30m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^https://(dev[.])?api[.]dotnet-template[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}dotnet-template{{ "{{" }} else if match "^https://(dev[.])?(api[.])?tactical-heroes[.]panixida[.]ru/health$" $labels.http_url {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "^https://dev[.]" $labels.http_url {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: TLS certificate expires soon.
               description: A public endpoint TLS certificate has less than 14 days remaining.
@@ -530,6 +546,8 @@ data:
             for: 2m
             labels:
               severity: warning
+              alert_owner: observability
+              environment: production
             annotations:
               summary: Telegram VPN proxy is unavailable.
               description: Telegram is not reachable through the preferred WireGuard route; the direct fallback remains active.
@@ -540,6 +558,8 @@ data:
             for: 2m
             labels:
               severity: critical
+              alert_owner: observability
+              environment: production
             annotations:
               summary: Telegram alert delivery route is unavailable.
               description: Telegram is not reachable through either the WireGuard route or the direct fallback.
@@ -550,6 +570,8 @@ data:
             for: 1m
             labels:
               severity: critical
+              alert_owner: observability
+              environment: production
             annotations:
               summary: Alertmanager failed to send a Telegram notification.
               description: At least one Telegram delivery attempt has failed during the last 5 minutes.
@@ -560,6 +582,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: postgresql
+              environment: production
             annotations:
               summary: Timeweb PostgreSQL exporter is unavailable.
               description: Managed PostgreSQL DB exporter metrics have been unavailable for at least 5 minutes.
@@ -569,6 +593,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: postgresql
+              environment: production
             annotations:
               summary: Timeweb PostgreSQL host exporter is unavailable.
               description: Managed PostgreSQL host node exporter metrics have been unavailable for at least 5 minutes.
@@ -578,6 +604,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: postgresql
+              environment: production
             annotations:
               summary: Managed PostgreSQL exporter scrape is failing.
               description: The PostgreSQL exporter reports scrape errors for the managed database.
@@ -587,6 +615,8 @@ data:
             for: 5m
             labels:
               severity: critical
+              alert_owner: postgresql
+              environment: production
             annotations:
               summary: Managed PostgreSQL is not reachable by exporter.
               description: The PostgreSQL exporter cannot reach the managed PostgreSQL instance.
@@ -596,6 +626,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: postgresql
+              environment: production
             annotations:
               summary: Managed PostgreSQL connection usage is high.
               description: PostgreSQL connection usage has stayed above 80 percent for at least 10 minutes.
@@ -605,6 +637,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^timeweb-dbaas-" $labels.service_name {{ "}}" }}postgresql{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: production
             annotations:
               summary: Host CPU usage is high.
               description: Host CPU usage has stayed above 85 percent for at least 10 minutes.
@@ -614,6 +648,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^timeweb-dbaas-" $labels.service_name {{ "}}" }}postgresql{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: production
             annotations:
               summary: Host memory usage is high.
               description: Host memory usage has stayed above 90 percent for at least 10 minutes.
@@ -623,6 +659,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^timeweb-dbaas-" $labels.service_name {{ "}}" }}postgresql{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: production
             annotations:
               summary: Host filesystem usage is high.
               description: Host filesystem usage has stayed above 85 percent for at least 10 minutes.
@@ -632,6 +670,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application HTTP route is slow.
               description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes.
@@ -641,6 +681,8 @@ data:
             for: 1m
             labels:
               severity: critical
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application 5xx error rate is high.
               description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute.
@@ -650,6 +692,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application GC pause ratio is high.
               description: .NET GC pause time has stayed above 10 percent of wall time for at least 5 minutes.
@@ -659,6 +703,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application CPU usage is high.
               description: Application process CPU usage has stayed above 80 percent for at least 10 minutes.
@@ -668,6 +714,8 @@ data:
             for: 10m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.namespace {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application container memory usage is high.
               description: Application container memory usage has stayed above 85 percent of its Kubernetes limit for at least 10 minutes.
@@ -677,6 +725,8 @@ data:
             for: 5m
             labels:
               severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application exception rate is high.
               description: .NET exception rate has stayed above 1 exception per second for at least 5 minutes.
@@ -698,10 +748,12 @@ data:
         interval: 1m
         rules:
           - alert: KubernetesErrorLogs
-            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats by ("k8s.container.name") count() as error_logs | filter error_logs:>0'
+            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats by ("k8s.namespace.name", "k8s.container.name") count() as error_logs | filter error_logs:>0'
             labels:
               severity: warning
               source: victorialogs
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.k8s_namespace_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.k8s_namespace_name {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.k8s_namespace_name "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.k8s_namespace_name {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Error-like Kubernetes logs were detected.
               description: VictoriaLogs found error-like application or infrastructure container logs during the last evaluation window.
@@ -720,19 +772,12 @@ data:
     templates:
       - /etc/alertmanager/telegram.tmpl
     route:
-      receiver: telegram
-      group_by: ["alertname", "severity", "instance", "kubernetes_io_hostname"]
+      receiver: telegram-unclassified-tests
+      group_by: ["alert_owner", "alertname", "severity", "environment"]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
       routes:
-        - receiver: telegram
-          matchers:
-            - alertname="KubernetesErrorLogs"
-          group_by: ["alertname", "severity", "source"]
-          group_wait: 30s
-          group_interval: 1m
-          repeat_interval: 1h
         - receiver: telegram-vpn-smoke
           matchers:
             - telegram_route_test="vpn"
@@ -745,10 +790,76 @@ data:
           group_wait: 0s
           group_interval: 1m
           repeat_interval: 1h
+        - receiver: telegram-tactical-heroes
+          matchers:
+            - alert_owner="tactical-heroes"
+        - receiver: telegram-dotnet-template
+          matchers:
+            - alert_owner="dotnet-template"
+        - receiver: telegram-postgresql
+          matchers:
+            - alert_owner="postgresql"
+        - receiver: telegram-core-platform
+          matchers:
+            - alert_owner="core-platform"
+        - receiver: telegram-observability
+          matchers:
+            - alert_owner="observability"
     receivers:
-      - name: telegram
+      - name: telegram-tactical-heroes
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "tactical-heroes" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-dotnet-template
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "dotnet-template" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-postgresql
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "postgresql" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-core-platform
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "core-platform" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-observability
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "observability" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: true
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+      - name: telegram-unclassified-tests
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
               proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
@@ -758,15 +869,18 @@ data:
       - name: telegram-vpn-smoke
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
               proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
             send_resolved: false
+            disable_notifications: true
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
       - name: telegram-direct-smoke
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
               proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
@@ -774,6 +888,7 @@ data:
                 X-Panixida-Telegram-Route:
                   - direct
             send_resolved: false
+            disable_notifications: true
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
   # Telegram messages are limited to 4096 characters. Keep grouped alerts compact.
@@ -797,6 +912,21 @@ data:
     {{ "{{" }}- if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
     {{ "{{" }}- with $alert.Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.alert_owner {{ "}}" }}
+    🏷 <code>{{ "{{" }} . | html {{ "}}" }}</code>{{ "{{" }} with $alert.Labels.environment {{ "}}" }} / <code>{{ "{{" }} . | html {{ "}}" }}</code>{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.service_name {{ "}}" }}
+    ⚙️ <code>{{ "{{" }} printf "%.100s" . | html {{ "}}" }}</code>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.namespace {{ "}}" }}
+    📦 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.k8s_namespace_name {{ "}}" }}
+    📦 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.http_url {{ "}}" }}
+    🌐 <code>{{ "{{" }} printf "%.160s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- with $alert.Labels.k8s_container_name {{ "}}" }}
     📦 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>

@@ -141,6 +141,13 @@ observability:
   alerts:
     telegram:
       chatId: "-1003738995665"
+      topics:
+        tactical-heroes: 955
+        dotnet-template: 956
+        postgresql: 958
+        core-platform: 960
+        observability: 962
+        unclassified-tests: 964
   telegramEgress:
     vpnReplicas: 1
     proxyReplicas: 2
