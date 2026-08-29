@@ -412,9 +412,9 @@ data:
     http_access allow telegram_domains
     http_access deny all
 
-    # Keep the VPN parent eligible for every request. Squid still falls back to
-    # the direct destination within the same request when the connection fails.
-    cache_peer telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local parent 8888 0 no-query round-robin name=vpn connect-timeout=3 connect-fail-limit=1000
+    # Prefer the VPN parent for every normal request. Squid still falls back to
+    # the direct destination when the parent connection fails.
+    cache_peer telegram-vpn.{{ .Values.observability.namespace }}.svc.cluster.local parent 8888 0 no-query round-robin name=vpn connect-timeout=3 connect-fail-limit=3
     cache_peer_access vpn deny direct_route
     cache_peer_access vpn allow telegram_domains
     cache_peer_access vpn deny all
@@ -422,12 +422,12 @@ data:
     always_direct allow direct_route
     nonhierarchical_direct off
     prefer_direct off
+    minimum_direct_rtt 0
+    minimum_direct_hops 0
     connect_timeout 5 seconds
     forward_timeout 15 seconds
     request_timeout 30 seconds
     shutdown_lifetime 1 second
-    debug_options ALL,1 15,8 44,3
-
     cache deny all
     cache_mem 16 MB
     cache_log /var/log/squid/cache.log
