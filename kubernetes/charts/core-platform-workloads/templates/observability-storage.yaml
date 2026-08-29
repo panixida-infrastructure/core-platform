@@ -22,6 +22,7 @@ spec:
         app.kubernetes.io/name: victoriametrics
         app.kubernetes.io/part-of: core-platform
     spec:
+      {{- include "core-platform-workloads.preferAwayFromSonarqube" . | nindent 6 }}
       containers:
         - name: victoriametrics
           image: {{ .Values.observability.images.victoriametrics | quote }}

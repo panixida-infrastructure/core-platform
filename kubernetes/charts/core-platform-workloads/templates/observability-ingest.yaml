@@ -23,6 +23,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8888"
     spec:
+      {{- include "core-platform-workloads.preferAwayFromSonarqube" . | nindent 6 }}
       serviceAccountName: observability-agent
       containers:
         - name: otel-collector

@@ -27,6 +27,7 @@ spec:
         app.kubernetes.io/name: keycloak
         app.kubernetes.io/part-of: core-platform
     spec:
+      {{- include "core-platform-workloads.preferAwayFromSonarqube" . | nindent 6 }}
       {{- if $jgroupsCleanupEnabled }}
       initContainers:
         - name: jgroups-cleanup
