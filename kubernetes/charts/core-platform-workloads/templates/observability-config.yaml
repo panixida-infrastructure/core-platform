@@ -776,38 +776,50 @@ data:
             send_resolved: false
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+  # Telegram messages are limited to 4096 characters. Keep grouped alerts compact.
   telegram.tmpl: |
     {{ "{{" }} define "telegram.panixida.message" {{ "}}" -}}
+    {{ "{{" }}- $maxAlerts := 5 {{ "}}" -}}
     {{ "{{" }}- if gt (len .Alerts.Firing) 0 {{ "}}" -}}
     🔥 <b>Alerts Firing</b> 🔥
     {{ "{{" }}- else {{ "}}" -}}
     ✅ <b>Alerts Resolved</b> ✅
     {{ "{{" }}- end {{ "}}" }}
 
-    {{ "{{" }}- range .Alerts {{ "}}" }}
+    📊 Firing: <b>{{ "{{" }} len .Alerts.Firing {{ "}}" }}</b> | Resolved: <b>{{ "{{" }} len .Alerts.Resolved {{ "}}" }}</b>
+    {{ "{{" }}- if gt (len .Alerts) $maxAlerts {{ "}}" }}
+    ⚠️ Showing the first {{ "{{" }} $maxAlerts {{ "}}" }} of {{ "{{" }} len .Alerts {{ "}}" }} alerts. Open Grafana for the complete group.
+    {{ "{{" }}- end {{ "}}" }}
+
+    {{ "{{" }}- range $index, $alert := .Alerts {{ "}}" }}
+    {{ "{{" }}- if lt $index $maxAlerts {{ "}}" }}
     ---
-    {{ "{{" }}- if eq .Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} .Labels.alertname {{ "}}" }}</b>
-    {{ "{{" }}- with .Labels.severity {{ "}}" }}
+    {{ "{{" }}- if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
+    {{ "{{" }}- with $alert.Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with .Labels.k8s_container_name {{ "}}" }}
-    📦 <code>{{ "{{" }} . {{ "}}" }}</code>
+    {{ "{{" }}- with $alert.Labels.k8s_container_name {{ "}}" }}
+    📦 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with .Annotations.summary {{ "}}" }}
-    📝 {{ "{{" }} . {{ "}}" }}
+    {{ "{{" }}- with $alert.Annotations.summary {{ "}}" }}
+    📝 {{ "{{" }} printf "%.160s" . | html {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with .Annotations.description {{ "}}" }}
-    📄 {{ "{{" }} . {{ "}}" }}
+    {{ "{{" }}- if eq (len $.Alerts) 1 {{ "}}" }}
+    {{ "{{" }}- with $alert.Annotations.description {{ "}}" }}
+    📄 {{ "{{" }} printf "%.500s" . | html {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with .Labels.instance {{ "}}" }}
-    📍 <code>{{ "{{" }} . {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- with .Labels.kubernetes_io_hostname {{ "}}" }}
-    🖥 <code>{{ "{{" }} . {{ "}}" }}</code>
+    {{ "{{" }}- with $alert.Labels.instance {{ "}}" }}
+    📍 <code>{{ "{{" }} printf "%.120s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
-    {{ "{{" }}- if or .Annotations.dashboard_url .Annotations.logs_url {{ "}}" }}
-    🛠 {{ "{{" }} with .Annotations.dashboard_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Grafana</a>{{ "{{" }} end {{ "}}" }}{{ "{{" }} if and .Annotations.dashboard_url .Annotations.logs_url {{ "}}" }} | {{ "{{" }} end {{ "}}" }}{{ "{{" }} with .Annotations.logs_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Logs</a>{{ "{{" }} end {{ "}}" }}
+    {{ "{{" }}- with $alert.Labels.kubernetes_io_hostname {{ "}}" }}
+    🖥 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- end {{ "}}" }}
+
+    {{ "{{" }}- if or .CommonAnnotations.dashboard_url .CommonAnnotations.logs_url {{ "}}" }}
+    🛠 {{ "{{" }} with .CommonAnnotations.dashboard_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Grafana</a>{{ "{{" }} end {{ "}}" }}{{ "{{" }} if and .CommonAnnotations.dashboard_url .CommonAnnotations.logs_url {{ "}}" }} | {{ "{{" }} end {{ "}}" }}{{ "{{" }} with .CommonAnnotations.logs_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Logs</a>{{ "{{" }} end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
 {{- end }}
