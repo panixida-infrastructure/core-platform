@@ -752,8 +752,8 @@ data:
             labels:
               severity: warning
               source: victorialogs
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.k8s_namespace_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.k8s_namespace_name {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.k8s_namespace_name "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.k8s_namespace_name {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" (index $labels "k8s.namespace.name") {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" (index $labels "k8s.namespace.name") {{ "}}" }}tactical-heroes{{ "{{" }} else if eq (index $labels "k8s.namespace.name") "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" (index $labels "k8s.namespace.name") {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Error-like Kubernetes logs were detected.
               description: VictoriaLogs found error-like application or infrastructure container logs during the last evaluation window.
