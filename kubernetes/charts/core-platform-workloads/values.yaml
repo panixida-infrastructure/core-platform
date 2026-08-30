@@ -138,6 +138,7 @@ observability:
     - https://api.tactical-heroes.panixida.ru/health
     - https://dev.tactical-heroes.panixida.ru/health
     - https://tactical-heroes.panixida.ru/health
+    - http://telegram-alert-gateway.observability.svc.cluster.local/health/ready
   alerts:
     telegram:
       chatId: "-1003738995665"

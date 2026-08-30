@@ -143,6 +143,10 @@ path "sys/policies/acl/observability-app" {
   capabilities = ["create", "read", "update"]
 }
 
+path "sys/policies/acl/telegram-alert-gateway-deploy" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "sys/policies/acl/dotnet-template-app" {
   capabilities = ["create", "read", "update"]
 }
@@ -188,6 +192,32 @@ path "secret/data/core-platform/telegram-alert-gateway" {
 }
 
 path "secret/metadata/core-platform/telegram-alert-gateway" {
+  capabilities = ["read"]
+}
+
+path "secret/data/applications/dotnet-template/registry" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/applications/dotnet-template/registry" {
+  capabilities = ["read"]
+}
+EOF
+
+bao policy write telegram-alert-gateway-deploy - <<'EOF'
+path "secret/data/core-platform/github" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/core-platform/github" {
+  capabilities = ["read"]
+}
+
+path "secret/data/applications/dotnet-template/registry" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/applications/dotnet-template/registry" {
   capabilities = ["read"]
 }
 EOF
@@ -346,6 +376,12 @@ bao write "auth/${kubernetes_auth_path}/role/observability" \
   bound_service_account_names=observability-external-secrets \
   bound_service_account_namespaces=observability \
   policies=observability-app \
+  ttl=1h
+
+bao write "auth/${kubernetes_auth_path}/role/telegram-alert-gateway" \
+  bound_service_account_names=telegram-alert-gateway-external-secrets \
+  bound_service_account_namespaces=telegram-alert-gateway \
+  policies=telegram-alert-gateway-deploy \
   ttl=1h
 
 bao write "auth/${kubernetes_auth_path}/role/dotnet-template-development" \

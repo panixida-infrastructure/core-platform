@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: Type test-telegram-alerting to send VPN and direct fallback test notifications
+        description: Type test-telegram-alerting to verify emergency routes and the alert gateway
         required: true
         type: string
 
@@ -177,3 +177,131 @@ jobs:
           fi
 
           echo "VPN and direct fallback Telegram notifications were delivered successfully."
+
+      - name: Test alert gateway delivery, idempotency, and log ingestion
+        run: |
+          set -euo pipefail
+
+          kubectl -n observability rollout status deployment/telegram-alert-gateway --timeout=10m
+          kubectl -n observability rollout status statefulset/alertmanager --timeout=10m
+
+          kubectl -n observability port-forward service/telegram-alert-gateway 18080:80 >/tmp/telegram-alert-gateway-port-forward.log 2>&1 &
+          gateway_port_forward_pid="$!"
+          kubectl -n observability port-forward service/alertmanager 19093:9093 >/tmp/alertmanager-gateway-port-forward.log 2>&1 &
+          alertmanager_port_forward_pid="$!"
+          smoke_namespace="alert-gateway-smoke"
+          cleanup() {
+            set +e
+            kill "$gateway_port_forward_pid" "$alertmanager_port_forward_pid" >/dev/null 2>&1 || true
+            kubectl delete namespace "$smoke_namespace" --wait=false >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/health/ready >/dev/null \
+              && curl -fsS http://127.0.0.1:19093/-/ready >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18080/health/ready >/dev/null
+          curl -fsS http://127.0.0.1:19093/-/ready >/dev/null
+
+          webhook_token="$(kubectl -n observability get secret telegram-alert-gateway-env -o jsonpath='{.data.Webhook__Token}' | base64 -d)"
+          test_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          alert_starts_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          alert_ends_at="$(date -u -d '+10 minutes' +%Y-%m-%dT%H:%M:%SZ)"
+          fingerprint="gateway-smoke-$(date -u +%s)"
+          gateway_payload="$(jq -n \
+            --arg starts_at "$alert_starts_at" \
+            --arg fingerprint "$fingerprint" \
+            '{
+              status: "firing",
+              externalUrl: "https://github.com/panixida-infrastructure/core-platform/actions",
+              alerts: [{
+                status: "firing",
+                labels: {
+                  alertname: "TelegramAlertGatewaySmokeTest",
+                  severity: "info",
+                  alert_owner: "unclassified-tests"
+                },
+                annotations: {
+                  summary: "Alert gateway delivery and idempotency smoke test."
+                },
+                startsAt: $starts_at,
+                generatorUrl: "https://github.com/panixida-infrastructure/core-platform/actions",
+                fingerprint: $fingerprint
+              }]
+            }')"
+
+          first_response="$(curl -fsS -X POST \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${webhook_token}" \
+            --data-binary "$gateway_payload" \
+            http://127.0.0.1:18080/api/v1/webhooks/alertmanager)"
+          retry_response="$(curl -fsS -X POST \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${webhook_token}" \
+            --data-binary "$gateway_payload" \
+            http://127.0.0.1:18080/api/v1/webhooks/alertmanager)"
+
+          if [ "$(jq -r '.queued' <<<"$first_response")" != "1" ] \
+            || [ "$(jq -r '.queued' <<<"$retry_response")" != "0" ]; then
+            echo "::error::Gateway webhook retry was not idempotent"
+            exit 1
+          fi
+
+          delivery_count() {
+            kubectl -n observability logs deployment/telegram-alert-gateway --since-time="$test_started_at" \
+              | grep -c 'was sent to topic unclassified-tests' || true
+          }
+
+          wait_for_delivery_after() {
+            local previous_count="$1"
+            local attempts="${2:-90}"
+            for _ in $(seq 1 "$attempts"); do
+              if [ "$(delivery_count)" -gt "$previous_count" ]; then
+                return 0
+              fi
+              sleep 2
+            done
+            return 1
+          }
+
+          wait_for_delivery_after 0
+          direct_delivery_count="$(delivery_count)"
+
+          jq -n \
+            --arg starts_at "$alert_starts_at" \
+            --arg ends_at "$alert_ends_at" \
+            '[{
+              labels: {
+                alertname: "AlertmanagerGatewaySmokeTest",
+                severity: "info",
+                alert_owner: "unclassified-tests",
+                instance: "github-actions"
+              },
+              annotations: {
+                summary: "Alertmanager webhook delivery to the alert gateway."
+              },
+              startsAt: $starts_at,
+              endsAt: $ends_at,
+              generatorURL: "https://github.com/panixida-infrastructure/core-platform/actions"
+            }]' \
+            | curl -fsS -X POST \
+                -H 'Content-Type: application/json' \
+                --data-binary @- \
+                http://127.0.0.1:19093/api/v2/alerts
+
+          wait_for_delivery_after "$direct_delivery_count"
+          alertmanager_delivery_count="$(delivery_count)"
+
+          kubectl create namespace "$smoke_namespace" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$smoke_namespace" run log-smoke \
+            --image=busybox:1.36.1 \
+            --restart=Never \
+            --command -- /bin/sh -c 'sleep 30; echo "ERROR telegram alert gateway VictoriaLogs smoke test"; sleep 10'
+          kubectl -n "$smoke_namespace" wait --for=jsonpath='{.status.phase}'=Succeeded pod/log-smoke --timeout=3m
+
+          wait_for_delivery_after "$alertmanager_delivery_count" 180
+          echo "Gateway webhook, Alertmanager integration, and VictoriaLogs ingestion were delivered successfully."

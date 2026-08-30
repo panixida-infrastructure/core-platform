@@ -1,0 +1,269 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: telegram-alert-gateway
+  labels:
+    kargo.akuity.io/project: "true"
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: telegram-alert-gateway-external-secrets
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-35"
+automountServiceAccountToken: false
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: telegram-alert-gateway
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"
+spec:
+  provider:
+    vault:
+      server: http://openbao.secrets.svc.cluster.local:8200
+      path: secret
+      version: v2
+      auth:
+        kubernetes:
+          mountPath: kubernetes
+          role: telegram-alert-gateway
+          serviceAccountRef:
+            name: telegram-alert-gateway-external-secrets
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: telegram-alert-gateway-git
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-25"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: telegram-alert-gateway
+    kind: SecretStore
+  target:
+    name: telegram-alert-gateway-git
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      type: Opaque
+      metadata:
+        labels:
+          kargo.akuity.io/cred-type: git
+      data:
+        repoURL: https://github.com/panixida-infrastructure/telegram-alert-gateway.git
+        username: x-access-token
+        password: "{{ .password }}"
+  data:
+    - secretKey: password
+      remoteRef:
+        key: core-platform/github
+        property: SERVER_GH_PAT
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: telegram-alert-gateway-api-image
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-25"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: telegram-alert-gateway
+    kind: SecretStore
+  target:
+    name: telegram-alert-gateway-api-image
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      type: Opaque
+      metadata:
+        labels:
+          kargo.akuity.io/cred-type: image
+      data:
+        repoURL: ghcr.io/panixida-infrastructure/telegram-alert-gateway/api
+        username: "{{ .username }}"
+        password: "{{ .password }}"
+  data:
+    - secretKey: username
+      remoteRef:
+        key: applications/dotnet-template/registry
+        property: REGISTRY_USER
+    - secretKey: password
+      remoteRef:
+        key: applications/dotnet-template/registry
+        property: REGISTRY_TOKEN
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: telegram-alert-gateway-migrator-image
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-25"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: telegram-alert-gateway
+    kind: SecretStore
+  target:
+    name: telegram-alert-gateway-migrator-image
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      type: Opaque
+      metadata:
+        labels:
+          kargo.akuity.io/cred-type: image
+      data:
+        repoURL: ghcr.io/panixida-infrastructure/telegram-alert-gateway/ef-migrator
+        username: "{{ .username }}"
+        password: "{{ .password }}"
+  data:
+    - secretKey: username
+      remoteRef:
+        key: applications/dotnet-template/registry
+        property: REGISTRY_USER
+    - secretKey: password
+      remoteRef:
+        key: applications/dotnet-template/registry
+        property: REGISTRY_TOKEN
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Project
+metadata:
+  name: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: telegram-alert-gateway
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  promotionPolicies:
+    - stageSelector:
+        name: production
+      autoPromotionEnabled: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
+metadata:
+  name: update-helm-images
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  vars:
+    - name: gitRepo
+    - name: targetBranch
+    - name: valuesFile
+    - name: argocdApp
+    - name: apiImageRepo
+    - name: migratorImageRepo
+  steps:
+    - uses: git-clone
+      config:
+        repoURL: ${{ vars.gitRepo }}
+        checkout:
+          - branch: ${{ vars.targetBranch }}
+            path: ./repo
+    - uses: yaml-update
+      config:
+        path: ./repo/${{ vars.valuesFile }}
+        updates:
+          - key: image.tag
+            value: ${{ imageFrom(vars.apiImageRepo).Tag }}
+          - key: migrations.image.tag
+            value: ${{ imageFrom(vars.migratorImageRepo).Tag }}
+    - uses: git-commit
+      config:
+        path: ./repo
+        message: "chore: promote ${{ ctx.stage }} images"
+    - uses: git-push
+      config:
+        path: ./repo
+    - uses: argocd-update
+      config:
+        apps:
+          - name: ${{ vars.argocdApp }}
+            namespace: argocd
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: telegram-alert-gateway-production
+  namespace: telegram-alert-gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  interval: 2m0s
+  freightCreationPolicy: Automatic
+  freightCreationCriteria:
+    expression: |
+      imageFrom("ghcr.io/panixida-infrastructure/telegram-alert-gateway/api") != nil &&
+      imageFrom("ghcr.io/panixida-infrastructure/telegram-alert-gateway/ef-migrator") != nil &&
+      imageFrom("ghcr.io/panixida-infrastructure/telegram-alert-gateway/api").Tag == imageFrom("ghcr.io/panixida-infrastructure/telegram-alert-gateway/ef-migrator").Tag
+  subscriptions:
+    - image:
+        repoURL: ghcr.io/panixida-infrastructure/telegram-alert-gateway/api
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^production-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+    - image:
+        repoURL: ghcr.io/panixida-infrastructure/telegram-alert-gateway/ef-migrator
+        imageSelectionStrategy: NewestBuild
+        allowTagsRegexes:
+          - ^production-[0-9]+$
+        discoveryLimit: 20
+        strictSemvers: true
+        cacheByTag: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: production
+  namespace: telegram-alert-gateway
+  labels:
+    environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: telegram-alert-gateway-production
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      steps:
+        - task:
+            name: update-helm-images
+          vars:
+            - name: gitRepo
+              value: https://github.com/panixida-infrastructure/telegram-alert-gateway.git
+            - name: targetBranch
+              value: main
+            - name: valuesFile
+              value: deploy/helm/telegram-alert-gateway/images-production.yaml
+            - name: argocdApp
+              value: telegram-alert-gateway
+            - name: apiImageRepo
+              value: ghcr.io/panixida-infrastructure/telegram-alert-gateway/api
+            - name: migratorImageRepo
+              value: ghcr.io/panixida-infrastructure/telegram-alert-gateway/ef-migrator

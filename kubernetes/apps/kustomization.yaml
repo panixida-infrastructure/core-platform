@@ -9,6 +9,8 @@ resources:
   - applications/tactical-heroes-kargo.yaml
   - applications/tactical-heroes-admin.yaml
   - applications/tactical-heroes-admin-kargo.yaml
+  - applications/telegram-alert-gateway.yaml
+  - applications/telegram-alert-gateway-kargo.yaml
   - platform/namespaces.yaml
   - platform/coredns.yaml
   - platform/envoy-gateway-config.yaml

@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: telegram-alert-gateway
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: telegram-alert-gateway
+    app.kubernetes.io/part-of: core-platform
+    environment: production
+  annotations:
+    kargo.akuity.io/authorized-stage: telegram-alert-gateway:production
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/panixida-infrastructure/ci-cd.git
+      targetRevision: main
+      path: charts/application
+      helm:
+        releaseName: telegram-alert-gateway
+        valueFiles:
+          - $values/deploy/helm/telegram-alert-gateway/values.yaml
+          - $values/deploy/helm/telegram-alert-gateway/values-production.yaml
+          - $values/deploy/helm/telegram-alert-gateway/images-production.yaml
+    - repoURL: https://github.com/panixida-infrastructure/telegram-alert-gateway.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

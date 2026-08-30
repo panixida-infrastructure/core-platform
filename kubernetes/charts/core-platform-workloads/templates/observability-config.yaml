@@ -318,6 +318,11 @@ data:
           - /var/log/pods/*/*/*.log
         exclude:
           - /var/log/pods/observability_otel-logs-*/*/*.log
+          - /var/log/pods/observability_telegram-alert-gateway-*/api/*.log
+          - /var/log/pods/tactical-heroes-development_*/api/*.log
+          - /var/log/pods/tactical-heroes-production_*/api/*.log
+          - /var/log/pods/dotnet-template-development_*/api/*.log
+          - /var/log/pods/dotnet-template-production_*/api/*.log
         start_at: end
         include_file_name: false
         include_file_path: true
@@ -509,7 +514,7 @@ data:
               description: Host OS metrics from node-exporter have been unavailable for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
           - alert: PlatformEndpointDown
-            expr: max by (http_url) (httpcheck_status_ratio{http_status_class="2xx"}) == 0
+            expr: max by (http_url) (httpcheck_status_ratio{http_status_class="2xx",http_url!="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready"}) == 0
             for: 5m
             labels:
               severity: warning
@@ -520,7 +525,7 @@ data:
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: PlatformEndpointSlow
-            expr: max by (http_url) (httpcheck_duration_milliseconds) > 2000
+            expr: max by (http_url) (httpcheck_duration_milliseconds{http_url!="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready"}) > 2000
             for: 3m
             labels:
               severity: warning
@@ -553,6 +558,39 @@ data:
               description: Telegram is not reachable through the preferred WireGuard route; the direct fallback remains active.
               dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
+          - alert: TelegramAlertGatewayDown
+            expr: max(httpcheck_status_ratio{http_url="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{http_url="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready",http_status_class="2xx"})
+            for: 2m
+            labels:
+              severity: critical
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Telegram alert gateway is unavailable.
+              description: The gateway readiness endpoint or its PostgreSQL dependency has been unavailable for at least two minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: TelegramAlertGatewayDeliveryFailures
+            expr: increase(telegram_alert_gateway_notifications_failed_total[5m]) > 0
+            for: 1m
+            labels:
+              severity: critical
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Telegram alert gateway cannot deliver notifications.
+              description: At least one Telegram delivery attempt failed during the last five minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+          - alert: AlertmanagerGatewayDeliveryFailures
+            expr: increase(alertmanager_notifications_failed_total{integration="webhook"}[5m]) > 0
+            for: 1m
+            labels:
+              severity: critical
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Alertmanager cannot reach the Telegram alert gateway.
+              description: At least one Alertmanager webhook delivery failed during the last five minutes.
+              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
           - alert: TelegramEgressDown
             expr: time() - max(timestamp(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=~"2.."})) > 60 or absent(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=~"2.."})
             for: 2m
@@ -735,33 +773,6 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: vmalert-log-rules
-  namespace: {{ .Values.observability.namespace }}
-  labels:
-    {{- include "core-platform-workloads.labels" . | nindent 4 }}
-    app.kubernetes.io/name: vmalert-logs
-data:
-  rules.yml: |
-    groups:
-      - name: kubernetes-logs
-        type: vlogs
-        interval: 1m
-        rules:
-          - alert: KubernetesErrorLogs
-            expr: '_time:5m (error OR ERROR OR exception OR Exception OR fatal OR FATAL) | stats by ("k8s.namespace.name", "k8s.container.name") count() as error_logs | filter error_logs:>0'
-            labels:
-              severity: warning
-              source: victorialogs
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" (index $labels "k8s.namespace.name") {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" (index $labels "k8s.namespace.name") {{ "}}" }}tactical-heroes{{ "{{" }} else if eq (index $labels "k8s.namespace.name") "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" (index $labels "k8s.namespace.name") {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
-            annotations:
-              summary: Error-like Kubernetes logs were detected.
-              description: VictoriaLogs found error-like application or infrastructure container logs during the last evaluation window.
-              logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
   name: alertmanager
   namespace: {{ .Values.observability.namespace }}
   labels:
@@ -772,12 +783,18 @@ data:
     templates:
       - /etc/alertmanager/telegram.tmpl
     route:
-      receiver: telegram-unclassified-tests
-      group_by: ["alert_owner", "alertname", "severity", "environment"]
+      receiver: gateway-unclassified-tests
+      group_by: ["alert_owner", "environment"]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 4h
       routes:
+        - receiver: telegram-gateway-emergency
+          matchers:
+            - alertname=~"TelegramAlertGatewayDown|TelegramAlertGatewayDeliveryFailures|AlertmanagerGatewayDeliveryFailures"
+          group_wait: 0s
+          group_interval: 2m
+          repeat_interval: 30m
         - receiver: telegram-vpn-smoke
           matchers:
             - telegram_route_test="vpn"
@@ -790,63 +807,23 @@ data:
           group_wait: 0s
           group_interval: 1m
           repeat_interval: 1h
-        - receiver: telegram-tactical-heroes
+        - receiver: gateway-tactical-heroes
           matchers:
             - alert_owner="tactical-heroes"
-        - receiver: telegram-dotnet-template
+        - receiver: gateway-dotnet-template
           matchers:
             - alert_owner="dotnet-template"
-        - receiver: telegram-postgresql
+        - receiver: gateway-postgresql
           matchers:
             - alert_owner="postgresql"
-        - receiver: telegram-core-platform
+        - receiver: gateway-core-platform
           matchers:
             - alert_owner="core-platform"
-        - receiver: telegram-observability
+        - receiver: gateway-observability
           matchers:
             - alert_owner="observability"
     receivers:
-      - name: telegram-tactical-heroes
-        telegram_configs:
-          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "tactical-heroes" }}
-            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
-            http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
-            send_resolved: true
-            parse_mode: HTML
-            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-      - name: telegram-dotnet-template
-        telegram_configs:
-          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "dotnet-template" }}
-            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
-            http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
-            send_resolved: true
-            parse_mode: HTML
-            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-      - name: telegram-postgresql
-        telegram_configs:
-          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "postgresql" }}
-            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
-            http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
-            send_resolved: true
-            parse_mode: HTML
-            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-      - name: telegram-core-platform
-        telegram_configs:
-          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "core-platform" }}
-            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
-            http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
-            send_resolved: true
-            parse_mode: HTML
-            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-      - name: telegram-observability
+      - name: telegram-gateway-emergency
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
             message_thread_id: {{ index .Values.observability.alerts.telegram.topics "observability" }}
@@ -856,16 +833,60 @@ data:
             send_resolved: true
             parse_mode: HTML
             message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
-      - name: telegram-unclassified-tests
-        telegram_configs:
-          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
-            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
-            http_config:
-              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+      - name: gateway-tactical-heroes
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
             send_resolved: true
-            parse_mode: HTML
-            message: '{{ "{{" }} template "telegram.panixida.message" . {{ "}}" }}'
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-dotnet-template
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-postgresql
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-core-platform
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-observability
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-unclassified-tests
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
       - name: telegram-vpn-smoke
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
@@ -908,7 +929,7 @@ data:
 
     {{ "{{" }}- range $index, $alert := .Alerts {{ "}}" }}
     {{ "{{" }}- if lt $index $maxAlerts {{ "}}" }}
-    ---
+    ────────────
     {{ "{{" }}- if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
     {{ "{{" }}- with $alert.Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}

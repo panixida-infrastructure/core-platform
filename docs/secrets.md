@@ -74,6 +74,7 @@ secret/core-platform/observability
 secret/core-platform/openbao
 secret/core-platform/sonarqube
 secret/core-platform/sso
+secret/core-platform/telegram-alert-gateway
 secret/core-platform/timeweb
 ```
 
@@ -144,10 +145,28 @@ TACTICAL_HEROES_DEV_DB_PASSWORD
 TACTICAL_HEROES_PROD_DB_NAME
 TACTICAL_HEROES_PROD_DB_USERNAME
 TACTICAL_HEROES_PROD_DB_PASSWORD
+TELEGRAM_ALERT_GATEWAY_DB_NAME
+TELEGRAM_ALERT_GATEWAY_DB_USERNAME
+TELEGRAM_ALERT_GATEWAY_DB_PASSWORD
+TELEGRAM_ALERT_GATEWAY_WEBHOOK_TOKEN
 TACTICAL_HEROES_DEV_CLIENT_SECRET
 TACTICAL_HEROES_PROD_CLIENT_SECRET
 TACTICAL_HEROES_SMTP_PASSWORD
 ```
+
+The gateway runtime path `secret/core-platform/telegram-alert-gateway` contains only deploy-time values synchronized to `observability/telegram-alert-gateway-env`:
+
+```text
+ConnectionStrings__PostgreSqlConnectionString
+Telegram__BotToken
+Webhook__Token
+VictoriaLogs__Username
+VictoriaLogs__Password
+```
+
+The managed PostgreSQL workflow builds this path from existing OpenBao values and generated service credentials; no value is written to Git or GitHub logs.
+
+The gateway workload and its Kargo project read the existing GHCR credentials from `secret/applications/dotnet-template/registry` through dedicated External Secrets. Kubernetes receives only a scoped image-pull secret, Kargo receives repository credentials, and the gateway process does not receive either value.
 
 `Tactical Heroes Mail` creates or updates the Timeweb mailbox and writes the complete SMTP overlay to both application paths:
 
