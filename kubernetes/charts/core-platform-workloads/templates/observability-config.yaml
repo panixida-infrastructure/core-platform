@@ -930,7 +930,7 @@ data:
     {{ "{{" }}- range $index, $alert := .Alerts {{ "}}" }}
     {{ "{{" }}- if lt $index $maxAlerts {{ "}}" }}
     ────────────
-    {{ "{{" }}- if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
+    {{ "{{" }} if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
     {{ "{{" }}- with $alert.Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
