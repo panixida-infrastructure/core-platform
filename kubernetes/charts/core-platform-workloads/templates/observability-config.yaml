@@ -330,6 +330,40 @@ data:
         operators:
           - id: container-parser
             type: container
+          - id: json-severity-parser
+            type: json_parser
+            if: 'body matches "^{.*level.*}$"'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.level
+              overwrite_text: true
+              mapping:
+                warn: warning
+                fatal: [critical, crit, panic, dpanic]
+          - id: logfmt-severity-parser
+            type: key_value_parser
+            if: 'body matches "(^|[[:space:]])level="'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.level
+              overwrite_text: true
+              mapping:
+                warn: warning
+                fatal: [critical, crit, panic, dpanic]
+          - id: klog-severity-parser
+            type: regex_parser
+            if: 'body matches "^[IWEF][0-9]{4}[[:space:]]"'
+            regex: '^(?P<klog_level>[IWEF])[0-9]{4}[[:space:]]'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.klog_level
+              preset: none
+              overwrite_text: true
+              mapping:
+                info: I
+                warn: W
+                error: E
+                fatal: F
 
     processors:
       memory_limiter:
