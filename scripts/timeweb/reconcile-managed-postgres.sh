@@ -245,7 +245,7 @@ ensure_user() {
   local existing_id
   local has_privileges
 
-  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200" \
+  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=100" \
     | jq -c --arg login "$login" '.admins[] | select(.login == $login)' \
     | head -n1)"
 
@@ -292,7 +292,7 @@ ensure_user() {
       '{login: $login, password: $password, host: "%", instance_id: $instance_id, privileges: $privileges, description: ""}')" \
     >/dev/null
 
-  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200" \
+  existing_user="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=100" \
     | jq -c --arg login "$login" '.admins[] | select(.login == $login)' \
     | head -n1)"
 
@@ -337,7 +337,7 @@ cleanup_excluded_target_resources() {
   local user_id
   local instance_id
 
-  admins="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=200")"
+  admins="$(twc GET "/api/v1/databases/${cluster_id}/admins?limit=100")"
   for login in $target_excluded_users; do
     user_id="$(jq -r --arg login "$login" '.admins[] | select(.login == $login) | .id' <<<"$admins" | head -n1)"
     if [ -n "$user_id" ]; then
@@ -346,7 +346,7 @@ cleanup_excluded_target_resources() {
     fi
   done
 
-  instances="$(twc GET "/api/v1/databases/${cluster_id}/instances?limit=200")"
+  instances="$(twc GET "/api/v1/databases/${cluster_id}/instances?limit=100")"
   for database_name in $target_excluded_databases; do
     instance_id="$(jq -r --arg name "$database_name" '.instances[] | select(.name == $name) | .id' <<<"$instances" | head -n1)"
     if [ -n "$instance_id" ]; then
@@ -517,8 +517,8 @@ target_passwords[telegram_alert_gateway]="$telegram_alert_gateway_password"
 target_privileges[telegram_alert_gateway]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
-  legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
-  legacy_admins="$(twc GET "/api/v1/databases/${legacy_cluster_id}/admins?limit=200")"
+  legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=100")"
+  legacy_admins="$(twc GET "/api/v1/databases/${legacy_cluster_id}/admins?limit=100")"
 
   while IFS= read -r row; do
     database_name="$(jq -r '.name' <<<"$row")"
