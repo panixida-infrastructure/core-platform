@@ -43,6 +43,10 @@ path "secret/data/core-platform/observability" {
   capabilities = ["create", "read", "update"]
 }
 
+path "secret/data/core-platform/telegram-alert-gateway" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "secret/data/core-platform/sonarqube" {
   capabilities = ["create", "read", "update"]
 }
@@ -176,6 +180,14 @@ path "secret/data/core-platform/observability" {
 }
 
 path "secret/metadata/core-platform/observability" {
+  capabilities = ["read"]
+}
+
+path "secret/data/core-platform/telegram-alert-gateway" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/core-platform/telegram-alert-gateway" {
   capabilities = ["read"]
 }
 EOF

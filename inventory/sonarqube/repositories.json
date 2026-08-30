@@ -46,6 +46,11 @@
       "projectName": "PANiXiDA Core Specification Pattern"
     },
     {
+      "repository": "panixida-infrastructure/telegram-alert-gateway",
+      "projectKey": "panixida-infrastructure-telegram-alert-gateway",
+      "projectName": "PANiXiDA Telegram Alert Gateway"
+    },
+    {
       "repository": "panixida-templates/dotnet-backend-template",
       "projectKey": "panixida-templates-dotnet-backend-template",
       "projectName": "PANiXiDA .NET Backend Template"

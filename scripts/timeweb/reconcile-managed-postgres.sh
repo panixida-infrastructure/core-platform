@@ -442,11 +442,17 @@ tactical_heroes_dev_user="$(jq -r '.TACTICAL_HEROES_DEV_DB_USERNAME // "tactical
 tactical_heroes_dev_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_DEV_DB_PASSWORD // empty' <<<"$applications_secret")")"
 tactical_heroes_prod_user="$(jq -r '.TACTICAL_HEROES_PROD_DB_USERNAME // "tacticalheroesprod"' <<<"$applications_secret")"
 tactical_heroes_prod_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_DB_PASSWORD // empty' <<<"$applications_secret")")"
+telegram_alert_gateway_user="$(jq -r '.TELEGRAM_ALERT_GATEWAY_DB_USERNAME // "telegram_alert_gateway"' <<<"$applications_secret")"
+telegram_alert_gateway_password="$(secret_or_generate "$(jq -r '.TELEGRAM_ALERT_GATEWAY_DB_PASSWORD // empty' <<<"$applications_secret")")"
+telegram_alert_gateway_webhook_token="$(secret_or_generate "$(jq -r '.TELEGRAM_ALERT_GATEWAY_WEBHOOK_TOKEN // empty' <<<"$applications_secret")")"
+telegram_bot_token="$(jq -r '.OBSERVABILITY_TELEGRAM_BOT_TOKEN // empty' <<<"$observability_secret")"
+victoria_logs_username="$(jq -r '.OBSERVABILITY_VM_REMOTE_WRITE_USERNAME // empty' <<<"$observability_secret")"
+victoria_logs_password="$(jq -r '.OBSERVABILITY_VM_REMOTE_WRITE_PASSWORD // empty' <<<"$observability_secret")"
 tactical_heroes_dev_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_DEV_CLIENT_SECRET // empty' <<<"$applications_secret")")"
 tactical_heroes_prod_client_secret="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_PROD_CLIENT_SECRET // empty' <<<"$applications_secret")")"
 tactical_heroes_smtp_password="$(secret_or_generate "$(jq -r '.TACTICAL_HEROES_SMTP_PASSWORD // empty' <<<"$applications_secret")")"
 
-for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password tactical_heroes_dev_user tactical_heroes_dev_password tactical_heroes_prod_user tactical_heroes_prod_password tactical_heroes_dev_client_secret tactical_heroes_prod_client_secret tactical_heroes_smtp_password; do
+for name in keycloak_user keycloak_password sonar_user sonar_password grafana_user grafana_password openbao_user openbao_password dotnet_template_dev_user dotnet_template_dev_password dotnet_template_prod_user dotnet_template_prod_password tactical_heroes_dev_user tactical_heroes_dev_password tactical_heroes_prod_user tactical_heroes_prod_password telegram_alert_gateway_user telegram_alert_gateway_password telegram_alert_gateway_webhook_token telegram_bot_token victoria_logs_username victoria_logs_password tactical_heroes_dev_client_secret tactical_heroes_prod_client_secret tactical_heroes_smtp_password; do
   if [ -z "${!name:-}" ] || [ "${!name}" = "null" ]; then
     echo "::error::${name} is empty"
     exit 1
@@ -506,6 +512,9 @@ target_privileges[tactical_heroes_dev]="$common_privileges"
 target_users[tactical_heroes_prod]="$tactical_heroes_prod_user"
 target_passwords[tactical_heroes_prod]="$tactical_heroes_prod_password"
 target_privileges[tactical_heroes_prod]="$common_privileges"
+target_users[telegram_alert_gateway]="$telegram_alert_gateway_user"
+target_passwords[telegram_alert_gateway]="$telegram_alert_gateway_password"
+target_privileges[telegram_alert_gateway]="$common_privileges"
 
 if [ -n "$legacy_cluster_id" ]; then
   legacy_instances="$(twc GET "/api/v1/databases/${legacy_cluster_id}/instances?limit=200")"
@@ -623,6 +632,9 @@ applications_secret="$(jq \
   --arg tactical_dev_password "$tactical_heroes_dev_password" \
   --arg tactical_prod_user "$tactical_heroes_prod_user" \
   --arg tactical_prod_password "$tactical_heroes_prod_password" \
+  --arg telegram_gateway_user "$telegram_alert_gateway_user" \
+  --arg telegram_gateway_password "$telegram_alert_gateway_password" \
+  --arg telegram_gateway_webhook_token "$telegram_alert_gateway_webhook_token" \
   --arg tactical_dev_client_secret "$tactical_heroes_dev_client_secret" \
   --arg tactical_prod_client_secret "$tactical_heroes_prod_client_secret" \
   --arg tactical_smtp_password "$tactical_heroes_smtp_password" \
@@ -644,6 +656,10 @@ applications_secret="$(jq \
     TACTICAL_HEROES_PROD_DB_NAME: "tactical_heroes_prod",
     TACTICAL_HEROES_PROD_DB_USERNAME: $tactical_prod_user,
     TACTICAL_HEROES_PROD_DB_PASSWORD: $tactical_prod_password,
+    TELEGRAM_ALERT_GATEWAY_DB_NAME: "telegram_alert_gateway",
+    TELEGRAM_ALERT_GATEWAY_DB_USERNAME: $telegram_gateway_user,
+    TELEGRAM_ALERT_GATEWAY_DB_PASSWORD: $telegram_gateway_password,
+    TELEGRAM_ALERT_GATEWAY_WEBHOOK_TOKEN: $telegram_gateway_webhook_token,
     TACTICAL_HEROES_DEV_CLIENT_SECRET: $tactical_dev_client_secret,
     TACTICAL_HEROES_PROD_CLIENT_SECRET: $tactical_prod_client_secret,
     TACTICAL_HEROES_SMTP_PASSWORD: $tactical_smtp_password
@@ -657,6 +673,20 @@ dotnet_template_dev_app_secret="$(jq -n \
 dotnet_template_prod_app_secret="$(jq -n \
   --arg connection_string "$dotnet_template_prod_connection_string" \
   '{ConnectionStrings__PostgreSqlConnectionString: $connection_string}')"
+telegram_alert_gateway_connection_string="Host=${target_host};Port=${target_port};Database=telegram_alert_gateway;Username=${telegram_alert_gateway_user};Password=${telegram_alert_gateway_password};SSL Mode=Require;Trust Server Certificate=true"
+telegram_alert_gateway_app_secret="$(jq -n \
+  --arg connection_string "$telegram_alert_gateway_connection_string" \
+  --arg bot_token "$telegram_bot_token" \
+  --arg webhook_token "$telegram_alert_gateway_webhook_token" \
+  --arg victoria_username "$victoria_logs_username" \
+  --arg victoria_password "$victoria_logs_password" \
+  '{
+    ConnectionStrings__PostgreSqlConnectionString: $connection_string,
+    Telegram__BotToken: $bot_token,
+    Webhook__Token: $webhook_token,
+    VictoriaLogs__Username: $victoria_username,
+    VictoriaLogs__Password: $victoria_password
+  }')"
 tactical_heroes_dev_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_dev;Username=${tactical_heroes_dev_user};Password=${tactical_heroes_dev_password};SSL Mode=Require;Trust Server Certificate=true"
 tactical_heroes_prod_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_prod;Username=${tactical_heroes_prod_user};Password=${tactical_heroes_prod_password};SSL Mode=Require;Trust Server Certificate=true"
 tactical_heroes_common_app_config="$(jq -n '{
@@ -757,6 +787,7 @@ bao_write "$openbao_token" core-platform/sonarqube "$sonarqube_secret"
 bao_write "$openbao_token" core-platform/observability "$observability_secret"
 bao_write "$openbao_token" core-platform/openbao "$openbao_secret"
 bao_write "$openbao_token" core-platform/applications "$applications_secret"
+bao_write "$openbao_token" core-platform/telegram-alert-gateway "$telegram_alert_gateway_app_secret"
 bao_write "$openbao_token" applications/dotnet-template/development "$dotnet_template_dev_app_secret"
 bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_template_prod_app_secret"
 bao_write "$openbao_token" applications/tactical-heroes-api/development "$tactical_heroes_dev_app_secret"
