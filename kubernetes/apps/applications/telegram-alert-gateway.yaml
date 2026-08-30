@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: telegram-alert-gateway
+  name: telegram-alert-gateway-production
   namespace: argocd
   labels:
     app.kubernetes.io/name: telegram-alert-gateway

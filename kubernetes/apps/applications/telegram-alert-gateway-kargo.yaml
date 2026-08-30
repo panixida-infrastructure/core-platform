@@ -262,7 +262,7 @@ spec:
             - name: valuesFile
               value: deploy/helm/telegram-alert-gateway/images-production.yaml
             - name: argocdApp
-              value: telegram-alert-gateway
+              value: telegram-alert-gateway-production
             - name: apiImageRepo
               value: ghcr.io/panixida-infrastructure/telegram-alert-gateway/api
             - name: migratorImageRepo
