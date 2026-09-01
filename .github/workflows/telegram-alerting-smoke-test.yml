@@ -300,7 +300,7 @@ jobs:
           kubectl -n "$smoke_namespace" run log-smoke \
             --image=busybox:1.36.1 \
             --restart=Never \
-            --command -- /bin/sh -c 'sleep 30; echo "ERROR telegram alert gateway VictoriaLogs smoke test"; sleep 10'
+            --command -- /bin/sh -c 'sleep 30; echo "{\"level\":\"error\",\"alert_owner\":\"unclassified-tests\",\"message\":\"Telegram alert gateway VictoriaLogs smoke test\"}"; sleep 10'
           kubectl -n "$smoke_namespace" wait --for=jsonpath='{.status.phase}'=Succeeded pod/log-smoke --timeout=3m
 
           wait_for_delivery_after "$alertmanager_delivery_count" 180
