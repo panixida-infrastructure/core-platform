@@ -149,7 +149,7 @@ observability:
         core-platform: 960
         observability: 962
         unclassified: 964
-        unclassified-tests: 10662
+        tests: 10662
   telegramEgress:
     vpnReplicas: 1
     proxyReplicas: 2

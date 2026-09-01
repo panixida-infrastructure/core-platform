@@ -856,9 +856,9 @@ data:
         - receiver: gateway-observability
           matchers:
             - alert_owner="observability"
-        - receiver: gateway-unclassified-tests
+        - receiver: gateway-tests
           matchers:
-            - alert_owner="unclassified-tests"
+            - alert_owner="tests"
     receivers:
       - name: telegram-gateway-emergency
         telegram_configs:
@@ -924,7 +924,7 @@ data:
               authorization:
                 type: Bearer
                 credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
-      - name: gateway-unclassified-tests
+      - name: gateway-tests
         webhook_configs:
           - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
             send_resolved: true
@@ -936,7 +936,7 @@ data:
       - name: telegram-vpn-smoke
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "tests" }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
               proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
@@ -947,7 +947,7 @@ data:
       - name: telegram-direct-smoke
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
-            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "unclassified-tests" }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "tests" }}
             bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
             http_config:
               proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
