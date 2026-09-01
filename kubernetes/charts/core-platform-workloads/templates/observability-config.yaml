@@ -742,8 +742,8 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application HTTP route is slow.
               description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes.
@@ -753,8 +753,8 @@ data:
             for: 1m
             labels:
               severity: critical
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application 5xx error rate is high.
               description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute.
@@ -764,8 +764,8 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application GC pause ratio is high.
               description: .NET GC pause time has stayed above 10 percent of wall time for at least 5 minutes.
@@ -775,8 +775,8 @@ data:
             for: 10m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application CPU usage is high.
               description: Application process CPU usage has stayed above 80 percent for at least 10 minutes.
@@ -797,8 +797,8 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
-              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application exception rate is high.
               description: .NET exception rate has stayed above 1 exception per second for at least 5 minutes.
