@@ -742,7 +742,7 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application HTTP route is slow.
@@ -753,7 +753,7 @@ data:
             for: 1m
             labels:
               severity: critical
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application 5xx error rate is high.
@@ -764,7 +764,7 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application GC pause ratio is high.
@@ -775,7 +775,7 @@ data:
             for: 10m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application CPU usage is high.
@@ -786,7 +786,7 @@ data:
             for: 10m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.namespace {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application container memory usage is high.
@@ -797,7 +797,7 @@ data:
             for: 5m
             labels:
               severity: warning
-              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified-tests{{ "{{" }} end {{ "}}" }}'
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application exception rate is high.
@@ -817,7 +817,7 @@ data:
     templates:
       - /etc/alertmanager/telegram.tmpl
     route:
-      receiver: gateway-unclassified-tests
+      receiver: gateway-unclassified
       group_by: ["alert_owner", "environment"]
       group_wait: 30s
       group_interval: 5m
@@ -856,6 +856,9 @@ data:
         - receiver: gateway-observability
           matchers:
             - alert_owner="observability"
+        - receiver: gateway-unclassified-tests
+          matchers:
+            - alert_owner="unclassified-tests"
     receivers:
       - name: telegram-gateway-emergency
         telegram_configs:
@@ -904,6 +907,15 @@ data:
                 type: Bearer
                 credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
       - name: gateway-observability
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-unclassified
         webhook_configs:
           - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
             send_resolved: true
