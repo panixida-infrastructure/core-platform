@@ -6,6 +6,11 @@ on:
     branches:
       - main
 
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
 env:
   HELM_VERSION: v4.2.1
 
@@ -70,3 +75,14 @@ jobs:
           kubectl kustomize kubernetes/apps >/tmp/core-platform-apps.yaml
           helm lint kubernetes/charts/core-platform-workloads
           helm template platform-workloads kubernetes/charts/core-platform-workloads >/tmp/core-platform-workloads.yaml
+
+  notify:
+    if: ${{ always() && github.event_name == 'push' && github.ref_name == 'main' }}
+    needs: [ shell, opentofu, kubernetes ]
+    uses: PANiXiDA-Infrastructure/ci-cd/.github/workflows/notify-telegram.yml@main
+    with:
+      event-name: ${{ github.event_name }}
+    secrets:
+      telegram-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      telegram-chat-id: ${{ vars.TELEGRAM_CHAT_ID }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
