@@ -23,6 +23,7 @@
     {
       "id": 1,
       "title": "API available",
+      "description": "Green: API metrics are reachable (1). Red: unreachable (0). ControlPlaneApiServerDown fires after 2 minutes of unavailability.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -36,7 +37,17 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
         },
         "overrides": []
       },
@@ -63,6 +74,7 @@
     {
       "id": 2,
       "title": "Master memory available",
+      "description": "Available RAM in bytes. Green: at least 10% of total RAM remains available. Red: less than 10%, matching the HostHighMemory condition (more than 90% used for 10 minutes). Total RAM is queried from the master so colors follow capacity changes.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -76,17 +88,54 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "min": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 10 }
+            ]
+          }
         },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "node_memory_MemAvailable_bytes{service_name=\"timeweb-kubernetes-node\"}",
+          "expr": "node_memory_MemAvailable_bytes{service_name=\"timeweb-kubernetes-node\"} and (node_memory_MemTotal_bytes{service_name=\"timeweb-kubernetes-node\"} > 0)",
           "legendFormat": "",
           "range": false,
           "instant": true
+        },
+        {
+          "refId": "B",
+          "expr": "(node_memory_MemTotal_bytes{service_name=\"timeweb-kubernetes-node\"} > 0) and node_memory_MemAvailable_bytes{service_name=\"timeweb-kubernetes-node\"}",
+          "legendFormat": "Total memory",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "B",
+            "applyTo": {
+              "id": "byType",
+              "options": "number"
+            },
+            "mappings": [
+              {
+                "fieldName": "Total memory",
+                "handlerKey": "max",
+                "reducerId": "lastNotNull"
+              }
+            ]
+          }
         }
       ],
       "options": {
@@ -103,6 +152,7 @@
     {
       "id": 3,
       "title": "API resident memory",
+      "description": "Physical RAM used by the API server process. Blue is informational: RSS alone has no universal unhealthy threshold. Correlate growth with available host RAM, OOM events and restarts.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -116,7 +166,11 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
         },
         "overrides": []
       },
@@ -143,6 +197,7 @@
     {
       "id": 4,
       "title": "Host OOM kills since boot",
+      "description": "Historical OOM kills since the master booted. Green: none. Yellow: at least one occurred; this does not imply an ongoing shortage. ControlPlaneOomKill alerts on new kills within the last 10 minutes.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -156,7 +211,17 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 }
+            ]
+          }
         },
         "overrides": []
       },
@@ -183,6 +248,7 @@
     {
       "id": 5,
       "title": "API process uptime",
+      "description": "Time since the API server process started. Blue is informational: longer uptime is normal. ControlPlaneApiServerRestarted detects changes in process start time over 10 minutes; planned maintenance can also reset uptime.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -196,7 +262,11 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
         },
         "overrides": []
       },
@@ -223,6 +293,7 @@
     {
       "id": 6,
       "title": "Log collection delay",
+      "description": "Time since the last successful control-plane log polling cycle. Green: less than 5 minutes. Red: 5 minutes or more. ControlPlaneLogCollectionStalled alerts when the delay remains above 5 minutes for another 5 minutes.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -236,7 +307,17 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 300 }
+            ]
+          }
         },
         "overrides": []
       },
