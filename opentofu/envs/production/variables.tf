@@ -44,7 +44,7 @@ variable "k8s_network_driver" {
 variable "k8s_master_preset_id" {
   description = "Timeweb Managed Kubernetes master preset id for the current cluster control plane."
   type        = number
-  default     = 1673
+  default     = 1675
 }
 
 variable "k8s_worker_preset_id" {
