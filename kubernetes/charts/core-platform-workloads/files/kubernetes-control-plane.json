@@ -1,0 +1,645 @@
+{
+  "uid": "kubernetes-control-plane",
+  "title": "Kubernetes Control Plane",
+  "description": "Timeweb managed master: host OS metrics, API server metrics and provider logs. OOM is a host counter; correlate increments with process restarts. No control-plane host agent is installed.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "30s",
+  "timezone": "browser",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "tags": [
+    "core-platform",
+    "kubernetes",
+    "control-plane"
+  ],
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "API available",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Master memory available",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemAvailable_bytes{service_name=\"timeweb-kubernetes-node\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "API resident memory",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_resident_memory_bytes{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Host OOM kills since boot",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_vmstat_oom_kill{service_name=\"timeweb-kubernetes-node\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "title": "API process uptime",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time()-process_start_time_seconds{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Log collection delay",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time()-max(timeweb_control_plane_logs_last_success_timestamp_seconds)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Master memory and API process",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemTotal_bytes{service_name=\"timeweb-kubernetes-node\"}",
+          "legendFormat": "Total",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "node_memory_MemTotal_bytes{service_name=\"timeweb-kubernetes-node\"}-node_memory_MemAvailable_bytes{service_name=\"timeweb-kubernetes-node\"}",
+          "legendFormat": "Host used (excluding available cache)",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "expr": "process_resident_memory_bytes{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "API RSS",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "expr": "go_memstats_heap_alloc_bytes{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "API Go heap",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Master CPU",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100*(1-avg(rate(node_cpu_seconds_total{service_name=\"timeweb-kubernetes-node\",mode=\"idle\"}[$__rate_interval])))",
+          "legendFormat": "CPU used",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "100*rate(process_cpu_seconds_total{service_name=\"timeweb-kubernetes-apiserver\"}[$__rate_interval])/scalar(count(node_cpu_seconds_total{service_name=\"timeweb-kubernetes-node\",mode=\"idle\"}))",
+          "legendFormat": "API share of host CPU",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "API requests by resource",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10,sum by(resource,verb)(rate(apiserver_request_total{service_name=\"timeweb-kubernetes-apiserver\"}[$__rate_interval])))",
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "API concurrent requests",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "apiserver_current_inflight_requests{service_name=\"timeweb-kubernetes-apiserver\"}",
+          "legendFormat": "{{request_kind}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "API request p99 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.99,sum by(le,verb)(rate(apiserver_request_duration_seconds_bucket{service_name=\"timeweb-kubernetes-apiserver\",verb!=\"WATCH\"}[$__rate_interval])))",
+          "legendFormat": "{{verb}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Objects stored by Kubernetes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(12,apiserver_storage_objects{service_name=\"timeweb-kubernetes-apiserver\"})",
+          "legendFormat": "{{resource}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "New OOM kills and API restarts",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "increase(node_vmstat_oom_kill{service_name=\"timeweb-kubernetes-node\"}[5m])",
+          "legendFormat": "OOM kills / 5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "changes(process_start_time_seconds{service_name=\"timeweb-kubernetes-apiserver\"}[5m])",
+          "legendFormat": "API restarts / 5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Master system disk",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100*(1-node_filesystem_avail_bytes{service_name=\"timeweb-kubernetes-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}/node_filesystem_size_bytes{service_name=\"timeweb-kubernetes-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})",
+          "legendFormat": "Filesystem used",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Managed control-plane logs",
+      "type": "logs",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 12
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "\"log.source\":=\"timeweb-api\" \"platform.name\":=\"core-platform\"",
+          "query": "\"log.source\":=\"timeweb-api\" \"platform.name\":=\"core-platform\""
+        }
+      ]
+    }
+  ]
+}
