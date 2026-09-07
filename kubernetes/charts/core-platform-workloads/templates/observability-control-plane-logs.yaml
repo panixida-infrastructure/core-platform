@@ -121,7 +121,7 @@ spec:
           command: [python, -B, /app/collector.py]
           env:
             - name: TIMEWEB_CLUSTER_ID
-              value: {{ .Values.observability.controlPlane.clusterId | quote }}
+              value: {{ .Values.observability.controlPlane.clusterId | int64 | quote }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
