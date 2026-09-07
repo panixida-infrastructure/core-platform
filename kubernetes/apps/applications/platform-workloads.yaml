@@ -16,9 +16,17 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: timeweb-control-plane-log-state
+      namespace: observability
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true

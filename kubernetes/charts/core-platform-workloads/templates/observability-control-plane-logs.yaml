@@ -1,0 +1,171 @@
+{{- if and .Values.observability.enabled .Values.observability.controlPlane.enabled .Values.observability.controlPlane.logs.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeweb-control-plane-log-code
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+data:
+  collector.py: |
+    {{- .Files.Get "files/timeweb_control_plane_logs.py" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeweb-control-plane-log-state
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+data:
+  state.json: "{}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: timeweb-control-plane-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: timeweb-control-plane-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [timeweb-control-plane-log-state]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: timeweb-control-plane-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: timeweb-control-plane-logs
+subjects:
+  - kind: ServiceAccount
+    name: timeweb-control-plane-logs
+    namespace: {{ .Values.observability.namespace }}
+---
+{{- if .Values.observability.externalSecrets.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: timeweb-control-plane-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+spec:
+  refreshInterval: {{ .Values.observability.externalSecrets.refreshInterval }}
+  secretStoreRef:
+    name: {{ .Values.observability.externalSecrets.secretStoreName }}
+    kind: SecretStore
+  target:
+    name: {{ .Values.observability.controlPlane.logs.secretName }}
+    creationPolicy: Orphan
+  data:
+    - secretKey: token
+      remoteRef:
+        key: {{ .Values.observability.controlPlane.logs.remoteKey }}
+        property: TIMEWEB_TOKEN
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeweb-control-plane-logs
+  namespace: {{ .Values.observability.namespace }}
+  labels:
+    {{- include "core-platform-workloads.labels" . | nindent 4 }}
+    app.kubernetes.io/name: timeweb-control-plane-logs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: timeweb-control-plane-logs
+      app.kubernetes.io/part-of: core-platform
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: timeweb-control-plane-logs
+        app.kubernetes.io/part-of: core-platform
+      annotations:
+        checksum/code: {{ .Files.Get "files/timeweb_control_plane_logs.py" | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: timeweb-control-plane-logs
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: timeweb-control-plane-logs
+          image: {{ .Values.observability.controlPlane.logs.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: [python, -B, /app/collector.py]
+          env:
+            - name: TIMEWEB_CLUSTER_ID
+              value: {{ .Values.observability.controlPlane.clusterId | quote }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POLL_INTERVAL_SECONDS
+              value: {{ .Values.observability.controlPlane.logs.pollIntervalSeconds | quote }}
+            - name: OTLP_LOGS_ENDPOINT
+              value: http://otel-collector.{{ .Values.observability.namespace }}.svc.cluster.local:4318/v1/logs
+          ports:
+            - name: metrics
+              containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: code
+              mountPath: /app
+              readOnly: true
+            - name: timeweb-token
+              mountPath: /var/run/timeweb
+              readOnly: true
+      volumes:
+        - name: code
+          configMap:
+            name: timeweb-control-plane-log-code
+        - name: timeweb-token
+          secret:
+            secretName: {{ .Values.observability.controlPlane.logs.secretName }}
+            defaultMode: 0440
+{{- end }}

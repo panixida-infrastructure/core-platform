@@ -121,6 +121,18 @@ observability:
       remoteKey: core-platform/observability
   nodeExporter:
     enabled: true
+  controlPlane:
+    enabled: true
+    clusterId: 1091532
+    nodeExporterTargets:
+      - address: local-k8s-ax71701-1091532.twc1.net:9100
+        instance: master-192.168.10.5
+    logs:
+      enabled: true
+      secretName: timeweb-control-plane-logs
+      remoteKey: core-platform/observability-timeweb-logs
+      pollIntervalSeconds: 60
+      image: python:3.13-alpine@sha256:7415fbc3c9e4979cc717d92377ab2bc7b2b4a2af1ac03cc52b5f3f88efedaf3a
   persistence:
     enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud

@@ -179,6 +179,14 @@ path "secret/metadata/core-platform/sonarqube" {
 EOF
 
 bao policy write observability-app - <<'EOF'
+path "secret/data/core-platform/observability-timeweb-logs" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/core-platform/observability-timeweb-logs" {
+  capabilities = ["read"]
+}
+
 path "secret/data/core-platform/observability" {
   capabilities = ["read"]
 }
