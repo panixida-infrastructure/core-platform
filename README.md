@@ -84,6 +84,16 @@ Manual workflows:
 - `Kubernetes Secrets Sync` copies OpenBao-backed runtime secrets into Kubernetes `Secret` objects for the migrated workloads.
 - `Ansible Bootstrap` applies server bootstrap through SSH.
 
+The managed master uses the Base preset (`1675`: 4 CPU, 8 GiB RAM, 60 GiB disk).
+Timeweb provider 1.7.2 reports a successful `twc_k8s_cluster.preset_id` update
+without changing the running master. Therefore `OpenTofu Apply` also reconciles
+the preset from its saved plan through the dedicated `/master-nodes` API and
+waits for the cluster and master resources to match. The reconciliation refuses
+resource reductions, availability-zone changes, and changes to the master count.
+When applying locally, run `opentofu/scripts/reconcile-k8s-master-preset.sh`
+with the cluster ID and the applied plan's master preset ID, using `TIMEWEB_TOKEN`.
+A successful provider apply alone is insufficient verification of a resize.
+
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.
 See [docs/kubernetes-migration.md](docs/kubernetes-migration.md) for the Kubernetes migration plan and cutover rules.
 See [docs/platform-domains.md](docs/platform-domains.md) and [docs/secrets.md](docs/secrets.md) for platform UI domains and the OpenBao bootstrap model.

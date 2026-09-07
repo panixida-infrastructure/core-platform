@@ -89,3 +89,13 @@ jobs:
 
       - name: Apply
         run: tofu apply -input=false -auto-approve production.tfplan
+
+      - name: Reconcile and verify managed master resources
+        run: |
+          set -euo pipefail
+          cluster_id="$(tofu output -json timeweb_inventory | jq -er '.kubernetes.id')"
+          master_preset_id="$(tofu show -json production.tfplan | jq -er '
+            .planned_values.root_module.resources[]
+            | select(.address == "twc_k8s_cluster.core_platform")
+            | .values.preset_id')"
+          bash ../../scripts/reconcile-k8s-master-preset.sh "$cluster_id" "$master_preset_id"
