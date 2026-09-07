@@ -73,6 +73,10 @@ node_vmstat_oom_kill 100
 
 Это накопленный счётчик убитых из-за нехватки памяти процессов за время работы ОС, а не число перезапусков Argo или доказательство 100 падений API. На том же диагностическом интервале RSS API-сервера составлял `986931200` байт (около 941 MiB). До этого изменения исторические метрики master-ноды в нашей VictoriaMetrics отсутствовали; собирались только метрики workers и managed PostgreSQL.
 
+При следующем сбое около **18:28–18:35** API отвечал с таймаутами чтения etcd. Снятые через Grafana proxy метрики ОС показали всего `37949440` байт MemAvailable (около 36 MiB) и load1 `5.47`. В **18:35:21** Timeweb снова зарегистрировал `Process terminated unexpectedly: signal: killed`, `component=kube-apiserver`; новый процесс стартовал в **18:35:25.550**. После восстановления счётчик OOM вырос **100 → 101**. Это усиливает связь нехватки памяти с перезапуском API; точный PID, выбранный OOM-killer, всё ещё требует журнала ядра Timeweb. Ручной перезапуск master не выполнялся.
+
+После запуска мониторинга около **18:40** CPU master составлял около 23% на двухминутном интервале, API занимал около 1.07 GiB RSS, доступная память ОС — около 91 MiB. Среди API-запросов лидировали продления leases (около 4.4 PUT/с), далее обычные GET/LIST контроллеров. В этом интервале подтверждён малый запас RAM, а не постоянная полная загрузка CPU.
+
 ## Почему тома не восстановились автоматически
 
 Устройства не исчезли: контрольная плоскость Timeweb и Kubernetes считали их подключёнными, но гостевой блочный ввод-вывод возвращал ошибки. Повторный `NodeStageVolume` пытался смонтировать то же неисправное устройство. Он не заменяет цикл `ControllerUnpublishVolume` / `ControllerPublishVolume`.
@@ -99,5 +103,7 @@ Preset остаётся **1673**, увеличение ресурсов и OpenT
 Spans ОС не создаются. Трассировка Kubernetes API возможна только при настройке самого API-сервера владельцем managed control plane; эти параметры у нас не доступны. Приложения на workers по-прежнему отправляют собственные трассы в существующий стек.
 
 Проверки: `python3 -B -m unittest discover -s tests`, `helm lint kubernetes/charts/core-platform-workloads`, `helm template platform-workloads kubernetes/charts/core-platform-workloads`, `kubectl kustomize kubernetes/apps`. После выкладки проверить `up{service_name=~"timeweb-kubernetes-.*"}`, метрику `timeweb_control_plane_logs_last_success_timestamp_seconds` и логи с `log.source=timeweb-api` в Grafana. Накопленный `node_vmstat_oom_kill` сам по себе не должен запускать alert: правило использует прирост.
+
+Проверено в работающем кластере: оба master scrape target возвращают `up=1`, дашборд содержит 15 панелей, в VictoriaLogs поступили записи всех четырёх источников, сохранены четыре позиции чтения, счётчик ошибок сборщика равен нулю. SonarQube и Alertmanager остаются Ready с прежними PVC. При выкладке исправлено представление cluster ID в Helm: переменная окружения должна содержать десятичное целое, а не scientific notation; этот контракт дополнительно проверяется в CI на готовом манифесте.
 
 Источники: [журналы Timeweb](https://timeweb.cloud/docs/k8s/manage-cluster/logs), [экспортёр метрик](https://timeweb.cloud/docs/k8s/manage-cluster/prometheus-exporter), [Kubernetes tracing](https://kubernetes.io/docs/concepts/cluster-administration/system-traces/). Оперативные значения получены из нашего кластера и API Timeweb; в документе нет учётных данных.
