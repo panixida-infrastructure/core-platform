@@ -152,7 +152,7 @@
     {
       "id": 3,
       "title": "API resident memory",
-      "description": "Physical RAM used by the API server process. Blue is informational: RSS alone has no universal unhealthy threshold. Correlate growth with available host RAM, OOM events and restarts.",
+      "description": "Physical RAM used by the API server process. Always green: RSS alone has no universal unhealthy threshold. Correlate growth with available host RAM, OOM events and restarts.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -169,7 +169,7 @@
           "unit": "bytes",
           "color": {
             "mode": "fixed",
-            "fixedColor": "blue"
+            "fixedColor": "green"
           }
         },
         "overrides": []
@@ -248,7 +248,7 @@
     {
       "id": 5,
       "title": "API process uptime",
-      "description": "Time since the API server process started. Blue is informational: longer uptime is normal. ControlPlaneApiServerRestarted detects changes in process start time over 10 minutes; planned maintenance can also reset uptime.",
+      "description": "Time since the API server process started. Always green: longer uptime is normal. ControlPlaneApiServerRestarted detects changes in process start time over 10 minutes; planned maintenance can also reset uptime.",
       "type": "stat",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -265,7 +265,7 @@
           "unit": "s",
           "color": {
             "mode": "fixed",
-            "fixedColor": "blue"
+            "fixedColor": "green"
           }
         },
         "overrides": []
