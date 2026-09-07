@@ -79,6 +79,16 @@ jobs:
           helm lint kubernetes/charts/core-platform-workloads
           helm template platform-workloads kubernetes/charts/core-platform-workloads >/tmp/core-platform-workloads.yaml
 
+      - name: Validate rendered log collector environment
+        run: |
+          python3 - <<'PY'
+          import pathlib, re
+          rendered = pathlib.Path('/tmp/core-platform-workloads.yaml').read_text()
+          cluster_id = re.search(r'name: TIMEWEB_CLUSTER_ID\s+value: "([^"]+)"', rendered)
+          assert cluster_id is not None, 'Missing cluster ID environment variable'
+          assert int(cluster_id[1]) > 0, 'Cluster ID must be a positive decimal integer'
+          PY
+
   notify:
     if: ${{ always() && github.event_name == 'push' && github.ref_name == 'main' }}
     needs: [ shell, opentofu, kubernetes ]
