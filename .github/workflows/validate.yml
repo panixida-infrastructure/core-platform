@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Test managed control-plane log collection
+      - name: Test managed control-plane automation
         run: python3 -B -m unittest discover -s tests
 
       - name: Install Kubernetes tooling
