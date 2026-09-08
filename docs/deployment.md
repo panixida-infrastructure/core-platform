@@ -61,6 +61,8 @@ The manual `Tactical Heroes Mail` workflow reconciles the single paid `tactical-
 
 OpenTofu creates the Timeweb Managed Kubernetes cluster and one infrastructure worker node group. Workers currently use public IPv4 for reliable registry and Timeweb API egress; public application traffic still enters through the Envoy Gateway LoadBalancer. The manual `Kubernetes Bootstrap` workflow reads the kubeconfig from OpenTofu state, installs the first Helm-managed controllers, applies the Argo CD root application, and installs the Timeweb CSI driver.
 
+The worker group registers with Timeweb autoscaling, with both `min_size` and `max_size` set to `k8s_worker_node_count` (currently two). This preserves the fixed worker count while avoiding repeated `twcp: groups not found` errors when Timeweb excludes groups with autoscaling disabled. Autohealing remains enabled. Change the fixed count through OpenTofu; remove this workaround once Timeweb fixes the disabled-autoscaling case.
+
 The bootstrap also pins the Timeweb-managed Cilium agent and operator to the direct Kubernetes API endpoint from kubeconfig. This prevents a Cilium restart from depending on the unavailable in-cluster API service route while the node network is still initializing.
 
 GitOps pull through Argo CD is the steady state. The `platform-workloads` Argo CD application deploys the Helm chart at:
