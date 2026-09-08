@@ -55,6 +55,8 @@ metadata:
     app.kubernetes.io/name: telegram-vpn
 spec:
   replicas: {{ .Values.observability.telegramEgress.vpnReplicas }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: telegram-vpn
@@ -69,6 +71,14 @@ spec:
         - name: gluetun
           image: {{ .Values.observability.images.gluetun | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              # Container restarts retain the pod network namespace. Remove only
+              # stale WireGuard rules before Gluetun recreates its routing table.
+              while ip -4 rule del table 51820 2>/dev/null; do :; done
+              while ip -6 rule del table 51820 2>/dev/null; do :; done
+              exec /gluetun-entrypoint
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:
@@ -96,7 +106,7 @@ spec:
             - name: HEALTH_RESTART_VPN
               value: "on"
             - name: HEALTH_TARGET_ADDRESSES
-              value: api.telegram.org:443
+              value: cloudflare.com:443,github.com:443
             - name: DNS_SERVER
               value: "on"
             - name: DNS_UPSTREAM_RESOLVER_TYPE
@@ -111,8 +121,7 @@ spec:
             - name: health
               containerPort: 9999
           startupProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: health
             failureThreshold: 30
             periodSeconds: 5
@@ -124,8 +133,7 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 2
           livenessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: health
             failureThreshold: 3
             periodSeconds: 10
