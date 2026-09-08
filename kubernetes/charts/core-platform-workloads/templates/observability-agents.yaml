@@ -85,6 +85,8 @@ spec:
               add:
                 - NET_ADMIN
           env:
+            - name: GOMEMLIMIT
+              value: 384MiB
             - name: VPN_SERVICE_PROVIDER
               value: custom
             - name: VPN_TYPE
@@ -113,6 +115,10 @@ spec:
               value: doh
             - name: DNS_UPSTREAM_RESOLVERS
               value: cloudflare,google
+            - name: PUBLICIP_ENABLED
+              value: "off"
+            - name: VERSION_INFORMATION
+              value: "off"
             - name: LOG_LEVEL
               value: info
           ports:
