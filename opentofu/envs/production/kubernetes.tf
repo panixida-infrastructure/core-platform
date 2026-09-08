@@ -29,7 +29,9 @@ resource "twc_k8s_node_group" "core_platform_default" {
   name              = "core-platform-infrastructure"
   preset_id         = var.k8s_worker_preset_id
   node_count        = var.k8s_worker_node_count
-  is_autoscaling    = false
+  is_autoscaling    = true
+  min_size          = var.k8s_worker_node_count
+  max_size          = var.k8s_worker_node_count
   is_autohealing    = true
   public_ip_enabled = true
 
