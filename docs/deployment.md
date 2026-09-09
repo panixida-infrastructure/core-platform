@@ -148,3 +148,17 @@ If an application uses OTLP/HTTP instead of OTLP/gRPC, use port `4318` and proto
 Kubernetes stdout/stderr logs are tailed on every node by the OpenTelemetry filelog DaemonSet. Applications with direct OTLP log export are excluded from duplicate filelog ingestion per container; applications without OTLP continue to use filelog as their VictoriaLogs source.
 
 SonarQube uses managed PostgreSQL for application data. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
+
+### SonarQube updates
+
+The workload chart pins Community Build `26.9.0.129388`. Updating from `26.5.0.122743` is direct under the [same-year update policy](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/update/determine-path). Managed PostgreSQL 18 meets the target requirements. The [release notes](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes#upgrade-notes) describe the Elasticsearch 9 index rebuild and the Java 21 minimum for scanners without JRE auto-provisioning.
+
+Complete preparation before merging an image update to `main`:
+
+1. Schedule downtime and finish running analyses. Argo CD automatically syncs `main`, and the SonarQube deployment uses `Recreate`.
+2. Check installed plugins, scanner compatibility, free database/PVC space, and take a fresh database backup with a verified restore procedure. Rehearse the update against an isolated database copy.
+3. Merge the reviewed image change after validation passes. Keep the existing database connection and PVC.
+4. If database migration is requested, open `https://sonar.panixida.ru/setup` and complete it. Wait for indexing and verify `/api/system/status` reports the target version with `status: UP`; HTTP 200 alone is insufficient.
+5. Verify SAML sign-in, existing projects, and a CI analysis with a successful Quality Gate. Review changed findings from the updated analyzers.
+
+If rollback is necessary after a database migration, stop SonarQube and restore the pre-update database backup with the previous image, following the [update procedure](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/update/update). Reverting only the image does not undo the database migration.
