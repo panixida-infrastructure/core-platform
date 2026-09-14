@@ -562,7 +562,7 @@ backup_start_at="$(date -u +%Y-%m-%dT00:00:00Z)"
 set +e
 twc PATCH "/api/v1/dbs/${target_cluster_id}/auto-backups" \
   "$(jq -nc --arg creation_start_at "$backup_start_at" \
-    '{is_enabled: true, copy_count: 7, creation_start_at: $creation_start_at, interval: "day", day_of_week: 1}')" \
+    '{is_enabled: true, copy_count: 1, creation_start_at: $creation_start_at, interval: "day", day_of_week: 1}')" \
   >/dev/null
 backup_status="$?"
 set -e

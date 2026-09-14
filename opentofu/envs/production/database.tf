@@ -19,7 +19,7 @@ resource "twc_database_backup_schedule" "postgres_database" {
   cluster_id        = twc_database_cluster.postgres_database_msk.id
   enabled           = true
   interval          = "day"
-  copy_count        = 7
+  copy_count        = 1
   creation_start_at = "2026-05-25T00:00:00.000Z"
 
   lifecycle {

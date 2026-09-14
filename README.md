@@ -73,6 +73,8 @@ source = "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud"
 
 Production state is stored in the Timeweb S3-compatible bucket `panixida-storage` at `core-platform/production.tfstate`.
 
+Managed PostgreSQL automatic backups run daily and retain one copy. Both OpenTofu and the `Managed PostgreSQL` workflow enforce this retention.
+
 Do not commit real tokens or state. In GitHub Actions, `secrets.TIMEWEB_TOKEN` is mapped to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
 
 Manual workflows:
