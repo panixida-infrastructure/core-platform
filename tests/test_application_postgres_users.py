@@ -80,6 +80,39 @@ class ApplicationPostgresUsersTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "workflow"):
                 reconciler.apply()
 
+    def user_reconciler(self, login="old", password="old-password"):
+        reconciler = object.__new__(MODULE.Reconciler)
+        reconciler.base = "/databases/1"
+        reconciler.instances = [{"name": "app", "id": 10}]
+        admin = {"id": 2, "login": login, "password": password,
+                 "instances": [{"instance_id": 10, "privileges": MODULE.PRIVILEGES}]}
+        reconciler.admins = Mock(return_value=[admin])
+        reconciler.tw = Mock()
+        reconciler.objects = Mock(return_value="same-objects")
+        reconciler.sql = Mock(return_value="same-role-oid")
+        item = {"database": "app", "login": "new", "aliases": ["old"], "secret_path": "app"}
+        return reconciler, admin, item
+
+    def test_rename_finishes_before_password_rotation(self):
+        reconciler, admin, item = self.user_reconciler()
+        reconciler.wait_user = Mock(side_effect=[admin | {"login": "new"},
+                                                admin | {"login": "new", "password": "new-password"}])
+        reconciler.reconcile_user(item, "new-password")
+        calls = reconciler.tw.call_args_list
+        self.assertEqual(calls[0].args[2], {"login": "new"})
+        self.assertNotIn("login", calls[1].args[2])
+        self.assertEqual(calls[1].args[2]["password"], "new-password")
+
+    def test_interrupted_rename_recovers_using_runtime_password(self):
+        reconciler, admin, item = self.user_reconciler(login="new", password="new-password")
+        reconciler.objects.side_effect = [RuntimeError("authentication failed"), "same-objects", "same-objects"]
+        reconciler.bao = Mock(return_value={"data": {MODULE.CONNECTION_KEY: "Host=db;Username=old;Password=old-password"}})
+        reconciler.wait_user = Mock(return_value=admin)
+        reconciler.reconcile_user(item, "new-password")
+        self.assertEqual(reconciler.objects.call_args_list[1].args[0]["password"], "old-password")
+        reconciler.tw.assert_called_once()
+        self.assertEqual(reconciler.tw.call_args.args[2]["password"], "new-password")
+
 
 if __name__ == "__main__":
     unittest.main()

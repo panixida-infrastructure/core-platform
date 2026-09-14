@@ -167,18 +167,37 @@ class Reconciler:
     def reconcile_user(self, item, password):
         admin = select_user(item, self.admins())
         instance = next(db for db in self.instances if db["name"] == item["database"])
-        before = self.objects(admin, item["database"]) if admin else None
-        old_oid = self.sql(admin, item["database"], "SELECT oid FROM pg_roles WHERE rolname=current_user") if admin else None
-        payload = {"login": item["login"], "password": password, "for_all": False,
+        authenticated = admin
+        if admin:
+            try:
+                before = self.objects(authenticated, item["database"])
+            except RuntimeError:
+                # A previous rename may have updated Timeweb's password record while
+                # PostgreSQL still accepts the password from the runtime secret.
+                connection = self.bao(item["secret_path"])["data"][CONNECTION_KEY]
+                matches = re.findall(r"(?:^|;)\s*Password\s*=([^;]*)", connection, re.I)
+                if len(matches) != 1:
+                    raise RuntimeError("Cannot recover the current database credential") from None
+                authenticated = admin | {"password": matches[0]}
+                before = self.objects(authenticated, item["database"])
+        else:
+            before = None
+        old_oid = self.sql(authenticated, item["database"], "SELECT oid FROM pg_roles WHERE rolname=current_user") if admin else None
+        payload = {"password": password, "for_all": False,
                    "instance_id": instance["id"], "privileges": PRIVILEGES}
         if admin:
+            if admin["login"] != item["login"]:
+                # Timeweb can leave the SQL password unchanged if login and password
+                # are patched together. Complete the rename before rotating it.
+                self.tw(self.base + f"/admins/{admin['id']}", "PATCH", {"login": item["login"]})
+                admin = self.wait_user(admin["id"])
             permissions = next((x["privileges"] for x in admin["instances"]
                                 if x["instance_id"] == instance["id"]), [])
-            if admin["login"] != item["login"] or admin["password"] != password or set(permissions) != set(PRIVILEGES):
+            if authenticated["password"] != password or admin["password"] != password or set(permissions) != set(PRIVILEGES):
                 self.tw(self.base + f"/admins/{admin['id']}", "PATCH", payload)
                 admin = self.wait_user(admin["id"])
         else:
-            created = self.tw(self.base + "/admins", "POST", payload | {"host": "%"})
+            created = self.tw(self.base + "/admins", "POST", payload | {"host": "%", "login": item["login"]})
             admin = self.wait_user(created["admin"]["id"])
         if admin["login"] != item["login"] or admin["password"] != password:
             raise RuntimeError(f"Database credential verification failed: {item['login']}")
