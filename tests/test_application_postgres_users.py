@@ -67,12 +67,13 @@ class ApplicationPostgresUsersTests(unittest.TestCase):
         reconciler.base = "/databases/1"
         reconciler.config = {"retired_users": ["old"]}
         reconciler.admins = Mock(return_value=[{"id": 2, "login": "old"}, {"id": 3, "login": "keep"}])
-        reconciler.sql = Mock(side_effect=["0", "1"])
+        reconciler.sql = Mock(side_effect=["0", "1", "0"])
         reconciler.tw = Mock()
         reconciler.wait_user = Mock()
-        with self.assertRaisesRegex(RuntimeError, "still exists in PostgreSQL"):
+        with patch.object(MODULE.time, "sleep"):
             reconciler.retire_users({}, "app")
         reconciler.tw.assert_called_once_with("/databases/1/admins/2", "DELETE")
+        self.assertEqual(reconciler.sql.call_count, 3)
 
     def test_apply_requires_workflow_execution(self):
         reconciler = object.__new__(MODULE.Reconciler)

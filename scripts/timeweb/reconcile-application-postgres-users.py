@@ -234,21 +234,31 @@ class Reconciler:
             raise RuntimeError(f"Expected one application deployment: {namespace}")
         deployment = consumers[0]
         name = deployment["metadata"]["name"]
-        run(["kubectl", "-n", namespace, "rollout", "restart", "deployment/" + name])
-        run(["kubectl", "-n", namespace, "rollout", "status", "deployment/" + name, "--timeout=300s"])
         selector = ",".join(f"{k}={v}" for k, v in deployment["spec"]["selector"]["matchLabels"].items())
-        pods = json.loads(run(["kubectl", "-n", namespace, "get", "pods", "-l", selector, "-o", "json"]))["items"]
-        pods = [p for p in pods if not p["metadata"].get("deletionTimestamp")]
-        if len(pods) != deployment["spec"]["replicas"]:
-            raise RuntimeError(f"Unexpected replica count: {namespace}")
-        for pod in pods:
-            env = run(["kubectl", "-n", namespace, "exec", pod["metadata"]["name"], "-c", "api", "--",
-                       "cat", "/proc/1/environ"], binary=True)
-            if (CONNECTION_KEY + "=" + connection).encode() not in env.split(b"\0"):
+
+        def processes_match():
+            pods = json.loads(run(["kubectl", "-n", namespace, "get", "pods", "-l", selector, "-o", "json"]))["items"]
+            pods = [p for p in pods if not p["metadata"].get("deletionTimestamp")]
+            if len(pods) != deployment["spec"]["replicas"]:
+                return False
+            for pod in pods:
+                if not any(c["type"] == "Ready" and c["status"] == "True" for c in pod["status"].get("conditions", [])):
+                    return False
+                env = run(["kubectl", "-n", namespace, "exec", pod["metadata"]["name"], "-c", "api", "--",
+                           "cat", "/proc/1/environ"], binary=True)
+                if (CONNECTION_KEY + "=" + connection).encode() not in env.split(b"\0"):
+                    return False
+            return True
+
+        if not processes_match():
+            run(["kubectl", "-n", namespace, "rollout", "restart", "deployment/" + name])
+            run(["kubectl", "-n", namespace, "rollout", "status", "deployment/" + name, "--timeout=300s"])
+            if not processes_match():
                 raise RuntimeError(f"Application environment does not match OpenBao: {namespace}")
+            print(f"Restart completed: {namespace}", flush=True)
         if request(item["health_url"]) != "Healthy":
             raise RuntimeError(f"Application health check failed: {namespace}")
-        print(f"Restart, process credentials and health verified: {namespace} ({len(pods)} replicas)", flush=True)
+        print(f"Process credentials and health verified: {namespace} ({deployment['spec']['replicas']} replicas)", flush=True)
 
     def apply(self):
         if os.environ.get("GITHUB_ACTIONS") != "true":
@@ -296,8 +306,12 @@ class Reconciler:
                 raise RuntimeError(f"Refusing to delete user that still owns objects: {admin['login']}")
             self.tw(self.base + f"/admins/{admin['id']}", "DELETE")
             self.wait_user(admin["id"], absent=True)
-            remaining = self.sql(verifier_admin, database, f"SELECT count(*) FROM pg_roles WHERE rolname='{login}'")
-            if remaining != "0":
+            for _ in range(30):
+                remaining = self.sql(verifier_admin, database, f"SELECT count(*) FROM pg_roles WHERE rolname='{login}'")
+                if remaining == "0":
+                    break
+                time.sleep(2)
+            else:
                 raise RuntimeError(f"Deleted Timeweb user still exists in PostgreSQL: {admin['login']}")
             print(f"Retired user removed: {admin['login']}", flush=True)
 
