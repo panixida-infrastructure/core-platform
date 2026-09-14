@@ -32,6 +32,12 @@ The retired `infrastructure` VM, its floating IP, SSH key, Ansible bootstrap, an
 
 OpenTofu creates the MSK-1 managed PostgreSQL cluster and private network. The manual `Managed PostgreSQL` workflow reconciles logical databases, users, automatic backups, and OpenBao connection settings.
 
+Application database identities are declared in `scripts/timeweb/application-postgres-users.json`. Run `Managed PostgreSQL` with `scope=application-users-plan`, review the user/database mapping, then run `scope=application-users-apply` from the same revision. Both use confirmation `reconcile-managed-postgres`; legacy migration and restore inputs stay disabled. This scope updates only the four application users, their OpenBao credentials, and their API deployments.
+
+The application user reconciler preserves PostgreSQL role identities and owned tables when changing names, rotates passwords once per inventory `password_revision`, and removes retired accounts only after checking that they own no objects other than default ACL records. Passwords and the applied password revision are kept in `secret/core-platform/applications`, allowing interrupted runs to resume without another password rotation. The same desired usernames are used by the full cluster reconciler. Credentials do not enter Git or OpenTofu state.
+
+Application connection strings are merged with KV version checks, leaving other OpenBao settings intact. External Secrets are refreshed before rolling restarts; the workflow verifies every new process environment and `/health`. Review the workflow result and active PostgreSQL sessions to confirm the cutover. Renaming an active login or changing its password can interrupt new database connections until the corresponding deployment has restarted.
+
 The platform uses the managed cluster for:
 
 ```text

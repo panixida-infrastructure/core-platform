@@ -1,0 +1,55 @@
+{
+  "password_revision": "2026-09-14",
+  "cluster_name": "postgres",
+  "availability_zone": "msk-1",
+  "kubernetes_cluster_name": "core-platform",
+  "retired_users": [
+    "dotnet_template_dev_user",
+    "dotnettemplatedev",
+    "tacticalheroesdev",
+    "tacticalheroesprod",
+    "codex_db_rotation_20260914"
+  ],
+  "users": [
+    {
+      "database": "dotnet_template_dev",
+      "login": "dotnet_template_user_dev",
+      "aliases": ["dotnet_template_dev_user", "dotnettemplatedev"],
+      "prefix": "DOTNET_TEMPLATE_DEV",
+      "secret_path": "applications/dotnet-template/development",
+      "namespace": "dotnet-template-development",
+      "secret_name": "dotnet-template-api-env",
+      "health_url": "https://dev.api.dotnet-template.panixida.ru/health"
+    },
+    {
+      "database": "dotnet_template_prod",
+      "login": "dotnet_template_user_prod",
+      "aliases": [],
+      "prefix": "DOTNET_TEMPLATE_PROD",
+      "secret_path": "applications/dotnet-template/production",
+      "namespace": "dotnet-template-production",
+      "secret_name": "dotnet-template-api-env",
+      "health_url": "https://api.dotnet-template.panixida.ru/health"
+    },
+    {
+      "database": "tactical_heroes_dev",
+      "login": "tactical_heroes_user_dev",
+      "aliases": ["tacticalheroesdev"],
+      "prefix": "TACTICAL_HEROES_DEV",
+      "secret_path": "applications/tactical-heroes-api/development",
+      "namespace": "tactical-heroes-development",
+      "secret_name": "tactical-heroes-api-env",
+      "health_url": "https://dev.api.tactical-heroes.panixida.ru/health"
+    },
+    {
+      "database": "tactical_heroes_prod",
+      "login": "tactical_heroes_user_prod",
+      "aliases": ["tacticalheroesprod"],
+      "prefix": "TACTICAL_HEROES_PROD",
+      "secret_path": "applications/tactical-heroes-api/production",
+      "namespace": "tactical-heroes-production",
+      "secret_name": "tactical-heroes-api-env",
+      "health_url": "https://api.tactical-heroes.panixida.ru/health"
+    }
+  ]
+}

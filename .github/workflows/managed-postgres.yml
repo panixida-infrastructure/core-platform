@@ -7,6 +7,15 @@ on:
         description: Type reconcile-managed-postgres to reconcile the MSK managed PostgreSQL cluster
         required: true
         type: string
+      scope:
+        description: Reconcile the whole cluster or only the declared application database users
+        required: true
+        type: choice
+        options:
+          - all
+          - application-users-plan
+          - application-users-apply
+        default: all
       migrate_legacy_databases:
         description: Migrate existing managed PostgreSQL databases from SPB to MSK
         required: true
@@ -35,6 +44,7 @@ concurrency:
 jobs:
   reconcile:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
@@ -60,6 +70,7 @@ jobs:
           /usr/lib/postgresql/18/bin/pg_dump --version
 
       - name: Reconcile managed PostgreSQL
+        if: ${{ inputs.scope == 'all' }}
         env:
           TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
           MIGRATE_LEGACY_DATABASES: ${{ inputs.migrate_legacy_databases }}
@@ -67,3 +78,16 @@ jobs:
           TARGET_POSTGRES_SSH_TUNNEL: "false"
           RECREATE_TARGET_DB_USERS: ${{ inputs.recreate_target_users != '' && inputs.recreate_target_users || (inputs.migrate_legacy_databases && 'dotnet_template_user_dev dotnet_template_user_prod keycloak_user' || '') }}
         run: bash scripts/timeweb/reconcile-managed-postgres.sh
+
+      - name: Reconcile application PostgreSQL users
+        if: ${{ inputs.scope != 'all' }}
+        env:
+          TIMEWEB_TOKEN: ${{ secrets.TIMEWEB_TOKEN }}
+          APPLICATION_USERS_SCOPE: ${{ inputs.scope }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "$APPLICATION_USERS_SCOPE" = "application-users-apply" ]; then
+            args+=(--apply)
+          fi
+          python3 -u -B scripts/timeweb/reconcile-application-postgres-users.py "${args[@]}"
