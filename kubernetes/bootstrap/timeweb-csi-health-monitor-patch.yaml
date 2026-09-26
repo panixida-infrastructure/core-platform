@@ -1,0 +1,16 @@
+spec:
+  template:
+    spec:
+      containers:
+        # The provider uses a mutable :2 tag. Reuse the installed driver on
+        # existing workers when rolling out a health-monitor configuration change.
+        - name: csi-plugin
+          imagePullPolicy: IfNotPresent
+        # Timeweb chart 2.0.0 hardcodes these args without a values override.
+        - name: external-health-monitor-controller
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --leader-election
+            - --http-endpoint=:8081
+            - --timeout=60s
