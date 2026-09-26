@@ -302,5 +302,9 @@ jobs:
             node-driver-registrar=rancher/mirrored-sig-storage-csi-node-driver-registrar:v2.12.0
           kubectl -n csi-driver-timeweb-cloud rollout status daemonset/csi-driver-timeweb-cloud-node --timeout=10m
 
+          kubectl -n csi-driver-timeweb-cloud patch deployment/csi-driver-timeweb-cloud-controller \
+            --type=strategic --patch-file kubernetes/bootstrap/timeweb-csi-health-monitor-patch.yaml
+          kubectl -n csi-driver-timeweb-cloud rollout status deployment/csi-driver-timeweb-cloud-controller --timeout=10m
+
           kubectl get csidriver network-drives.csi.timeweb.cloud
           kubectl get storageclass
