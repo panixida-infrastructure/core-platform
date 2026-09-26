@@ -1,8 +1,12 @@
 import copy
 import datetime as dt
 import importlib.util
+import io
+import json
 from pathlib import Path
 import unittest
+from unittest.mock import Mock, patch
+import urllib.error
 
 
 SOURCE = (Path(__file__).resolve().parents[1] / "kubernetes/charts/"
@@ -107,6 +111,67 @@ class CollectorTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             collector.collect_node(client, NODE, state, NOW, page_limit=1)
         self.assertEqual((state, client.exported, client.saved), ({}, [], []))
+
+
+class RequestTests(unittest.TestCase):
+    def test_get_recovers_from_open_and_response_read_timeouts(self):
+        opener = Mock()
+        timed_out = io.BytesIO()
+        timed_out.read = Mock(side_effect=TimeoutError("response stalled"))
+        opener.open.side_effect = [urllib.error.URLError(TimeoutError("connect stalled")),
+                                   timed_out, io.BytesIO(b'{"k8s_logs": []}')]
+        with patch.object(collector.time, "sleep") as sleep, patch("sys.stdout", new_callable=io.StringIO) as logs:
+            result = collector.Client.request(opener, "https://example.com/logs", operation="timeweb/logs",
+                                              scope="twcp.service")
+        self.assertEqual(result, {"k8s_logs": []})
+        self.assertEqual(opener.open.call_count, 3)
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
+        self.assertTrue(timed_out.closed)
+        retries = [json.loads(line) for line in logs.getvalue().splitlines()]
+        self.assertEqual([entry["level"] for entry in retries], ["warning", "warning"])
+        self.assertEqual(retries[0]["reason_type"], "TimeoutError")
+
+    def test_timeout_exhaustion_reports_safe_context(self):
+        opener = Mock()
+        opener.open.side_effect = TimeoutError("private-token-and-response")
+        with patch.object(collector.time, "sleep"), patch("sys.stdout", new_callable=io.StringIO) as logs:
+            with self.assertRaises(collector.RequestFailure) as raised:
+                collector.Client.request(opener, "https://example.com/private-url",
+                                         {"Authorization": "Bearer private-token"},
+                                         operation="timeweb/logs", scope="twcp.service")
+        fields = raised.exception.fields
+        self.assertEqual(opener.open.call_count, 3)
+        self.assertEqual(fields["error_type"], "TimeoutError")
+        self.assertEqual(fields["attempt"], 3)
+        self.assertEqual(fields["operation"], "timeweb/logs")
+        self.assertEqual(fields["timeweb_log_scope"], "twcp.service")
+        self.assertEqual(fields["request_timeout_seconds"], 20)
+        self.assertNotIn("private", logs.getvalue() + json.dumps(fields) + str(raised.exception))
+
+    def test_writes_are_not_retried_after_ambiguous_timeout(self):
+        for method in (None, "POST", "PATCH"):
+            with self.subTest(method=method):
+                opener = Mock()
+                opener.open.side_effect = TimeoutError("response stalled")
+                with patch.object(collector.time, "sleep") as sleep:
+                    with self.assertRaises(collector.RequestFailure):
+                        collector.Client.request(opener, "https://example.com", body={"records": []},
+                                                 method=method, operation="write")
+                self.assertEqual(opener.open.call_count, 1)
+                sleep.assert_not_called()
+
+    def test_other_errors_are_not_retried(self):
+        for error in (urllib.error.HTTPError("https://example.com", 403, "forbidden", {}, None),
+                      urllib.error.URLError("certificate verify failed"), RuntimeError("redirect")):
+            with self.subTest(error=type(error).__name__):
+                opener = Mock()
+                opener.open.side_effect = error
+                with patch.object(collector.time, "sleep") as sleep:
+                    with self.assertRaises(collector.RequestFailure) as raised:
+                        collector.Client.request(opener, "https://example.com", operation="read")
+                self.assertEqual(opener.open.call_count, 1)
+                self.assertEqual(raised.exception.fields["http_status"], getattr(error, "code", None))
+                sleep.assert_not_called()
 
 
 if __name__ == "__main__":
