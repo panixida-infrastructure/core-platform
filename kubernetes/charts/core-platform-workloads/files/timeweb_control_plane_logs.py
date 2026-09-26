@@ -10,6 +10,7 @@ import signal
 import ssl
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -21,6 +22,7 @@ LEVELS = {"trace": (1, "Trace"), "debug": (5, "Debug"), "info": (9, "Information
 SCOPES = ("k0scontroller.service", "cloud-provider-timeweb-cloud.service",
           "tw-kube-healer.service", "twcp.service")
 OVERLAP_SECONDS = 120
+REQUEST_TIMEOUT_SECONDS = 20
 
 
 def attribute(key, value):
@@ -83,6 +85,20 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise RuntimeError("Unexpected HTTP redirect")
 
 
+class RequestFailure(RuntimeError):
+    def __init__(self, error, operation, attempt, elapsed, scope):
+        super().__init__("Control-plane HTTP request failed")
+        self.fields = {"error_type": type(error).__name__,
+                       "http_status": getattr(error, "code", None),
+                       "operation": operation, "attempt": attempt,
+                       "elapsed_seconds": round(elapsed, 3),
+                       "request_timeout_seconds": REQUEST_TIMEOUT_SECONDS}
+        if scope is not None:
+            self.fields["timeweb_log_scope"] = scope
+        if isinstance(error, urllib.error.URLError):
+            self.fields["reason_type"] = type(error.reason).__name__
+
+
 class Client:
     def __init__(self, cluster, namespace, token_file):
         self.cluster = cluster
@@ -95,14 +111,29 @@ class Client:
                           + "/configmaps/timeweb-control-plane-log-state")
 
     @staticmethod
-    def request(opener, url, headers=None, body=None, method=None):
+    def request(opener, url, headers=None, body=None, method=None, *, operation, scope=None):
         data = None if body is None else json.dumps(body).encode()
         req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
-        with opener.open(req, timeout=20) as response:
-            raw = response.read(8 * 1024 * 1024 + 1)
-            if len(raw) > 8 * 1024 * 1024:
-                raise RuntimeError("Response exceeds size limit")
-            return json.loads(raw) if raw else {}
+        # Retry reads only: an export or checkpoint may have succeeded before timing out.
+        attempts = 3 if req.get_method() == "GET" else 1
+        started = time.monotonic()
+        for attempt in range(1, attempts + 1):
+            try:
+                with opener.open(req, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+                    raw = response.read(8 * 1024 * 1024 + 1)
+                    if len(raw) > 8 * 1024 * 1024:
+                        raise RuntimeError("Response exceeds size limit")
+                    return json.loads(raw) if raw else {}
+            except Exception as error:
+                failure = RequestFailure(error, operation, attempt,
+                                         time.monotonic() - started, scope)
+                reason = error.reason if isinstance(error, urllib.error.URLError) else error
+                if not isinstance(reason, TimeoutError) or attempt == attempts:
+                    raise failure from error
+                # Only allowlisted metadata is logged; exception messages can contain secrets.
+                print(json.dumps({"level": "warning", "message": "Control-plane HTTP read timed out; retrying",
+                                  **failure.fields, "retry_in_seconds": attempt}), flush=True)
+                time.sleep(attempt)
 
     def timeweb(self, path, query=None):
         with open(self.token_file, encoding="utf-8") as source:
@@ -110,7 +141,8 @@ class Client:
         url = "https://api.timeweb.cloud/api/v1/k8s/clusters/" + str(self.cluster) + path
         if query:
             url += "?" + urllib.parse.urlencode(query)
-        return self.request(self.public, url, {"Authorization": "Bearer " + token})
+        return self.request(self.public, url, {"Authorization": "Bearer " + token},
+                            operation="timeweb" + path, scope=(query or {}).get("scope"))
 
     def kube_headers(self):
         with open("/var/run/secrets/kubernetes.io/serviceaccount/token", encoding="utf-8") as source:
@@ -118,12 +150,14 @@ class Client:
         return {"Authorization": "Bearer " + token, "Content-Type": "application/merge-patch+json"}
 
     def load_state(self):
-        response = self.request(self.kube, self.state_url, self.kube_headers())
+        response = self.request(self.kube, self.state_url, self.kube_headers(),
+                                operation="kubernetes/load-state")
         return json.loads(response.get("data", {}).get("state.json", "{}"))
 
     def save_state(self, state):
         self.request(self.kube, self.state_url, self.kube_headers(),
-                     {"data": {"state.json": json.dumps(state)}}, "PATCH")
+                     {"data": {"state.json": json.dumps(state)}}, "PATCH",
+                     operation="kubernetes/save-state")
 
     def export(self, node, records):
         groups = {}
@@ -141,7 +175,8 @@ class Client:
         if not resources:
             return
         response = self.request(self.public, os.environ["OTLP_LOGS_ENDPOINT"],
-                                {"Content-Type": "application/json"}, {"resourceLogs": resources})
+                                {"Content-Type": "application/json"}, {"resourceLogs": resources},
+                                operation="otel/export-logs")
         partial = response.get("partialSuccess", {})
         if int(partial.get("rejectedLogRecords", 0)):
             raise RuntimeError("OpenTelemetry collector rejected log records")
@@ -262,9 +297,10 @@ def main():
         except Exception as error:
             metrics.errors += 1
             # Never print request headers, credential values, or provider response bodies.
+            fields = error.fields if isinstance(error, RequestFailure) else {
+                "error_type": type(error).__name__, "http_status": getattr(error, "code", None)}
             print(json.dumps({"level": "error", "message": "Control-plane log collection failed",
-                              "error_type": type(error).__name__,
-                              "http_status": getattr(error, "code", None)}), flush=True)
+                              **fields}), flush=True)
         stop.wait(interval)
     server.shutdown()
 
