@@ -222,6 +222,17 @@ spec:
   hostnames:
     - {{ .Values.sonarqube.host }}
   rules:
+    # Cold-cache scanners can need more than five minutes for large analyzer plugins.
+    - matches:
+        - path:
+            type: Exact
+            value: /api/plugins/download
+      timeouts:
+        request: 15m
+        backendRequest: 15m
+      backendRefs:
+        - name: sonarqube
+          port: 9000
     - timeouts:
         request: 5m
         backendRequest: 5m
