@@ -149,6 +149,8 @@ If an application uses OTLP/HTTP instead of OTLP/gRPC, use port `4318` and proto
 
 Kubernetes stdout/stderr logs are tailed on every node by the OpenTelemetry filelog DaemonSet. Applications with direct OTLP log export are excluded from duplicate filelog ingestion per container; applications without OTLP continue to use filelog as their VictoriaLogs source.
 
+Both collector log pipelines add a UUID in the OpenTelemetry `log.record.uid` attribute when it is missing or empty, before batching and export. An ID supplied by the producer is preserved. This also covers managed control-plane logs forwarded from the Timeweb API through the OTLP collector. VictoriaLogs stores the ID as an ordinary searchable field; it is not a stream label. The stream labels remain `service.name`, `deployment.environment`, and `platform.name`, supporting source queries and efficient storage. VictoriaLogs retention remains 14 days. IDs apply to newly collected records; older records and direct VictoriaLogs inserts that bypass the collectors do not receive them. Export retries keep the assigned ID, but rereading a source record without a producer ID can generate a new one; this is not an exactly-once ingestion guarantee.
+
 SonarQube uses managed PostgreSQL for application data. Keycloak SSO for SonarQube uses SAML because SonarQube Community Build supports SAML with Keycloak rather than native OIDC.
 
 ### SonarQube updates
