@@ -233,6 +233,7 @@ data:
       transform/logs:
         error_mode: ignore
         log_statements:
+          - 'set(log.attributes["log.record.uid"], UUID()) where log.attributes["log.record.uid"] == nil or log.attributes["log.record.uid"] == ""'
           - 'set(log.attributes["http.request.method"], log.attributes["Method"]) where log.attributes["http.request.method"] == nil and log.attributes["Method"] != nil'
           - 'set(log.attributes["url.path"], log.attributes["RequestPath"]) where log.attributes["url.path"] == nil and log.attributes["RequestPath"] != nil'
           - 'set(log.attributes["url.path"], log.attributes["Path"]) where log.attributes["url.path"] == nil and log.attributes["Path"] != nil'
@@ -415,6 +416,7 @@ data:
       transform/kubernetes:
         error_mode: ignore
         log_statements:
+          - 'set(log.attributes["log.record.uid"], UUID()) where log.attributes["log.record.uid"] == nil or log.attributes["log.record.uid"] == ""'
           - 'replace_pattern(log.body, "bot[0-9]{8,}:[A-Za-z0-9_-]{20,}", "bot[REDACTED]") where IsString(log.body)'
           - 'set(resource.attributes["service.name"], resource.attributes["k8s.container.name"]) where resource.attributes["service.name"] == nil and resource.attributes["k8s.container.name"] != nil'
           - 'set(resource.attributes["deployment.environment"], resource.attributes["k8s.namespace.name"]) where resource.attributes["deployment.environment"] == nil and resource.attributes["k8s.namespace.name"] != nil'
