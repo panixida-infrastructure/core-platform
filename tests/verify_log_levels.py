@@ -155,6 +155,9 @@ def fixtures():
     add("keycloak-sso-configure", "Created new model with id 'example'", 9)
     add("keycloak-sso-configure", "Unexpected server response", 0)
     add("app", "Created new client with id 'example'", 0)
+    add("sonarqube-configure", "info: SonarQube GitHub integration reconciled", 9)
+    add("sonarqube-configure", "info: SonarQube SAML configuration reconciled", 9)
+    add("sonarqube-configure", "error: SonarQube did not become UP before configuration timeout", 17)
 
     # Do not manufacture a severity for missing levels/statuses or other sources.
     add("envoy", '{"response_code":0,"response_flags":"DC"}', 0)
