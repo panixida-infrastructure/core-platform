@@ -89,6 +89,9 @@ jobs:
           assert int(cluster_id[1]) > 0, 'Cluster ID must be a positive decimal integer'
           PY
 
+      - name: Verify log severity with the deployed Collector version
+        run: python3 -B tests/verify_log_levels.py /tmp/core-platform-workloads.yaml
+
   notify:
     if: ${{ always() && github.event_name == 'push' && github.ref_name == 'main' }}
     needs: [ shell, opentofu, kubernetes ]
