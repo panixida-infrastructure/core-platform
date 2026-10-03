@@ -1,0 +1,87 @@
+{{ define "telegram.panixida.message" -}}
+{{- $originPattern := `(?i)^https?://(?:[^/?#]*@)?(?:\[[0-9a-f:]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]{1,5})?(?:[/?#].*)?$` -}}
+{{- $body := "" -}}
+{{- $remaining := .Alerts -}}
+{{- $full := false -}}
+{{- range $index, $alert := .Alerts -}}
+{{- if and (lt $index 5) (not $full) -}}
+{{- $icon := "🔥" -}}
+{{- if eq $alert.Status "resolved" }}{{ $icon = "✅" }}{{ end -}}
+{{- $name := or $alert.Labels.alertname "unnamed-alert" -}}
+{{- $nameText := printf "%.80s" $name | html -}}
+{{- if gt (len $nameText) 160 }}{{ $nameText = printf "%.20s…" $name | html }}{{ end -}}
+{{- $severity := or $alert.Labels.severity "warning" | toUpper -}}
+{{- $severityText := printf "%.40s" $severity | html -}}
+{{- if gt (len $severityText) 40 }}{{ $severityText = printf "%.6s…" $severity | html }}{{ end -}}
+{{- $owner := or $alert.Labels.service $alert.Labels.service_name $alert.Labels.job $alert.Labels.namespace $alert.Labels.alert_owner "unclassified" -}}
+{{- $ownerText := printf "%.100s" $owner | html -}}
+{{- if gt (len $ownerText) 160 }}{{ $ownerText = printf "%.20s…" $owner | html }}{{ end -}}
+{{- $summary := or $alert.Annotations.summary "No summary provided." -}}
+{{- $summaryText := printf "%.160s" $summary | html -}}
+{{- if gt (len $summaryText) 300 }}{{ $summaryText = printf "%.40s…" $summary | html }}{{ end -}}
+{{- $targets := "" -}}
+{{- $instanceKey := "instance" -}}
+{{- if not $alert.Labels.instance }}{{ $instanceKey = "service_instance_id" }}{{ end -}}
+{{- range $key, $value := $alert.Labels -}}
+{{- if and $value (or (eq $key "http_url") (eq $key $instanceKey)) -}}
+{{- $origin := "" -}}
+{{- $label := $value -}}
+{{- $prefix := "🖥 Instance: " -}}
+{{- if eq $key "http_url" }}{{ $prefix = "🌐 " }}{{ end -}}
+{{- if match $originPattern $value -}}
+{{- $origin = reReplaceAll `(?i)^(https?://)([^/?#]*@)?([^/?#]+).*$` "${1}${3}" $value | toLower -}}
+{{- $label = reReplaceAll `^https?://` "" $origin -}}
+{{- if not (match `:[0-9]+$` $label) -}}
+{{- if match `^https://` $origin }}{{ $label = printf "%s:443" $label }}{{ else }}{{ $label = printf "%s:80" $label }}{{ end -}}
+{{- end -}}
+{{- $origin = printf "%s/" $origin -}}
+{{- $origin = reReplaceAll `^(https://[^/]+):443/$` "${1}/" $origin -}}
+{{- $origin = reReplaceAll `^(http://[^/]+):80/$` "${1}/" $origin -}}
+{{- else if and (eq $key $instanceKey) (match `(?i)^(\[[0-9a-f:]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?):(80|443|8080|8081|8443|9100)$` $value) -}}
+{{- $scheme := "http" -}}
+{{- if match `:(443|8443)$` $value }}{{ $scheme = "https" }}{{ end -}}
+{{- $origin = printf "%s://%s/" $scheme $value | toLower -}}
+{{- $origin = reReplaceAll `^(https://[^/]+):443/$` "${1}/" $origin -}}
+{{- $origin = reReplaceAll `^(http://[^/]+):80/$` "${1}/" $origin -}}
+{{- end -}}
+{{- if or $origin (eq $key $instanceKey) -}}
+{{- $text := printf "%.100s" $label | html -}}
+{{- if gt (len $text) 200 }}{{ $text = printf "%.30s…" $label | html }}{{ end -}}
+{{- if $origin -}}
+{{- $link := printf `<a href="%s">%s</a>` ($origin | html) $text -}}
+{{- if le (len $link) 200 }}{{ $text = $link }}{{ end -}}
+{{- end -}}
+{{- $targets = printf "%s%s%s\n" $targets $prefix $text -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $description := "" -}}
+{{- with $alert.Annotations.description }}{{ $description = printf "📖 %s\n" (printf "%.500s" . | html) }}{{ end -}}
+{{- $dashboard := or $alert.Annotations.dashboard_url $alert.Annotations.logs_url "__GRAFANA_ORIGIN__/d/core-platform-overview/core-platform-overview?orgId=1&from=now-1h&to=now&timezone=browser&refresh=30s" -}}
+{{- $links := "" -}}
+{{- if and (match $originPattern $dashboard) (le (len ($dashboard | html)) 1000) -}}
+{{- $links = printf "\n🔗 <a href=\"%s\">Grafana</a>\n" ($dashboard | html) -}}
+{{- end -}}
+{{- $details := printf "%s <b>%s</b> · %s\n📦 %s\n%s📝 %s\n" $icon $nameText $severityText $ownerText $targets $summaryText -}}
+{{- $separator := "" -}}
+{{- if $body }}{{ $separator = "\n• • •\n\n" }}{{ end -}}
+{{- $candidate := printf "%s%s%s%s%s" $body $separator $details $description $links -}}
+{{- if gt (len $candidate) 3300 -}}
+{{- $candidate = printf "%s%s%s<i>Description omitted because the alert is too long.</i>\n%s" $body $separator $details $links -}}
+{{- end -}}
+{{- if le (len $candidate) 3300 -}}
+{{- $body = $candidate -}}
+{{- $remaining = slice $remaining 1 -}}
+{{- else -}}
+{{- $full = true -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if gt (len .Alerts.Firing) 0 }}🔥 <b>Alerts firing</b>{{ else }}✅ <b>Alerts resolved</b>{{ end }}
+📊 Firing: <b>{{ len .Alerts.Firing }}</b> | Resolved: <b>{{ len .Alerts.Resolved }}</b>
+{{- if $remaining }}
+⚠️ {{ len $remaining }} alerts omitted. Open Grafana for the complete group.
+{{- end }}
+
+{{ $body | safeHtml }}🔗 <a href="__GRAFANA_ORIGIN__/alerting/groups?alertmanager=Alertmanager">Alertmanager</a>
+{{- end }}
