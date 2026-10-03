@@ -267,7 +267,7 @@ data:
     done
 
     if ! curl -fsS "$sonar_url/api/system/status" 2>/dev/null | grep -q '"UP"'; then
-      echo "SonarQube did not become UP before configuration timeout" >&2
+      echo "error: SonarQube did not become UP before configuration timeout" >&2
       exit 1
     fi
 
@@ -284,7 +284,7 @@ data:
         --data-urlencode "previousPassword=admin" \
         --data-urlencode "password=${SONAR_ADMIN_PASSWORD}" >/dev/null
     else
-      echo "SonarQube admin credentials are not valid; cannot configure SAML" >&2
+      echo "error: SonarQube admin credentials are not valid; cannot configure SAML" >&2
       exit 1
     fi
 
@@ -295,7 +295,7 @@ data:
     )"
 
     if [ -z "$idp_certificate" ]; then
-      echo "Keycloak SAML signing certificate was not found in metadata" >&2
+      echo "error: Keycloak SAML signing certificate was not found in metadata" >&2
       exit 1
     fi
 
@@ -332,12 +332,12 @@ data:
       done
 
       if [ "$github_credentials_count" -eq 0 ]; then
-        echo "SonarQube GitHub integration credentials are not configured; skipping reconciliation"
+        echo "info: SonarQube GitHub integration credentials are not configured; skipping reconciliation"
         return
       fi
 
       if [ "$github_credentials_count" -ne 4 ]; then
-        echo "SonarQube GitHub integration credentials are incomplete" >&2
+        echo "error: SonarQube GitHub integration credentials are incomplete" >&2
         exit 1
       fi
 
@@ -363,14 +363,14 @@ data:
 
       curl -fsS -u "$auth" --get "$sonar_url/api/alm_settings/validate" \
         --data-urlencode "key=${github_integration_key}" >/dev/null
-      echo "SonarQube GitHub integration reconciled"
+      echo "info: SonarQube GitHub integration reconciled"
     }
 
     if [ "$github_integration_enabled" = "true" ]; then
       reconcile_github_integration
     fi
 
-    echo "SonarQube SAML configuration reconciled"
+    echo "info: SonarQube SAML configuration reconciled"
 ---
 apiVersion: batch/v1
 kind: Job
