@@ -353,6 +353,30 @@ data:
         operators:
           - id: container-parser
             type: container
+          # Keep stack traces and indented console output with the event whose
+          # prefix supplies their level. Other sources retain one record per line.
+          - id: multiline-router
+            type: router
+            routes:
+              - output: multiline-source
+                expr: 'resource["k8s.container.name"] in ["sonarqube", "migrator"] or (resource["k8s.container.name"] == "admin" and resource["k8s.namespace.name"] matches "^tactical-heroes-admin-")'
+            default: json-severity-parser
+          - id: multiline-source
+            type: add
+            field: attributes["log.multiline.source"]
+            value: EXPR(attributes["log.file.path"] + ":" + attributes["log.iostream"])
+          - id: multiline-recombine
+            type: recombine
+            combine_field: body
+            source_identifier: attributes["log.multiline.source"]
+            is_first_entry: '(resource["k8s.container.name"] == "sonarqube" and body matches "^[0-9]{4}[.][0-9]{2}[.][0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[[:space:]]") or (resource["k8s.container.name"] != "sonarqube" and body matches "^[^[:space:]]")'
+            overwrite_with: oldest
+            force_flush_period: 2s
+            max_log_size: 262144
+            max_unmatched_batch_size: 1
+          - id: multiline-source-cleanup
+            type: remove
+            field: attributes["log.multiline.source"]
           - id: json-severity-parser
             type: json_parser
             if: 'body matches "^{.*level.*}$"'
@@ -441,6 +465,44 @@ data:
                 info: [{min: 100, max: 399}]
                 warn: 4xx
                 error: 5xx
+          # Squid cache.log has a different format from its access log. Match
+          # explicit diagnostic prefixes and known maintenance messages only.
+          - id: squid-cache-severity-parser
+            type: regex_parser
+            if: 'resource["k8s.container.name"] in ["squid", "log-forwarder"] and body matches "^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[|][[:space:]]+(WARNING:|ERROR:|FATAL:|Logfile: (opening|closing) log |NETDB state saved;)"'
+            regex: '^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[|][[:space:]]+(?P<cache_level>WARNING:|ERROR:|FATAL:|Logfile: (opening|closing) log |NETDB state saved;)'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.cache_level
+              preset: none
+              overwrite_text: true
+              mapping:
+                info: ["Logfile: opening log ", "Logfile: closing log ", "NETDB state saved;"]
+                warn: "WARNING:"
+                error: "ERROR:"
+                fatal: "FATAL:"
+          - id: envoy-no-route-severity-parser
+            type: regex_parser
+            if: 'resource["k8s.container.name"] == "envoy" and body matches "^[{].*\"response_code\":[[:space:]]*0[[:space:]]*[,}]" and body matches "\"response_code_details\":[[:space:]]*\"filter_chain_not_found\"" and not (body matches "\"level\"[[:space:]]*:")'
+            regex: '"response_code_details":[[:space:]]*"(?P<response_failure>filter_chain_not_found)"'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.response_failure
+              preset: none
+              overwrite_text: true
+              mapping:
+                warn: filter_chain_not_found
+          - id: native-loader-severity-parser
+            type: regex_parser
+            if: 'resource["k8s.container.name"] == "migrator" and body matches "^Cannot load library [^[:space:]]+"'
+            regex: '^(?P<loader_level>Cannot load library) '
+            parse_to: attributes
+            severity:
+              parse_from: attributes.loader_level
+              preset: none
+              overwrite_text: true
+              mapping:
+                error: Cannot load library
 
     processors:
       memory_limiter:

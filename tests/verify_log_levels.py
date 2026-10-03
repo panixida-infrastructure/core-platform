@@ -89,6 +89,21 @@ def fixtures():
             add(container, f"1791010988.675 182 192.0.2.1 TCP_TUNNEL/{status} 6803 CONNECT example.org:443 -", severity)
     add("envoy", '{"level":"error","response_code":200}', 17)
 
+    # cache.log maintenance is INFO; explicit diagnostics keep their own level.
+    for container in ["squid", "log-forwarder"]:
+        for message, severity in [
+            ("Logfile: opening log stdio:/var/spool/squid/netdb.state", 9),
+            ("Logfile: closing log stdio:/var/spool/squid/netdb.state", 9),
+            ("NETDB state saved; 0 entries, 0 msec", 9),
+            ("WARNING: slow operation", 13), ("ERROR: operation failed", 17),
+            ("FATAL: cannot start", 21),
+        ]:
+            add(container, "2026/10/03 08:00:00| " + message, severity)
+    add("envoy", '{"response_code":0,"response_code_details":"filter_chain_not_found","response_flags":"NR"}', 13)
+    add("envoy", '{"response_code_details":"filter_chain_not_found","response_code":0}', 13)
+    add("envoy", '{"level":"error","response_code":0,"response_code_details":"filter_chain_not_found"}', 17)
+    add("migrator", "Cannot load library libgssapi_krb5.so.2", 17)
+
     # Do not manufacture a severity for missing levels/statuses or other sources.
     add("envoy", '{"response_code":0,"response_flags":"DC"}', 0)
     add("envoy", '{"response_code":null}', 0)
@@ -99,7 +114,45 @@ def fixtures():
     add("app", "2026-10-03T08:00:00Z request completed with previous error", 0)
     add("app", "2026-10-03T08:00:00Z INFOGRAPHS are ready", 0)
     add("migrator", "      SELECT 1;", 0)
+    add("sonarqube", "\tat orphan.Frame.method(Frame.java:1)", 0)
+    add("squid", "2026/10/03 08:00:00| Unrecognised maintenance message", 0)
+    add("app", "2026/10/03 08:00:00| ERROR: different source", 0)
+    add("app", '{"response_code":0,"response_code_details":"filter_chain_not_found"}', 0)
+    add("envoy", '{"response_code":null,"response_code_details":"filter_chain_not_found"}', 0)
     return cases
+
+
+def multiline_fixtures():
+    # Interleave stdout/stderr in one CRI file: neither stream may consume the
+    # other's header or frames. Each new timestamp closes the previous event.
+    error = "2026.10.03 08:00:00 ERROR web[][worker] Failed request"
+    warning = "2026.10.03 08:00:01 WARN  web[][worker] Slow request"
+    exception = "java.lang.IllegalStateException: failed"
+    cause = "Caused by: java.io.IOException: connection reset"
+    frame = "\tat example.Worker.run(Worker.java:42)"
+    following = "2026.10.03 08:00:02 INFO  web[][worker] Next request"
+    yield "sonarqube", [
+        ("stdout", error), ("stderr", warning), ("stdout", exception),
+        ("stderr", "\tat warning.Frame.run(Frame.java:1)"),
+        ("stdout", frame), ("stdout", cause), ("stdout", "\t... 12 common frames omitted"),
+        ("stdout", following),
+    ], [
+        ("sonarqube", "\n".join([error, exception, frame, cause, "\t... 12 common frames omitted"]), 17),
+        ("sonarqube", warning + "\n\tat warning.Frame.run(Frame.java:1)", 13),
+        ("sonarqube", following, 9),
+    ]
+    for container in ["migrator", "admin"]:
+        first = "info: Example.Database[1]"
+        second = "fail: Example.Database[2]"
+        yield container, [
+            ("stdout", first), ("stdout", "      Executed DbCommand (1ms)"),
+            ("stdout", "      SELECT migration_id"), ("stdout", "      FROM history;"),
+            ("stdout", second), ("stdout", "      System.Exception: failed command"),
+            ("stdout", "         at Database.Run()"),
+        ], [
+            (container, first + "\n      Executed DbCommand (1ms)\n      SELECT migration_id\n      FROM history;", 9),
+            (container, second + "\n      System.Exception: failed command\n         at Database.Run()", 17),
+        ]
 
 
 def records(path):
@@ -131,12 +184,24 @@ def verify_collector(rendered):
         output = root / "output"
         output.mkdir(mode=0o777)
         output.chmod(0o777)
-        pod = root / "pods" / "observability_log-test_00000000-0000-4000-8000-000000000000"
-        for container, body, _ in cases:
+        def write_file(index, container, entries):
+            namespace = "tactical-heroes-admin-development" if container == "admin" else "observability"
+            pod = root / "pods" / f"{namespace}_log-test-{index}_00000000-0000-4000-8000-000000000000"
             folder = pod / container
             folder.mkdir(parents=True, exist_ok=True)
-            with (folder / "0.log").open("a", encoding="utf-8", newline="\n") as stream:
-                stream.write(f"2026-10-03T08:00:00.000000000Z stdout F {body}\n")
+            with (folder / "0.log").open("w", encoding="utf-8", newline="\n") as stream:
+                for line, (log_stream, body) in enumerate(entries):
+                    # filelog fingerprints file contents; distinct CRI times keep
+                    # equal bodies in different source files from looking rotated.
+                    stream.write(f"2026-10-03T08:00:00.{index * 1000 + line:09d}Z {log_stream} F {body}\n")
+
+        # Separate files also prove that simultaneous events from different pods
+        # cannot be merged merely because their container names match.
+        for index, (container, body, _) in enumerate(cases):
+            write_file(index, container, [("stdout", body)])
+        for index, (container, entries, expected) in enumerate(multiline_fixtures(), start=len(cases)):
+            write_file(index, container, entries)
+            cases.extend(expected)
         config = ("receivers:\n  filelog/test:\n"
                   "    include: [/var/log/pods/*/*/*.log]\n"
                   "    start_at: beginning\n    include_file_path: true\n"
@@ -171,6 +236,8 @@ def verify_collector(rendered):
                     assert log.get("severityNumber", 0) == severity, (container, body, log)
                     if severity:
                         assert log["severityText"] in ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"], log
+                    assert all(attribute["key"] != "log.multiline.source"
+                               for attribute in log.get("attributes", [])), log
                 print(f"{image}: {len(cases)} filelog records, severity and unchanged body: OK", flush=True)
             finally:
                 subprocess.run(["docker", "stop", "--time", "2", name],
