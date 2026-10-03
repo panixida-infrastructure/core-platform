@@ -77,6 +77,8 @@ def verify(rendered):
     image = re.search(r'image: "(prom/alertmanager:[^"]+)"', rendered)[1]
     with tempfile.TemporaryDirectory(prefix="metric-emergency-") as directory:
         work = Path(directory)
+        # amtool runs as nobody; TemporaryDirectory is owner-only on Linux.
+        work.chmod(0o755)
         (work / "telegram.tmpl").write_text(template, encoding="utf-8")
         urls = [f"https://grafana.panixida.ru/d/demo/demo?var-service=api-{i}&viewPanel=panel-{i}" for i in range(1, 7)]
         payload = {"Status": "firing", "CommonAnnotations": {}, "Alerts": [
@@ -87,7 +89,8 @@ def verify(rendered):
             "docker", "run", "--rm", "-v", f"{work}:/work", "--entrypoint=/bin/amtool", image,
             "template", "render", "--template.glob=/work/telegram.tmpl",
             '--template.text={{ template "telegram.panixida.message" . }}',
-            "--template.data=/work/data.json"], check=True, capture_output=True, text=True, encoding="utf-8")
+            "--template.data=/work/data.json"], check=False, capture_output=True, text=True, encoding="utf-8")
+        assert result.returncode == 0, result.stderr + result.stdout
         message = html.unescape(result.stdout)
         assert message.count(">Grafana</a>") == 5, message
         assert all(url in message for url in urls[:5]), message
