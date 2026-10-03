@@ -1110,7 +1110,9 @@ data:
 
     {{ "{{" }}- range $index, $alert := .Alerts {{ "}}" }}
     {{ "{{" }}- if lt $index $maxAlerts {{ "}}" }}
-    ────────────
+    {{ "{{" }} if gt $index 0 {{ "}}" }}
+    • • •
+    {{ "{{" }} end {{ "}}" }}
     {{ "{{" }} if eq $alert.Status "firing" {{ "}}" }}🔥{{ "{{" }} else {{ "}}" }}✅{{ "{{" }} end {{ "}}" }} <b>{{ "{{" }} printf "%.80s" $alert.Labels.alertname | html {{ "}}" }}</b>
     {{ "{{" }}- with $alert.Labels.severity {{ "}}" }}
     {{ "{{" }}- if eq . "critical" {{ "}}" }}🚨 CRITICAL 🚨{{ "{{" }} else if eq . "warning" {{ "}}" }}⚠️ WARNING{{ "{{" }} else {{ "}}" }}ℹ️ {{ "{{" }} . {{ "}}" }}{{ "{{" }} end {{ "}}" }}
@@ -1148,6 +1150,7 @@ data:
     🖥 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- with $alert.Annotations.dashboard_url {{ "}}" }}
+
     🔗 <a href="{{ "{{" }} . | html {{ "}}" }}">Grafana</a>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- with $alert.Annotations.logs_url {{ "}}" }}
