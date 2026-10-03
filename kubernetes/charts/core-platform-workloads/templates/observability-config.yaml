@@ -359,7 +359,7 @@ data:
             type: router
             routes:
               - output: multiline-source
-                expr: 'resource["k8s.container.name"] in ["sonarqube", "migrator"] or (resource["k8s.container.name"] == "admin" and resource["k8s.namespace.name"] matches "^tactical-heroes-admin-")'
+                expr: 'resource["k8s.container.name"] in ["sonarqube", "migrator", "squid", "log-forwarder"] or (resource["k8s.container.name"] == "admin" and resource["k8s.namespace.name"] matches "^tactical-heroes-admin-")'
             default: json-severity-parser
           - id: multiline-source
             type: add
@@ -469,18 +469,66 @@ data:
           # explicit diagnostic prefixes and known maintenance messages only.
           - id: squid-cache-severity-parser
             type: regex_parser
-            if: 'resource["k8s.container.name"] in ["squid", "log-forwarder"] and body matches "^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[|][[:space:]]+(WARNING:|ERROR:|FATAL:|Logfile: (opening|closing) log |NETDB state saved;)"'
-            regex: '^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[|][[:space:]]+(?P<cache_level>WARNING:|ERROR:|FATAL:|Logfile: (opening|closing) log |NETDB state saved;)'
+            if: 'resource["k8s.container.name"] in ["squid", "log-forwarder"] and body matches "^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}( [A-Za-z0-9_-]+)?[|][[:space:]]+(WARNING:|FATAL:|ERROR:|Open  icmp_sock:|Recv recv:|Logfile: opening log |Logfile: closing log |NETDB state saved;|Set Current Directory to |Processing Configuration File: |Created PID file |Removing PID file |Creating missing swap directories|No cache_dir stores are configured[.]|Starting Squid Cache version |Service Name: |Process ID |Process Roles: |With |Using |Initializing IP Cache|Adding nameserver |Adding domain |Adding ndots |DNS IPv4 socket created |DNS IPv6 socket created |Local cache digest enabled;|Finished loading MIME types and icons[.]|HTCP Disabled[.]|Adaptation support is off[.]|Squid plugin modules loaded: |Accepting HTTP Socket connections at |Store logging disabled|Swap maxSize |Target number of buckets: |Max Swap size: |Max Mem  size: |Pinger socket opened |Closing Pinger socket |Initialising ICMP pinger |Configuring Parent |storeLateRelease: released )"'
+            regex: '^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}( [A-Za-z0-9_-]+)?[|][[:space:]]+(?P<cache_level>WARNING:|FATAL:|ERROR:|Open  icmp_sock:|Recv recv:|Logfile: opening log |Logfile: closing log |NETDB state saved;|Set Current Directory to |Processing Configuration File: |Created PID file |Removing PID file |Creating missing swap directories|No cache_dir stores are configured[.]|Starting Squid Cache version |Service Name: |Process ID |Process Roles: |With |Using |Initializing IP Cache|Adding nameserver |Adding domain |Adding ndots |DNS IPv4 socket created |DNS IPv6 socket created |Local cache digest enabled;|Finished loading MIME types and icons[.]|HTCP Disabled[.]|Adaptation support is off[.]|Squid plugin modules loaded: |Accepting HTTP Socket connections at |Store logging disabled|Swap maxSize |Target number of buckets: |Max Swap size: |Max Mem  size: |Pinger socket opened |Closing Pinger socket |Initialising ICMP pinger |Configuring Parent |storeLateRelease: released )'
             parse_to: attributes
             severity:
               parse_from: attributes.cache_level
               preset: none
               overwrite_text: true
               mapping:
-                info: ["Logfile: opening log ", "Logfile: closing log ", "NETDB state saved;"]
+                info:
+                  - "Logfile: opening log "
+                  - "Logfile: closing log "
+                  - "NETDB state saved;"
+                  - "Set Current Directory to "
+                  - "Processing Configuration File: "
+                  - "Created PID file "
+                  - "Removing PID file "
+                  - "Creating missing swap directories"
+                  - "No cache_dir stores are configured."
+                  - "Starting Squid Cache version "
+                  - "Service Name: "
+                  - "Process ID "
+                  - "Process Roles: "
+                  - "With "
+                  - "Using "
+                  - "Initializing IP Cache"
+                  - "Adding nameserver "
+                  - "Adding domain "
+                  - "Adding ndots "
+                  - "DNS IPv4 socket created "
+                  - "DNS IPv6 socket created "
+                  - "Local cache digest enabled;"
+                  - "Finished loading MIME types and icons."
+                  - "HTCP Disabled."
+                  - "Adaptation support is off."
+                  - "Squid plugin modules loaded: "
+                  - "Accepting HTTP Socket connections at "
+                  - "Store logging disabled"
+                  - "Swap maxSize "
+                  - "Target number of buckets: "
+                  - "Max Swap size: "
+                  - "Max Mem  size: "
+                  - "Pinger socket opened "
+                  - "Closing Pinger socket "
+                  - "Initialising ICMP pinger "
+                  - "Configuring Parent "
+                  - "storeLateRelease: released "
                 warn: "WARNING:"
-                error: "ERROR:"
+                error: ["ERROR:", "Open  icmp_sock:", "Recv recv:"]
                 fatal: "FATAL:"
+          - id: keycloak-cli-severity-parser
+            type: regex_parser
+            if: 'resource["k8s.container.name"] == "keycloak-sso-configure" and body matches "^(Logging into https?://|Created new (client|model) with id )"'
+            regex: '^(?P<cli_level>Logging into https?://|Created new (client|model) with id )'
+            parse_to: attributes
+            severity:
+              parse_from: attributes.cli_level
+              preset: none
+              overwrite_text: true
+              mapping:
+                info: ["Logging into http://", "Logging into https://", "Created new client with id ", "Created new model with id "]
           - id: envoy-no-route-severity-parser
             type: regex_parser
             if: 'resource["k8s.container.name"] == "envoy" and body matches "^[{].*\"response_code\":[[:space:]]*0[[:space:]]*[,}]" and body matches "\"response_code_details\":[[:space:]]*\"filter_chain_not_found\"" and not (body matches "\"level\"[[:space:]]*:")'

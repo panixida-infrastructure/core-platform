@@ -104,6 +104,58 @@ def fixtures():
     add("envoy", '{"level":"error","response_code":0,"response_code_details":"filter_chain_not_found"}', 17)
     add("migrator", "Cannot load library libgssapi_krb5.so.2", 17)
 
+    # Remaining startup formats observed after Collector rollout.
+    for container in ["squid", "log-forwarder"]:
+        for phrase in [
+            'Set Current Directory to ',
+            'Processing Configuration File: ',
+            'Created PID file ',
+            'Removing PID file ',
+            'Creating missing swap directories',
+            'No cache_dir stores are configured.',
+            'Starting Squid Cache version ',
+            'Service Name: ',
+            'Process ID ',
+            'Process Roles: ',
+            'With ',
+            'Using ',
+            'Initializing IP Cache',
+            'Adding nameserver ',
+            'Adding domain ',
+            'Adding ndots ',
+            'DNS IPv4 socket created ',
+            'DNS IPv6 socket created ',
+            'Local cache digest enabled;',
+            'Finished loading MIME types and icons.',
+            'HTCP Disabled.',
+            'Adaptation support is off.',
+            'Squid plugin modules loaded: ',
+            'Accepting HTTP Socket connections at ',
+            'Store logging disabled',
+            'Swap maxSize ',
+            'Target number of buckets: ',
+            'Max Swap size: ',
+            'Max Mem  size: ',
+            'Pinger socket opened ',
+            'Closing Pinger socket ',
+            'Initialising ICMP pinger ',
+            'Configuring Parent ',
+            'storeLateRelease: released ',
+        ]:
+            add(container, "2026/10/03 08:00:00| " + phrase + "startup sample", 9)
+        for role in ["pinger", "kid1"]:
+            for message, severity in [("ERROR: cannot open socket", 17),
+                                      ("FATAL: cannot start helper", 21),
+                                      ("WARNING: retrying", 13),
+                                      ("Open  icmp_sock: (1) Operation not permitted", 17)]:
+                add(container, f"2026/10/03 08:00:00 {role}| {message}", severity)
+        add(container, "2026/10/03 08:00:00| Recv recv: (111) Connection refused", 17)
+    add("keycloak-sso-configure", "Logging into http://keycloak:8080 as user admin of realm master", 9)
+    add("keycloak-sso-configure", "Created new client with id 'example'", 9)
+    add("keycloak-sso-configure", "Created new model with id 'example'", 9)
+    add("keycloak-sso-configure", "Unexpected server response", 0)
+    add("app", "Created new client with id 'example'", 0)
+
     # Do not manufacture a severity for missing levels/statuses or other sources.
     add("envoy", '{"response_code":0,"response_flags":"DC"}', 0)
     add("envoy", '{"response_code":null}', 0)
@@ -152,6 +204,15 @@ def multiline_fixtures():
         ], [
             (container, first + "\n      Executed DbCommand (1ms)\n      SELECT migration_id\n      FROM history;", 9),
             (container, second + "\n      System.Exception: failed command\n         at Database.Run()", 17),
+        ]
+
+    for container in ["squid", "log-forwarder"]:
+        header = "2026/10/03 08:00:00| Accepting HTTP Socket connections at conn3"
+        access = "1791010988.675 182 192.0.2.1 TCP_TUNNEL/200 6803 CONNECT example.org:443 - next"
+        yield container, [("stdout", header), ("stdout", "    listening port: 8888"),
+                          ("stdout", access)], [
+            (container, header + "\n    listening port: 8888", 9),
+            (container, access, 9),
         ]
 
 
