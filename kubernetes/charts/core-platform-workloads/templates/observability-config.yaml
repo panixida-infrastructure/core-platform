@@ -578,7 +578,7 @@ data:
             annotations:
               summary: Kubernetes node metrics are unavailable.
               description: Kubelet node metrics have been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 8) | quote }}
           - alert: KubernetesCadvisorDown
             expr: up{service_name="kubernetes-cadvisor"} == 0
             for: 5m
@@ -589,7 +589,7 @@ data:
             annotations:
               summary: Kubernetes cAdvisor metrics are unavailable.
               description: Kubelet cAdvisor container metrics have been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "variables" (dict "node" "kubernetes_io_hostname")) | quote }}
           - alert: KubernetesLogCollectionDown
             expr: count(up{service_name="kubernetes-nodes"} == 1) > count(up{app_kubernetes_io_name="otel-logs"} == 1) or absent(up{app_kubernetes_io_name="otel-logs"})
             for: 5m
@@ -600,7 +600,7 @@ data:
             annotations:
               summary: Kubernetes log collection is incomplete.
               description: At least one Kubernetes node has no healthy OpenTelemetry filelog collector, so its container logs may be missing from VictoriaLogs.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: KubernetesLogExportFailures
             expr: increase(otelcol_exporter_send_failed_log_records_total{app_kubernetes_io_name="otel-logs"}[5m]) > 0
@@ -612,7 +612,7 @@ data:
             annotations:
               summary: Kubernetes logs cannot be exported to VictoriaLogs.
               description: A node log collector failed to export one or more log records during the last 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 6) | quote }}
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: LinuxNodeExporterDown
             expr: up{service_name="linux-node-exporter"} == 0
@@ -624,7 +624,7 @@ data:
             annotations:
               summary: Linux node exporter metrics are unavailable.
               description: Host OS metrics from node-exporter have been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "infrastructure-nodes" "variables" (dict "node" "service_instance_id")) | quote }}
           {{- if .Values.observability.controlPlane.enabled }}
           - alert: ControlPlaneNodeExporterDown
             expr: up{service_name="timeweb-kubernetes-node"} == 0 or absent(up{service_name="timeweb-kubernetes-node"})
@@ -636,7 +636,7 @@ data:
             annotations:
               summary: Managed control-plane host metrics are unavailable.
               description: The Timeweb master node exporter has been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-control-plane/kubernetes-control-plane
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-control-plane") | quote }}
           - alert: ControlPlaneApiServerDown
             expr: up{service_name="timeweb-kubernetes-apiserver"} == 0 or absent(up{service_name="timeweb-kubernetes-apiserver"})
             for: 2m
@@ -647,7 +647,7 @@ data:
             annotations:
               summary: Managed Kubernetes API server is unavailable.
               description: API server metrics have been unreachable for at least 2 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-control-plane/kubernetes-control-plane
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-control-plane" "panel" 1) | quote }}
           - alert: ControlPlaneOomKill
             expr: increase(node_vmstat_oom_kill{service_name="timeweb-kubernetes-node"}[10m]) > 0
             labels:
@@ -657,7 +657,7 @@ data:
             annotations:
               summary: A process was killed by OOM on the managed master node.
               description: The host OOM counter increased during the last 10 minutes. Check memory and API server restarts; the separate restart alert is suppressed during this OOM window.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-control-plane/kubernetes-control-plane
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-control-plane" "panel" 13) | quote }}
           - alert: ControlPlaneApiServerRestarted
             expr: (changes(process_start_time_seconds{service_name="timeweb-kubernetes-apiserver"}[10m]) > 0) unless on() (increase(node_vmstat_oom_kill{service_name="timeweb-kubernetes-node"}[10m]) > 0)
             labels:
@@ -667,7 +667,7 @@ data:
             annotations:
               summary: The managed API server process restarted.
               description: API process start time changed during the last 10 minutes without a recorded host OOM increase. Check the provider logs.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-control-plane/kubernetes-control-plane
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-control-plane" "panel" 13) | quote }}
           {{- if .Values.observability.controlPlane.logs.enabled }}
           - alert: ControlPlaneLogCollectionStalled
             expr: time() - max(timeweb_control_plane_logs_last_success_timestamp_seconds) > 300 or absent(timeweb_control_plane_logs_last_success_timestamp_seconds)
@@ -679,7 +679,7 @@ data:
             annotations:
               summary: Managed control-plane logs are not being collected.
               description: No successful Timeweb API log polling cycle has completed for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-control-plane/kubernetes-control-plane
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-control-plane" "panel" 6) | quote }}
           {{- end }}
           {{- end }}
           - alert: PlatformEndpointDown
@@ -692,7 +692,7 @@ data:
             annotations:
               summary: Platform endpoint is not reachable.
               description: One public platform endpoint has failed OpenTelemetry HTTP checks for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 1) | quote }}
           - alert: PlatformEndpointSlow
             expr: max by (http_url) (httpcheck_duration_milliseconds{http_url!="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready"}) > 2000
             for: 3m
@@ -703,7 +703,7 @@ data:
             annotations:
               summary: Platform endpoint is slow.
               description: One public platform endpoint has responded slower than 2 seconds for at least 3 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 7) | quote }}
           - alert: SslCertificateExpiringSoon
             expr: min by (http_url) (httpcheck_tls_cert_remaining_seconds) < 1209600
             for: 30m
@@ -714,7 +714,7 @@ data:
             annotations:
               summary: TLS certificate expires soon.
               description: A public endpoint TLS certificate has less than 14 days remaining.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 2) | quote }}
           - alert: TelegramVpnProxyDown
             expr: time() - max(timestamp(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx",http_status_code=~"2.."})) > 60 or absent(httpcheck_status_ratio{service_name="telegram-vpn-check",http_status_class="2xx",http_status_code=~"2.."})
             for: 2m
@@ -725,7 +725,7 @@ data:
             annotations:
               summary: Telegram VPN proxy is unavailable.
               description: Telegram is not reachable through the preferred WireGuard route; the direct fallback remains active.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: TelegramAlertGatewayDown
             expr: max(httpcheck_status_ratio{http_url="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready",http_status_class="2xx"}) == 0 or absent(httpcheck_status_ratio{http_url="http://telegram-alert-gateway.observability.svc.cluster.local/health/ready",http_status_class="2xx"})
@@ -737,7 +737,7 @@ data:
             annotations:
               summary: Telegram alert gateway is unavailable.
               description: The gateway readiness endpoint or its PostgreSQL dependency has been unavailable for at least two minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 1) | quote }}
           - alert: TelegramAlertGatewayDeliveryFailures
             expr: increase(telegram_alert_gateway_notifications_failed_total[5m]) > 0
             for: 1m
@@ -748,7 +748,7 @@ data:
             annotations:
               summary: Telegram alert gateway cannot deliver notifications.
               description: At least one Telegram delivery attempt failed during the last five minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
           - alert: AlertmanagerGatewayDeliveryFailures
             expr: increase(alertmanager_notifications_failed_total{integration="webhook"}[5m]) > 0
             for: 1m
@@ -759,7 +759,7 @@ data:
             annotations:
               summary: Alertmanager cannot reach the Telegram alert gateway.
               description: At least one Alertmanager webhook delivery failed during the last five minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
           - alert: TelegramEgressDown
             expr: time() - max(timestamp(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=~"2.."})) > 60 or absent(httpcheck_status_ratio{service_name="telegram-egress-check",http_status_class="2xx",http_status_code=~"2.."})
             for: 2m
@@ -770,7 +770,7 @@ data:
             annotations:
               summary: Telegram alert delivery route is unavailable.
               description: Telegram is not reachable through either the WireGuard route or the direct fallback.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: TelegramNotificationFailures
             expr: increase(alertmanager_notifications_failed_total{integration="telegram"}[5m]) > 0
@@ -782,7 +782,7 @@ data:
             annotations:
               summary: Alertmanager failed to send a Telegram notification.
               description: At least one Telegram delivery attempt has failed during the last 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview") | quote }}
               logs_url: https://grafana.panixida.ru/explore?left=%7B%22datasource%22:%22victorialogs%22%7D
           - alert: TimewebPostgresExporterDown
             expr: up{service_name="timeweb-dbaas-postgres"} == 0
@@ -794,7 +794,7 @@ data:
             annotations:
               summary: Timeweb PostgreSQL exporter is unavailable.
               description: Managed PostgreSQL DB exporter metrics have been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed") | quote }}
           - alert: TimewebPostgresHostExporterDown
             expr: up{service_name="timeweb-dbaas-node"} == 0
             for: 5m
@@ -805,7 +805,7 @@ data:
             annotations:
               summary: Timeweb PostgreSQL host exporter is unavailable.
               description: Managed PostgreSQL host node exporter metrics have been unavailable for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed") | quote }}
           - alert: TimewebPostgresScrapeError
             expr: pg_exporter_last_scrape_error{service_name="timeweb-dbaas-postgres"} > 0
             for: 5m
@@ -816,7 +816,7 @@ data:
             annotations:
               summary: Managed PostgreSQL exporter scrape is failing.
               description: The PostgreSQL exporter reports scrape errors for the managed database.
-              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed" "panel" 2) | quote }}
           - alert: TimewebPostgresDown
             expr: pg_up{service_name="timeweb-dbaas-postgres"} == 0
             for: 5m
@@ -827,7 +827,7 @@ data:
             annotations:
               summary: Managed PostgreSQL is not reachable by exporter.
               description: The PostgreSQL exporter cannot reach the managed PostgreSQL instance.
-              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed" "panel" 1) | quote }}
           - alert: TimewebPostgresHighConnectionUsage
             expr: 100 * sum(pg_stat_activity_count{service_name="timeweb-dbaas-postgres"}) / max(pg_settings_max_connections{service_name="timeweb-dbaas-postgres"}) > 80
             for: 10m
@@ -838,7 +838,7 @@ data:
             annotations:
               summary: Managed PostgreSQL connection usage is high.
               description: PostgreSQL connection usage has stayed above 80 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed" "panel" 3) | quote }}
           - alert: HostHighCpu
             expr: 100 * (1 - avg by (service_name, service_instance_id, k8s_node_name) (rate(node_cpu_seconds_total{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node",mode="idle"}[5m]))) > 85
             for: 10m
@@ -849,7 +849,7 @@ data:
             annotations:
               summary: Host CPU usage is high.
               description: Host CPU usage has stayed above 85 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "infrastructure-nodes" "panel" 1 "variables" (dict "node" "service_instance_id")) | quote }}
           - alert: HostHighMemory
             expr: 100 * (1 - (sum by (service_name, service_instance_id, k8s_node_name) (node_memory_MemAvailable_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node"}) / sum by (service_name, service_instance_id, k8s_node_name) (node_memory_MemTotal_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node"}))) > 90
             for: 10m
@@ -860,7 +860,7 @@ data:
             annotations:
               summary: Host memory usage is high.
               description: Host memory usage has stayed above 90 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "infrastructure-nodes" "panel" 2 "variables" (dict "node" "service_instance_id")) | quote }}
           - alert: HostFilesystemHighUsage
             expr: 100 * (1 - (sum by (service_name, service_instance_id, k8s_node_name, mountpoint) (node_filesystem_avail_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node",fstype!~"tmpfs|overlay|squashfs|fuse.*",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"}) / sum by (service_name, service_instance_id, k8s_node_name, mountpoint) (node_filesystem_size_bytes{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node",fstype!~"tmpfs|overlay|squashfs|fuse.*",mountpoint!~"/run.*|/var/lib/kubelet/pods.*"}))) > 85
             for: 10m
@@ -871,7 +871,7 @@ data:
             annotations:
               summary: Host filesystem usage is high.
               description: Host filesystem usage has stayed above 85 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/infrastructure-nodes/infrastructure-nodes
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "infrastructure-nodes" "panel" 13 "variables" (dict "node" "service_instance_id")) | quote }}
           - alert: ApplicationSlowHttpRequests
             expr: histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=""}[5m]))) > 2
             for: 5m
@@ -882,7 +882,7 @@ data:
             annotations:
               summary: Application HTTP route is slow.
               description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 15 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHigh5xxErrorRate
             expr: (sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5..",http_route!=""}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_route!=""}[5m]))) > 0.05
             for: 1m
@@ -893,7 +893,7 @@ data:
             annotations:
               summary: Application 5xx error rate is high.
               description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute.
-              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 23 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHighGcPause
             expr: sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total[5m])) > 0.10
             for: 5m
@@ -904,7 +904,7 @@ data:
             annotations:
               summary: Application GC pause ratio is high.
               description: .NET GC pause time has stayed above 10 percent of wall time for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 30 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHighCpu
             expr: 100 * sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count) > 80
             for: 10m
@@ -915,7 +915,7 @@ data:
             annotations:
               summary: Application CPU usage is high.
               description: Application process CPU usage has stayed above 80 percent for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 25 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHighMemoryUsage
             expr: 100 * (sum by (namespace, pod, container) (container_memory_working_set_bytes{namespace=~".*-(development|production)",container!="",container!="POD",pod!=""}) / sum by (namespace, pod, container) (container_spec_memory_limit_bytes{namespace=~".*-(development|production)",container!="",container!="POD",pod!=""} > 0)) > 85
             for: 10m
@@ -926,7 +926,7 @@ data:
             annotations:
               summary: Application container memory usage is high.
               description: Application container memory usage has stayed above 85 percent of its Kubernetes limit for at least 10 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 2 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
           - alert: ApplicationHighExceptionRate
             expr: sum by (service_name) (rate(dotnet_exceptions_total[5m])) > 1
             for: 5m
@@ -937,7 +937,7 @@ data:
             annotations:
               summary: Application exception rate is high.
               description: .NET exception rate has stayed above 1 exception per second for at least 5 minutes.
-              dashboard_url: https://grafana.panixida.ru/d/application-telemetry/application-telemetry
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 45 "variables" (dict "service" "service_name")) | quote }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -1147,11 +1147,13 @@ data:
     {{ "{{" }}- with $alert.Labels.kubernetes_io_hostname {{ "}}" }}
     🖥 <code>{{ "{{" }} printf "%.80s" . | html {{ "}}" }}</code>
     {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Annotations.dashboard_url {{ "}}" }}
+    🔗 <a href="{{ "{{" }} . | html {{ "}}" }}">Grafana</a>
+    {{ "{{" }}- end {{ "}}" }}
+    {{ "{{" }}- with $alert.Annotations.logs_url {{ "}}" }}
+    🔗 <a href="{{ "{{" }} . | html {{ "}}" }}">Logs</a>
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
-
-    {{ "{{" }}- if or .CommonAnnotations.dashboard_url .CommonAnnotations.logs_url {{ "}}" }}
-    🛠 {{ "{{" }} with .CommonAnnotations.dashboard_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Grafana</a>{{ "{{" }} end {{ "}}" }}{{ "{{" }} if and .CommonAnnotations.dashboard_url .CommonAnnotations.logs_url {{ "}}" }} | {{ "{{" }} end {{ "}}" }}{{ "{{" }} with .CommonAnnotations.logs_url {{ "}}" }}<a href="{{ "{{" }} . {{ "}}" }}">Logs</a>{{ "{{" }} end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
     {{ "{{" }}- end {{ "}}" }}
 {{- end }}

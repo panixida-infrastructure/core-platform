@@ -23,3 +23,12 @@ affinity:
               app.kubernetes.io/name: sonarqube
               app.kubernetes.io/part-of: core-platform
 {{- end -}}
+
+{{/* Keep rule-to-panel mappings beside the rules; encode metric labels as URL values. */}}
+{{- define "core-platform-workloads.metricDashboardUrl" -}}
+https://{{ .root.Values.grafana.host }}/d/{{ .dashboard }}/{{ .dashboard }}?orgId=1&from={{ "{{ ($activeAt.Add (parseDurationTime \"-1h\")).UnixMilli }}" }}&to=now&timezone=browser&refresh=30s
+{{- with .panel }}&viewPanel=panel-{{ . }}{{ end -}}
+{{- range $variable, $label := .variables -}}
+{{ printf "{{ with $labels.%s }}" $label }}&var-{{ $variable }}={{ "{{ . | queryEscape }}{{ end }}" }}
+{{- end -}}
+{{- end -}}
