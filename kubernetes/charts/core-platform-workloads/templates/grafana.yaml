@@ -34,33 +34,35 @@ data:
         basicAuthUser: ${OBSERVABILITY_VM_REMOTE_WRITE_USERNAME}
         jsonData:
           logLevelRules:
+            # Keep regexes compatible with both JavaScript (log rows) and RE2
+            # (Logs volume). JavaScript does not support the inline (?i) flag.
             - field: severity_text
-              value: '(?i)^(critical|crit|fatal[2-4]?|panic|dpanic)$'
+              value: '^([Cc][Rr][Ii][Tt]([Ii][Cc][Aa][Ll])?|[Ff][Aa][Tt][Aa][Ll][2-4]?|[Dd]?[Pp][Aa][Nn][Ii][Cc])$'
               level: critical
               operator: regex
               enabled: true
             - field: severity_text
-              value: '(?i)^(error[2-4]?|err)$'
+              value: '^[Ee][Rr][Rr]([Oo][Rr][2-4]?)?$'
               level: error
               operator: regex
               enabled: true
             - field: severity_text
-              value: '(?i)^(warn[2-4]?|warning)$'
+              value: '^[Ww][Aa][Rr][Nn]([2-4]|[Ii][Nn][Gg])?$'
               level: warning
               operator: regex
               enabled: true
             - field: severity_text
-              value: '(?i)^(info[2-4]?|information|informational)$'
+              value: '^[Ii][Nn][Ff][Oo]([2-4]|[Rr][Mm][Aa][Tt][Ii][Oo][Nn]([Aa][Ll])?)?$'
               level: info
               operator: regex
               enabled: true
             - field: severity_text
-              value: '(?i)^debug[2-4]?$'
+              value: '^[Dd][Ee][Bb][Uu][Gg][2-4]?$'
               level: debug
               operator: regex
               enabled: true
             - field: severity_text
-              value: '(?i)^trace[2-4]?$'
+              value: '^[Tt][Rr][Aa][Cc][Ee][2-4]?$'
               level: trace
               operator: regex
               enabled: true

@@ -1,7 +1,7 @@
 """Exercise rendered filelog operators with the deployed Collector image.
 
 Usage: python3 -B tests/verify_log_levels.py /tmp/core-platform-workloads.yaml
-Requires Docker; uses only Python's standard library.
+Requires Docker and Node.js; uses only Python's standard library.
 """
 
 import json
@@ -30,16 +30,24 @@ def verify_grafana_rules(rendered):
         "critical": ["Critical", "CRIT", "FATAL", "Fatal2", "panic", "DPANIC"],
         "error": ["Error", "ERROR", "err", "error4"],
         "warning": ["Warning", "WARN", "warning", "Warn3"],
-        "info": ["Information", "INFO", "info", "Info", "Informational", "INFO2"],
+        "info": ["Information", "INFO", "info", "Info", "iNfO", "Informational", "INFO2"],
         "debug": ["Debug", "DEBUG", "debug3"],
         "trace": ["Trace", "TRACE", "trace4"],
     }
-    for expected, values in aliases.items():
-        for value in values:
-            matches = [level for pattern, level in rules if re.fullmatch(pattern, value)]
-            assert matches == [expected], (value, matches, expected)
+    examples = [(value, [expected]) for expected, values in aliases.items() for value in values]
     for value in ["", "Unspecified", "unknown", "error fetching data", "INFO5"]:
-        assert not any(re.fullmatch(pattern, value) for pattern, _ in rules), value
+        examples.append((value, []))
+    # The plugin calls new RegExp(rule.value), without flags. A Python-only
+    # regex test would miss expressions such as (?i) that fail in the browser.
+    subprocess.run(["node", "-e", """
+const {rules, examples} = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+for (const [value, expected] of examples) {
+  const actual = rules.filter(([pattern]) => new RegExp(pattern).test(value)).map(([, level]) => level);
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(JSON.stringify({value, actual, expected}));
+  }
+}
+"""], input=json.dumps({"rules": rules, "examples": examples}), text=True, check=True)
     print("Grafana severity aliases and unknown values: OK", flush=True)
 
 
