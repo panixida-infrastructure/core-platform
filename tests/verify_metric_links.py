@@ -93,6 +93,8 @@ def verify(rendered):
         assert result.returncode == 0, result.stderr + result.stdout
         message = html.unescape(result.stdout)
         assert message.count(">Grafana</a>") == 5, message
+        assert message.count("\n\n• • •\n\n") == 4, message
+        assert message.count('\n\n🔗 <a href=') == 5, message
         assert all(url in message for url in urls[:5]), message
         assert urls[5] not in message, message
         assert len(message) < 4096, "Emergency group exceeds Telegram limit"
