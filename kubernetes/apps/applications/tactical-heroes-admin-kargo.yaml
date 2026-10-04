@@ -25,10 +25,10 @@ spec:
   promotionPolicies:
     - stageSelector:
         name: development
-      autoPromotionEnabled: true
+      autoPromotionEnabled: false
     - stageSelector:
         name: production
-      autoPromotionEnabled: true
+      autoPromotionEnabled: false
 ---
 apiVersion: kargo.akuity.io/v1alpha1
 kind: PromotionTask
