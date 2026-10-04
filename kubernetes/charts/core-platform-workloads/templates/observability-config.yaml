@@ -262,10 +262,13 @@ data:
       batch:
         timeout: 5s
         send_batch_size: 8192
+        send_batch_max_size: 8192
 
     exporters:
       otlphttp/victoriametrics:
         compression: gzip
+        sending_queue:
+          num_consumers: 2
         metrics_endpoint: http://victoriametrics.observability.svc.cluster.local:8428/opentelemetry/v1/metrics
         auth:
           authenticator: basicauth/victoria

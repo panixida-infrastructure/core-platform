@@ -172,7 +172,7 @@ observability:
     vmalert: victoriametrics/vmalert:v1.153.0
     alertmanager: prom/alertmanager:v0.34.1
     nodeExporter: quay.io/prometheus/node-exporter:v1.12.1
-    otelCollector: otel/opentelemetry-collector-contrib:0.142.0
+    otelCollector: otel/opentelemetry-collector-contrib:0.161.0
     gluetun: ghcr.io/qdm12/gluetun:v3.41.3
     squid: ubuntu/squid:6.6-24.04_edge
     busybox: busybox:1.37.0
