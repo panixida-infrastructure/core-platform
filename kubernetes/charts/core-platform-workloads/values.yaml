@@ -170,7 +170,7 @@ observability:
     victorialogs: victoriametrics/victoria-logs:v1.50.0
     victoriatraces: victoriametrics/victoria-traces:v0.9.0
     vmalert: victoriametrics/vmalert:v1.143.0
-    alertmanager: prom/alertmanager:v0.32.1
+    alertmanager: prom/alertmanager:v0.34.1
     nodeExporter: quay.io/prometheus/node-exporter:v1.12.1
     otelCollector: otel/opentelemetry-collector-contrib:0.142.0
     gluetun: ghcr.io/qdm12/gluetun:v3.41.3
