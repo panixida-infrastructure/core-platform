@@ -32,7 +32,7 @@ variable "kubernetes_gateway_public_ipv4" {
 variable "k8s_version" {
   description = "Managed Kubernetes version for the core platform cluster."
   type        = string
-  default     = "v1.35.8+k0s.0"
+  default     = "v1.36.4+k0s.0"
 }
 
 variable "k8s_network_driver" {
