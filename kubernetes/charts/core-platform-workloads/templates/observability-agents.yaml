@@ -213,6 +213,11 @@ metadata:
     app.kubernetes.io/name: telegram-egress
 spec:
   replicas: {{ .Values.observability.telegramEgress.proxyReplicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: telegram-egress
@@ -228,16 +233,18 @@ spec:
       securityContext:
         fsGroup: 13
         fsGroupChangePolicy: OnRootMismatch
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                topologyKey: kubernetes.io/hostname
-                labelSelector:
-                  matchLabels:
-                    app.kubernetes.io/name: telegram-egress
-                    app.kubernetes.io/part-of: core-platform
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: telegram-egress
+              app.kubernetes.io/part-of: core-platform
+          # Balance each rollout independently from the retiring pods.
+          matchLabelKeys:
+            - pod-template-hash
       containers:
         - name: squid
           image: {{ .Values.observability.images.squid | quote }}
