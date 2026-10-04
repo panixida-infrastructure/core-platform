@@ -117,10 +117,25 @@ jobs:
             --wait \
             --timeout 10m
 
+          # Helm does not upgrade CRDs installed by previous chart versions.
+          helm template eg-crds oci://docker.io/envoyproxy/gateway-crds-helm \
+            --version v1.9.2 \
+            --set crds.gatewayAPI.enabled=true \
+            --set crds.gatewayAPI.channel=experimental \
+            --set crds.envoyGateway.enabled=true \
+            | kubectl apply --server-side --force-conflicts -f -
+
+          # Use the same controller configuration as the GitOps-managed ConfigMap.
+          {
+            printf 'config:\n  envoyGateway:\n'
+            sed -n '/^    apiVersion:/,$p' kubernetes/apps/platform/envoy-gateway-config.yaml
+          } >/tmp/envoy-gateway-values.yaml
           helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm \
-            --version v1.8.0 \
+            --version v1.9.2 \
             --namespace envoy-gateway-system \
             --create-namespace \
+            --set crds.enabled=false \
+            -f /tmp/envoy-gateway-values.yaml \
             --wait \
             --timeout 10m
 
