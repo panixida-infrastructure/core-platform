@@ -125,7 +125,7 @@ jobs:
             --timeout 10m
 
           helm upgrade --install external-secrets external-secrets/external-secrets \
-            --version 2.4.1 \
+            --version 2.11.0 \
             --namespace external-secrets \
             --create-namespace \
             --set installCRDs=true \
