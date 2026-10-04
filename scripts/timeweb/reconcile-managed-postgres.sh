@@ -750,11 +750,12 @@ tactical_heroes_common_app_config="$(jq -n '{
   "Notifications__Email__Smtp__SenderEmail": "tactical-heroes@panixida.ru"
 }')"
 tactical_heroes_dev_app_secret="$(jq -n \
+  --argjson existing "$(bao_read_optional "$openbao_token" applications/tactical-heroes-api/development)" \
   --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_dev_connection_string" \
   --arg client_secret "$tactical_heroes_dev_client_secret" \
   --arg smtp_password "$tactical_heroes_smtp_password" \
-  '$common + {
+  '($existing | with_entries(select(.key | test("^Identity__Provider__(Signing|Encryption)Certificates__")))) + $common + {
     ASPNETCORE_ENVIRONMENT: "Development",
     DOTNET_ENVIRONMENT: "Development",
     OTEL_SERVICE_NAME: "tactical-heroes-api-development",
@@ -766,11 +767,12 @@ tactical_heroes_dev_app_secret="$(jq -n \
     Notifications__Email__Smtp__SenderName: "Tactical Heroes Dev"
   }')"
 tactical_heroes_prod_app_secret="$(jq -n \
+  --argjson existing "$(bao_read_optional "$openbao_token" applications/tactical-heroes-api/production)" \
   --argjson common "$tactical_heroes_common_app_config" \
   --arg connection_string "$tactical_heroes_prod_connection_string" \
   --arg client_secret "$tactical_heroes_prod_client_secret" \
   --arg smtp_password "$tactical_heroes_smtp_password" \
-  '$common + {
+  '($existing | with_entries(select(.key | test("^Identity__Provider__(Signing|Encryption)Certificates__")))) + $common + {
     ASPNETCORE_ENVIRONMENT: "Production",
     DOTNET_ENVIRONMENT: "Production",
     OTEL_SERVICE_NAME: "tactical-heroes-api-production",
