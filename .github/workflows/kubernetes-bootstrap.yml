@@ -160,7 +160,7 @@ jobs:
           helm repo update
 
           helm upgrade --install argo-cd argo/argo-cd \
-            --version 9.3.7 \
+            --version 10.9.6 \
             --namespace argocd \
             --create-namespace \
             -f kubernetes/bootstrap/argocd-values.yaml \
