@@ -104,6 +104,8 @@ spec:
               value: {{ .Values.sonarqube.javaOpts.search | quote }}
             - name: SONAR_CORE_SERVERBASEURL
               value: https://{{ .Values.sonarqube.host }}
+            - name: SONAR_UPDATECENTER_ACTIVATE
+              value: "false"
             - name: SONAR_AUTH_JWTBASE64HS256SECRET
               valueFrom:
                 secretKeyRef:
