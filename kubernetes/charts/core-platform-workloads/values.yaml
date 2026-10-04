@@ -132,7 +132,7 @@ observability:
       secretName: timeweb-control-plane-logs
       remoteKey: core-platform/observability-timeweb-logs
       pollIntervalSeconds: 60
-      image: python:3.13-alpine@sha256:7415fbc3c9e4979cc717d92377ab2bc7b2b4a2af1ac03cc52b5f3f88efedaf3a
+      image: python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72
   persistence:
     enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud
