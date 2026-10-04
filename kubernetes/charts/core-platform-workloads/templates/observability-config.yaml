@@ -660,6 +660,8 @@ data:
     shutdown_lifetime 1 second
     cache deny all
     cache_mem 16 MB
+    pinger_enable off
+    netdb_filename none
     cache_log /var/log/squid/cache.log
     logformat telegram_egress %ts.%03tu %6tr %>a %Ss/%03>Hs %<st %rm %ru route=%{X-Panixida-Telegram-Route}>h %Sh/%<a %mt
     access_log stdio:/var/log/squid/access.log telegram_egress

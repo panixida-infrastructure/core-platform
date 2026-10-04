@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: otel-collector
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: otel-collector
@@ -95,6 +97,8 @@ kind: DaemonSet
 metadata:
   name: otel-logs
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: otel-logs

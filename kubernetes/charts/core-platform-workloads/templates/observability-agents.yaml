@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: vmalert
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: vmalert
@@ -204,6 +206,8 @@ kind: Deployment
 metadata:
   name: telegram-egress
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: telegram-egress
@@ -334,6 +338,8 @@ kind: {{ ternary "StatefulSet" "Deployment" .Values.observability.persistence.en
 metadata:
   name: alertmanager
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: alertmanager
