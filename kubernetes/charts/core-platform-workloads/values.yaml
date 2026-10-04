@@ -174,7 +174,7 @@ observability:
     nodeExporter: quay.io/prometheus/node-exporter:v1.12.1
     otelCollector: otel/opentelemetry-collector-contrib:0.161.0
     gluetun: ghcr.io/qdm12/gluetun:v3.41.3
-    squid: ubuntu/squid:6.6-24.04_edge
+    squid: ubuntu/squid:7.2-26.04_edge
     busybox: busybox:1.37.0
   storage:
     victoriametrics: 20Gi

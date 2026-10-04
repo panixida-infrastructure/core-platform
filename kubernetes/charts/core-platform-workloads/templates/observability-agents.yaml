@@ -238,6 +238,8 @@ spec:
         - name: squid
           image: {{ .Values.observability.images.squid | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /usr/sbin/squid-gnutls
           args:
             - -N
             - -f
@@ -263,12 +265,12 @@ spec:
             periodSeconds: 10
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 13
+            runAsGroup: 13
             capabilities:
               drop:
                 - ALL
-              add:
-                - SETGID
-                - SETUID
           volumeMounts:
             - name: config
               mountPath: /etc/squid/squid.conf
