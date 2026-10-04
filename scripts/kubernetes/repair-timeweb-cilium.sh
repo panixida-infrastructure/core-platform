@@ -28,6 +28,10 @@ cilium_patch="$(jq -nc \
   --arg port "$api_port" '
     {
       spec: {
+        updateStrategy: {
+          type: "RollingUpdate",
+          rollingUpdate: {maxUnavailable: 1}
+        },
         template: {
           spec: {
             initContainers: [{
