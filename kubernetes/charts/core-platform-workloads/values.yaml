@@ -187,7 +187,7 @@ observability:
         cpu: 100m
         memory: 256Mi
       limits:
-        memory: 768Mi
+        memory: 1Gi
     victorialogs:
       requests:
         cpu: 50m
