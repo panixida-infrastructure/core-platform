@@ -34,6 +34,10 @@ metadata:
     app.kubernetes.io/name: openbao
 spec:
   replicas: {{ .Values.openbao.replicas }}
+  {{- if eq (int .Values.openbao.replicas) 1 }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: openbao

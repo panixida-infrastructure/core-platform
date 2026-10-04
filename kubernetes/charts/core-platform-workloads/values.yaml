@@ -37,7 +37,7 @@ openbao:
   enabled: true
   namespace: secrets
   host: secrets.panixida.ru
-  image: openbao/openbao:2.5.4
+  image: openbao/openbao:2.6.4
   secretName: openbao-secrets
   staticSeal:
     enabled: true
