@@ -2,15 +2,16 @@
 # Manual edits may be lost in future updates.
 
 provider "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud" {
-  version     = "1.7.2"
-  constraints = "~> 1.7"
+  version     = "1.8.2"
+  constraints = "~> 1.8"
   hashes = [
-    "h1:kGNHB1lFfBevcFQo6DiULooiTGEf9r4eANTjffgTZr4=",
-    "zh:163402744a5becc9b67676e1f283955408d50a25c40c26ec4065f8feb4791ade",
-    "zh:456afde16bad3fa8cb55ff41657ded1070b52b02c8901d9d792f244e331b383f",
-    "zh:4c06dbd4bbddaf9ae6a42e6852c51920615ccf21a52110486c7d808da97a66f1",
-    "zh:4fe7e659f003bf33c7742dbf07b2d26668014193a868445e24317a3c3effb52e",
-    "zh:7db902fcb47b29623e9a7cd209aa6a050e90e850ccda855a13ef8466e53a07e3",
-    "zh:e1bec4d88411f7ca6acd2e77ae07b472cd2885f37b9ffb8f5dd9956ac52d9004",
+    "h1:8Ygtv2PKYJxQN+rKjBkhSb6rCezhwsisKm3vbOLT4Ng=",
+    "h1:Q2I7YvwG949s/pfCskPrRqDRQ+xkXHr40y1gM03eWP8=",
+    "zh:256a55a657642da86babda60cb3d5a039818a60dbf1354d24bf0595548988fc5",
+    "zh:278b5b8e0a3069fe6183b56b5f42a1a9b9426ac3125ae67ac47d750d64155279",
+    "zh:3ba47ace275a8a0bc28381db598282d6e2d860762e045624ea3b146d14e9b05e",
+    "zh:5aeef0740eb75a996f1e1e0abf83f5363cad18312ca15b481b217b83b9932457",
+    "zh:6f2f2183e26845a6d5ad2b8196b8c182dbd5892a5240ef17013aad7bd2550d5c",
+    "zh:a379d9b024f67c3ec5562add9e63fcb8a784c42aa06500f7949258831e967cf1",
   ]
 }
