@@ -166,7 +166,7 @@ observability:
     vpnReplicas: 1
     proxyReplicas: 2
   images:
-    victoriametrics: victoriametrics/victoria-metrics:v1.143.0
+    victoriametrics: victoriametrics/victoria-metrics:v1.153.0
     victorialogs: victoriametrics/victoria-logs:v1.50.0
     victoriatraces: victoriametrics/victoria-traces:v0.9.0
     vmalert: victoriametrics/vmalert:v1.143.0
