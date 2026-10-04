@@ -14,7 +14,7 @@ keycloak:
   enabled: true
   namespace: identity
   host: identity.panixida.ru
-  image: quay.io/keycloak/keycloak:26.6.2
+  image: quay.io/keycloak/keycloak:26.8.0
   secretName: keycloak-secrets
   replicas: 1
   sso:
