@@ -6,6 +6,7 @@ Requires Docker; uses only Python's standard library.
 
 import json
 import html
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import subprocess
@@ -48,9 +49,11 @@ def verify(rendered):
         ("TelegramAlertGatewayDeliveryFailures", "core-platform-overview", None, {}),
     ]
     rules, checks = [], []
+    # vmalert-tool >= 1.148 starts fixture series at 2000-01-01 UTC.
+    test_start_ms = int(datetime(2000, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
     for name, dashboard, panel, variables in cases:
         rules.append({"alert": name, "expr": "metric_link_fixture", "annotations": {"dashboard_url": links[name]}})
-        params = {"orgId": "1", "from": "-3600000", "to": "now", "timezone": "browser", "refresh": "30s"}
+        params = {"orgId": "1", "from": str(test_start_ms - 3600000), "to": "now", "timezone": "browser", "refresh": "30s"}
         if panel:
             params["viewPanel"] = f"panel-{panel}"
         params.update({f"var-{key}": value for key, value in variables.items()})
