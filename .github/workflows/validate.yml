@@ -12,13 +12,13 @@ permissions:
   pull-requests: read
 
 env:
-  HELM_VERSION: v4.2.1
+  HELM_VERSION: v4.3.0
 
 jobs:
   shell:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Syntax check
         run: find scripts opentofu/scripts -name '*.sh' -print0 | xargs -0 -n1 bash -n
@@ -32,7 +32,7 @@ jobs:
       run:
         working-directory: opentofu/envs/production
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install OpenTofu
         run: |
@@ -57,7 +57,7 @@ jobs:
   kubernetes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Test managed control-plane automation
         run: python3 -B -m unittest discover -s tests
@@ -68,7 +68,7 @@ jobs:
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
           chmod 700 get_helm.sh
           DESIRED_VERSION="${HELM_VERSION}" ./get_helm.sh
-          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          kubectl_version="v1.36.5"
           curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
 

@@ -27,7 +27,7 @@ jobs:
     env:
       KUBECONFIG: /tmp/core-platform.kubeconfig
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check confirmation
         run: |
@@ -47,7 +47,7 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/opentofu.list >/dev/null
           sudo apt-get update
           sudo apt-get install -y tofu
-          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          kubectl_version="v1.36.5"
           curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
 

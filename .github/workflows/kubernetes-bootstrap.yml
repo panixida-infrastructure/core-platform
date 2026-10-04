@@ -36,7 +36,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  HELM_VERSION: v4.2.1
+  HELM_VERSION: v4.3.0
   TF_IN_AUTOMATION: "true"
   TF_VAR_twc_token: ${{ secrets.TIMEWEB_TOKEN }}
   AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
@@ -48,7 +48,7 @@ jobs:
     env:
       KUBECONFIG: /tmp/core-platform.kubeconfig
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check confirmation
         run: |
@@ -81,7 +81,7 @@ jobs:
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
           chmod 700 get_helm.sh
           DESIRED_VERSION="${HELM_VERSION}" ./get_helm.sh
-          kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+          kubectl_version="v1.36.5"
           curl -fsSLo kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
 
