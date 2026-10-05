@@ -687,8 +687,8 @@ telegram_alert_gateway_app_secret="$(jq -n \
     VictoriaLogs__Username: $victoria_username,
     VictoriaLogs__Password: $victoria_password
   }')"
-tactical_heroes_dev_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_dev;Username=${tactical_heroes_dev_user};Password=${tactical_heroes_dev_password};SSL Mode=Require;Trust Server Certificate=true"
-tactical_heroes_prod_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_prod;Username=${tactical_heroes_prod_user};Password=${tactical_heroes_prod_password};SSL Mode=Require;Trust Server Certificate=true"
+tactical_heroes_dev_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_dev;Username=${tactical_heroes_dev_user};Password=${tactical_heroes_dev_password};SSL Mode=Require;Trust Server Certificate=true;GSS Encryption Mode=Disable"
+tactical_heroes_prod_connection_string="Host=${target_host};Port=${target_port};Database=tactical_heroes_prod;Username=${tactical_heroes_prod_user};Password=${tactical_heroes_prod_password};SSL Mode=Require;Trust Server Certificate=true;GSS Encryption Mode=Disable"
 tactical_heroes_common_app_config="$(jq -n '{
   "ASPNETCORE_HTTP_PORTS": "8080",
   "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
