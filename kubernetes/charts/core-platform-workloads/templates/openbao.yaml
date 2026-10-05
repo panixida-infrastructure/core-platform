@@ -173,4 +173,19 @@ spec:
     - backendRefs:
         - name: openbao
           port: 8200
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: openbao-connection-idle-timeout
+  namespace: {{ .Values.openbao.namespace }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: openbao
+  timeout:
+    http:
+      # Close idle upstream connections before OpenBao's default 5-minute timeout.
+      connectionIdleTimeout: 240s
 {{- end }}
