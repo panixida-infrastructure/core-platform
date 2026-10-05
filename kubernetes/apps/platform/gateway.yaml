@@ -167,3 +167,18 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: core-platform-backend-traffic
+  namespace: envoy-gateway-system
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: core-platform
+  timeout:
+    http:
+      # Retire idle upstream connections before backend keep-alive timeouts.
+      connectionIdleTimeout: 30s
