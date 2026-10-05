@@ -23,6 +23,14 @@ def line(seconds=0, message="test"):
     return f'time="{timestamp}" level=info msg="{message}" component=kube-apiserver'
 
 
+def reset_line(peer="176.53.162.227", component="kube-apiserver", message=None):
+    message = message or ('E0907 18:00:00.123456 123 upgradeaware.go:428] '
+                          '"Error proxying data from client to backend" '
+                          f'err="read tcp 192.0.2.1:6443->{peer}:61984: read: connection reset by peer"')
+    timestamp = dt.datetime.fromtimestamp(NOW, dt.timezone.utc).isoformat()
+    return f'time="{timestamp}" level=info msg={json.dumps(message)} component={component}'
+
+
 class FakeClient:
     def __init__(self, pages, fail_export=False, fail_save=False):
         self.pages = pages
@@ -50,6 +58,61 @@ class FakeClient:
 
 
 class CollectorTests(unittest.TestCase):
+    def test_known_diagnostic_client_reset_is_warning_with_source_error_preserved(self):
+        raw = reset_line()
+        with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", {"176.53.162.227"}):
+            component, timestamp, record = collector.normalize(raw, NODE, NOW)
+        self.assertEqual((component, timestamp, record["severityNumber"], record["severityText"]),
+                         ("kube-apiserver", NOW, 13, "Warning"))
+        self.assertEqual(record["body"]["stringValue"], json.loads(collector.FIELDS.findall(raw)[2][1]))
+        attrs = {attr["key"]: attr["value"]["stringValue"] for attr in record["attributes"]}
+        self.assertEqual(attrs["log.original.severity_text"], "Error")
+        self.assertEqual(attrs[collector.CLIENT_STREAM_RESET_ATTRIBUTE], "true")
+
+    def test_other_peers_components_scopes_and_transport_failures_remain_errors(self):
+        base = json.loads(collector.FIELDS.findall(reset_line())[2][1])
+        variants = [
+            (reset_line(peer="198.51.100.9"), "k0scontroller.service"),
+            (reset_line(component="kube-controller-manager"), "k0scontroller.service"),
+            (reset_line(), "twcp.service"),
+            (reset_line(message=base.replace("client to backend", "backend to client")), "k0scontroller.service"),
+            (reset_line(message=base.replace("read tcp", "write tcp")), "k0scontroller.service"),
+            (reset_line(message=base.replace(":6443->", ":43512->")), "k0scontroller.service"),
+            (reset_line(message=base.replace("connection reset by peer", "i/o timeout")), "k0scontroller.service"),
+            (reset_line(message=base.replace("upgradeaware.go", "other.go")), "k0scontroller.service"),
+            (reset_line(message=base + ' error="another failure"'), "k0scontroller.service"),
+            (line(message="E0907 18:00:00.123456 OOM failure"), "k0scontroller.service"),
+        ]
+        with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", {"176.53.162.227"}):
+            for raw, scope in variants:
+                with self.subTest(raw=raw, scope=scope):
+                    _, _, record = collector.normalize(raw, NODE, NOW, scope)
+                    self.assertEqual(record["severityNumber"], 17)
+                    self.assertNotIn(collector.CLIENT_STREAM_RESET_ATTRIBUTE,
+                                     [attr["key"] for attr in record["attributes"]])
+
+    def test_empty_diagnostic_allowlist_keeps_reset_error(self):
+        with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", set()):
+            _, _, record = collector.normalize(reset_line(), NODE, NOW)
+        self.assertEqual(record["severityNumber"], 17)
+
+    def test_reset_metric_counts_exported_records_once_across_poll_overlap(self):
+        state, metrics = {}, collector.Metrics()
+        with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", {"176.53.162.227"}):
+            collector.collect_node(FakeClient([[reset_line(), reset_line(peer="198.51.100.9")]]),
+                                   NODE, state, NOW, metrics=metrics)
+            collector.collect_node(FakeClient([[reset_line(), reset_line(peer="198.51.100.9")]]),
+                                   NODE, state, NOW + 60, metrics=metrics)
+        self.assertEqual(metrics.diagnostic_stream_resets, 1)
+
+    def test_failed_export_does_not_increment_reset_metric(self):
+        metrics = collector.Metrics()
+        with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", {"176.53.162.227"}):
+            with self.assertRaises(OSError):
+                collector.collect_node(FakeClient([[reset_line()]], fail_export=True),
+                                       NODE, {}, NOW, metrics=metrics)
+        self.assertEqual(metrics.diagnostic_stream_resets, 0)
+
     def test_logrus_glog_error_overrides_outer_info(self):
         component, timestamp, record = collector.normalize(line(message="E0907 18:00:00.123456 error"), NODE, NOW)
         self.assertEqual((component, timestamp, record["severityNumber"]), ("kube-apiserver", NOW, 17))

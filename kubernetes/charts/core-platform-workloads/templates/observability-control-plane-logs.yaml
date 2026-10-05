@@ -128,6 +128,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: POLL_INTERVAL_SECONDS
               value: {{ .Values.observability.controlPlane.logs.pollIntervalSeconds | quote }}
+            - name: DIAGNOSTIC_CLIENT_IPS
+              value: {{ join "," .Values.observability.controlPlane.logs.diagnosticClientIPs | quote }}
             - name: OTLP_LOGS_ENDPOINT
               value: http://otel-collector.{{ .Values.observability.namespace }}.svc.cluster.local:4318/v1/logs
           ports:
