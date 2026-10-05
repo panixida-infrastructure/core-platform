@@ -23,6 +23,13 @@ SCOPES = ("k0scontroller.service", "cloud-provider-timeweb-cloud.service",
           "tw-kube-healer.service", "twcp.service")
 OVERLAP_SECONDS = 120
 REQUEST_TIMEOUT_SECONDS = 20
+DIAGNOSTIC_CLIENT_IPS = frozenset(filter(None, os.environ.get("DIAGNOSTIC_CLIENT_IPS", "").split(",")))
+CLIENT_STREAM_RESET = re.compile(
+    r'^E\d{4}\s[^\]]+\supgradeaware\.go:\d+\] '
+    r'"Error proxying data from client to backend" '
+    r'err="read tcp [^ ]+:6443->(?P<peer>(?:\d{1,3}\.){3}\d{1,3}):\d+: '
+    r'read: connection reset by peer"$')
+CLIENT_STREAM_RESET_ATTRIBUTE = "k8s.apiserver.diagnostic_stream_reset"
 
 
 def attribute(key, value):
@@ -69,6 +76,14 @@ def normalize(line, node, observed, scope="k0scontroller.service"):
     severity, text = LEVELS.get(level, LEVELS["info"])
     attrs = [attribute("alert_owner", "core-platform"), attribute("log.source", "timeweb-api"),
              attribute("timeweb.log.scope", scope)]
+    component = fields.get("component", scope.removesuffix(".service"))
+    reset = CLIENT_STREAM_RESET.fullmatch(message)
+    if (level == "error" and component == "kube-apiserver" and scope == "k0scontroller.service"
+            and reset and reset["peer"] in DIAGNOSTIC_CLIENT_IPS):
+        # Only confirmed operator peers get lower-priority alerts; retain the source error.
+        attrs.extend([attribute("log.original.severity_text", text),
+                      attribute(CLIENT_STREAM_RESET_ATTRIBUTE, "true")])
+        severity, text = LEVELS["warn"]
     if timestamp is None:
         attrs.append(attribute("timeweb.timestamp.missing", "true"))
     record = {"observedTimeUnixNano": str(int(observed * 1_000_000_000)),
@@ -76,7 +91,6 @@ def normalize(line, node, observed, scope="k0scontroller.service"):
               "body": {"stringValue": message}, "attributes": attrs}
     if timestamp is not None:
         record["timeUnixNano"] = str(int(timestamp * 1_000_000_000))
-    component = fields.get("component", scope.removesuffix(".service"))
     return component, timestamp, record
 
 
@@ -182,7 +196,7 @@ class Client:
             raise RuntimeError("OpenTelemetry collector rejected log records")
 
 
-def collect_node(client, node, state, now, scope="k0scontroller.service", page_limit=20):
+def collect_node(client, node, state, now, scope="k0scontroller.service", page_limit=20, metrics=None):
     """Overlap polls to tolerate timestamp ties and delayed logs; export before checkpoint."""
     key = str(node["id"]) + ":" + scope
     previous = state.get(key, {})
@@ -239,7 +253,12 @@ def collect_node(client, node, state, now, scope="k0scontroller.service", page_l
         return 0
     records = list(reversed(pending))
     for offset in range(0, len(records), 500):
-        client.export(node, records[offset:offset + 500])
+        batch = records[offset:offset + 500]
+        client.export(node, batch)
+        if metrics is not None:
+            metrics.diagnostic_stream_resets += sum(
+                any(attr["key"] == CLIENT_STREAM_RESET_ATTRIBUTE for attr in record[2]["attributes"])
+                for record in batch)
     checkpoint = {"watermark": watermark, "seen": {
         key: value for key, value in seen.items() if value["time"] >= watermark - OVERLAP_SECONDS}}
     if checkpoint != previous:
@@ -253,6 +272,7 @@ class Metrics:
     last_success = 0
     errors = 0
     records = 0
+    diagnostic_stream_resets = 0
 
 
 def main():
@@ -270,7 +290,9 @@ def main():
                 return
             body = (f"timeweb_control_plane_logs_last_success_timestamp_seconds {metrics.last_success}\n"
                     f"timeweb_control_plane_logs_errors_total {metrics.errors}\n"
-                    f"timeweb_control_plane_logs_exported_records_total {metrics.records}\n").encode()
+                    f"timeweb_control_plane_logs_exported_records_total {metrics.records}\n"
+                    "# TYPE timeweb_control_plane_logs_diagnostic_stream_resets_total counter\n"
+                    f"timeweb_control_plane_logs_diagnostic_stream_resets_total {metrics.diagnostic_stream_resets}\n").encode()
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; version=0.0.4")
             self.send_header("Content-Length", str(len(body)))
@@ -292,7 +314,7 @@ def main():
                 raise RuntimeError("Provider returned no master nodes")
             for node in masters:
                 for scope in SCOPES:
-                    metrics.records += collect_node(client, node, state, time.time(), scope)
+                    metrics.records += collect_node(client, node, state, time.time(), scope, metrics=metrics)
             metrics.last_success = time.time()
         except Exception as error:
             metrics.errors += 1

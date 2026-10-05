@@ -26,7 +26,7 @@ def verify(rendered):
     links = dict(re.findall(
         r"- alert: (\w+)\n(?:(?!- alert:).)*?dashboard_url: (\"[^\n]+\")",
         rendered, re.S))
-    assert len(links) == 33, f"Expected 33 metric alert links, got {len(links)}"
+    assert len(links) == 34, f"Expected 34 metric alert links, got {len(links)}"
     links = {name: json.loads(value) for name, value in links.items()}
     for name, link in links.items():
         parsed = urlsplit(re.sub(r"{{.*?}}", "", link))
@@ -62,6 +62,21 @@ def verify(rendered):
             {"exp_labels": labels, "exp_annotations": {"dashboard_url": expected}}]})
 
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1]
+    reset_rule = re.search(
+        r'- alert: ControlPlaneDiagnosticStreamResetBurst\n\s+expr: ([^\n]+)\n\s+for: ([^\n]+)', rendered)
+    assert reset_rule is not None, "Missing diagnostic stream reset alert"
+    rules.append({"alert": "ControlPlaneDiagnosticStreamResetBurst", "expr": reset_rule[1], "for": reset_rule[2]})
+    reset_series = "timeweb_control_plane_logs_diagnostic_stream_resets_total"
+    reset_tests = [
+        {"interval": "1m", "input_series": [{"series": reset_series, "values": values}],
+         "alert_rule_test": [{"eval_time": eval_time, "alertname": "ControlPlaneDiagnosticStreamResetBurst",
+                              "exp_alerts": expected} for eval_time, expected in evaluations]}
+        for values, evaluations in [
+            ("0+1x10", [("4m", []), ("8m", [])]),
+            ("0+5x10", [("1m", []), ("4m", [{"exp_labels": {}, "exp_annotations": {}}])]),
+            ("0 10 10 10 10 10 10 10 10", [("3m", [{"exp_labels": {}, "exp_annotations": {}}]), ("8m", [])]),
+            ("5 6 0 1 2 3 4 5 6", [("4m", []), ("8m", [])]),
+        ]]
     with tempfile.TemporaryDirectory(prefix="metric-links-") as directory:
         work = Path(directory)
         (work / "rules.json").write_text(json.dumps({"groups": [{"name": "links", "rules": rules}]}))
@@ -69,11 +84,11 @@ def verify(rendered):
         (work / "tests.json").write_text(json.dumps({
             "rule_files": ["/work/rules.json"], "evaluation_interval": "1m",
             "tests": [{"interval": "1m", "input_series": [{"series": series, "values": "1 1"}],
-                       "alert_rule_test": checks}]}))
+                       "alert_rule_test": checks}] + reset_tests}))
         subprocess.run(["docker", "run", "--rm", "-v", f"{work}:/work", "-w", "/work",
                         image.replace("/vmalert:", "/vmalert-tool:"), "unittest",
                         "--disableAlertgroupLabel", "--files=/work/tests.json"], check=True)
-    print("33 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
+    print("34 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
 
     # Mixed emergency groups must retain each alert's link even without CommonAnnotations.
     document = next(doc for doc in rendered.split("\n---") if "  name: alertmanager\n" in doc)
