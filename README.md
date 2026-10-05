@@ -75,6 +75,22 @@ Production state is stored in the Timeweb S3-compatible bucket `panixida-storage
 
 Managed PostgreSQL automatic backups run daily and retain one copy. Both OpenTofu and the `Managed PostgreSQL` workflow enforce this retention.
 
+The `Managed PostgreSQL` workflow also provisions `tactical_heroes_admin_dev` and
+`tactical_heroes_admin_prod` with separate users in the existing cluster. Their
+credentials are retained in `core-platform/applications`; connection strings
+are merged into `applications/tactical-heroes-admin/{development,production}`
+without replacing other application settings. Admin uses these databases for
+ASP.NET Core Data Protection keys. No additional cluster or Kubernetes volume
+is required.
+
+Before deploying Admin's PostgreSQL key storage, run `Managed PostgreSQL` with
+legacy database migration disabled and verify both application secrets have
+`ConnectionStrings__DataProtection`. Apply the Admin Kargo promotion task before
+publishing the new Admin release: it updates the application and EF migrator to
+the same tag. Admin CI publishes the migrator first; its Argo CD migration job
+creates the schema before the application deployment. Existing cookies issued
+with the old ephemeral key ring require a one-time refresh or sign-in.
+
 Do not commit real tokens or state. In GitHub Actions, `secrets.TIMEWEB_TOKEN` is mapped to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
 
 Manual workflows:
