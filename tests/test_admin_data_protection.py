@@ -28,7 +28,7 @@ tactical_heroes_prod_connection_string='Host=postgres.internal;Port=5432;Databas
 
     def test_preserves_existing_settings_and_reuses_matching_api_credentials(self):
         existing = {"Oidc__ClientSecret": "synthetic-oidc-secret",
-                    "ConnectionStrings__DataProtection": "old-connection"}
+                    "ConnectionStrings__PostgreSqlConnectionString": "old-connection"}
 
         result = self.reconcile(json.dumps(existing))
 
@@ -38,7 +38,7 @@ tactical_heroes_prod_connection_string='Host=postgres.internal;Port=5432;Databas
         for write, environment, suffix in zip(writes, ("development", "production"), ("dev", "prod")):
             self.assertEqual(write["path"], f"applications/tactical-heroes-admin/{environment}")
             self.assertEqual(write["data"]["Oidc__ClientSecret"], existing["Oidc__ClientSecret"])
-            connection = write["data"]["ConnectionStrings__DataProtection"]
+            connection = write["data"]["ConnectionStrings__PostgreSqlConnectionString"]
             self.assertEqual(connection,
                              f"Host=postgres.internal;Port=5432;Database=tactical_heroes_{suffix};"
                              f"Username=api_{suffix};Password=synthetic-{suffix}-password;"
@@ -49,7 +49,7 @@ tactical_heroes_prod_connection_string='Host=postgres.internal;Port=5432;Databas
 
         self.assertEqual(result.returncode, 0, result.stderr)
         for line in result.stdout.splitlines():
-            self.assertEqual(set(json.loads(line)["data"]), {"ConnectionStrings__DataProtection"})
+            self.assertEqual(set(json.loads(line)["data"]), {"ConnectionStrings__PostgreSqlConnectionString"})
 
     def test_invalid_existing_secret_stops_before_any_write(self):
         result = self.reconcile("invalid-json")

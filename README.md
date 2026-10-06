@@ -77,7 +77,7 @@ Managed PostgreSQL automatic backups run daily and retain one copy. Both OpenTof
 
 Admin shares the API databases `tactical_heroes_dev` and `tactical_heroes_prod`
 and their existing connection credentials. The `Managed PostgreSQL` workflow
-copies the matching API connection string to `ConnectionStrings__DataProtection`
+copies the matching API connection string to `ConnectionStrings__PostgreSqlConnectionString`
 in `applications/tactical-heroes-admin/{development,production}`, preserving
 other application settings. Admin's EF migrator owns `admin.data_protection_keys`
 and `admin.__ef_migrations_history`; API schemas and migration history remain
@@ -85,7 +85,7 @@ separate. No additional database, user, cluster, or Kubernetes volume is require
 
 Before deploying Admin's PostgreSQL key storage, run `Managed PostgreSQL` with
 legacy database migration disabled and verify both application secrets have
-`ConnectionStrings__DataProtection`. Apply the Admin Kargo promotion task before
+`ConnectionStrings__PostgreSqlConnectionString`. Apply the Admin Kargo promotion task before
 publishing the new Admin release: it updates the application and EF migrator to
 the same tag. Admin CI publishes the migrator first; its Argo CD migration job
 creates the schema before the application deployment. Existing cookies issued

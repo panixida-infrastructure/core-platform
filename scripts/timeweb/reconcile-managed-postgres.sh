@@ -803,7 +803,7 @@ for environment in development production; do
   fi
   admin_app_secret="$(jq \
     --arg connection_string "$admin_connection_string" \
-    '. + {ConnectionStrings__DataProtection: $connection_string}' \
+    '. + {ConnectionStrings__PostgreSqlConnectionString: $connection_string}' \
     <<<"$(bao_read_optional "$openbao_token" "applications/tactical-heroes-admin/${environment}")")"
   bao_write "$openbao_token" "applications/tactical-heroes-admin/${environment}" "$admin_app_secret"
 done
