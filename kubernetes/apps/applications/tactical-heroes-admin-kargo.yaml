@@ -58,6 +58,8 @@ spec:
         updates:
           - key: image.tag
             value: ${{ imageFrom(vars.imageRepo).Tag }}
+          - key: migrations.image.tag
+            value: ${{ imageFrom(vars.imageRepo).Tag }}
     - uses: git-commit
       as: commit
       config:
