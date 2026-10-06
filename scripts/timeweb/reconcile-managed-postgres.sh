@@ -795,19 +795,6 @@ bao_write "$openbao_token" applications/dotnet-template/production "$dotnet_temp
 bao_write "$openbao_token" applications/tactical-heroes-api/development "$tactical_heroes_dev_app_secret"
 bao_write "$openbao_token" applications/tactical-heroes-api/production "$tactical_heroes_prod_app_secret"
 
-for environment in development production; do
-  if [ "$environment" = "development" ]; then
-    admin_connection_string="$tactical_heroes_dev_connection_string"
-  else
-    admin_connection_string="$tactical_heroes_prod_connection_string"
-  fi
-  admin_app_secret="$(jq \
-    --arg connection_string "$admin_connection_string" \
-    '. + {ConnectionStrings__PostgreSqlConnectionString: $connection_string}' \
-    <<<"$(bao_read_optional "$openbao_token" "applications/tactical-heroes-admin/${environment}")")"
-  bao_write "$openbao_token" "applications/tactical-heroes-admin/${environment}" "$admin_app_secret"
-done
-
 if [ "${MIGRATE_LEGACY_DATABASES:-false}" = "true" ] && [ -n "$legacy_cluster_id" ]; then
   mkdir -p "$tmp_dir"
   legacy_host="$(cluster_public_host "$legacy_cluster_id")"
