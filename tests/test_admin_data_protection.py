@@ -17,12 +17,8 @@ class AdminDataProtectionSecretTests(unittest.TestCase):
 bao_read_optional() { printf '%s' "$EXISTING_CONFIG"; }
 bao_write() { jq -nc --arg path "$2" --argjson data "$3" '{path: $path, data: $data}'; }
 openbao_token=test-token
-target_host=postgres.internal
-target_port=5432
-tactical_heroes_admin_dev_user=admin_dev
-tactical_heroes_admin_dev_password=synthetic-dev-password
-tactical_heroes_admin_prod_user=admin_prod
-tactical_heroes_admin_prod_password=synthetic-prod-password
+tactical_heroes_dev_connection_string='Host=postgres.internal;Port=5432;Database=tactical_heroes_dev;Username=api_dev;Password=synthetic-dev-password;SSL Mode=Require;Trust Server Certificate=true;GSS Encryption Mode=Disable'
+tactical_heroes_prod_connection_string='Host=postgres.internal;Port=5432;Database=tactical_heroes_prod;Username=api_prod;Password=synthetic-prod-password;SSL Mode=Require;Trust Server Certificate=true;GSS Encryption Mode=Disable'
 """ + source[start:end]
         return subprocess.run(
             ["bash", "-c", program],
@@ -30,7 +26,7 @@ tactical_heroes_admin_prod_password=synthetic-prod-password
             capture_output=True, text=True, timeout=10,
         )
 
-    def test_preserves_existing_settings_and_isolates_environment_credentials(self):
+    def test_preserves_existing_settings_and_reuses_matching_api_credentials(self):
         existing = {"Oidc__ClientSecret": "synthetic-oidc-secret",
                     "ConnectionStrings__DataProtection": "old-connection"}
 
@@ -43,11 +39,10 @@ tactical_heroes_admin_prod_password=synthetic-prod-password
             self.assertEqual(write["path"], f"applications/tactical-heroes-admin/{environment}")
             self.assertEqual(write["data"]["Oidc__ClientSecret"], existing["Oidc__ClientSecret"])
             connection = write["data"]["ConnectionStrings__DataProtection"]
-            self.assertIn(f"Database=tactical_heroes_admin_{suffix};", connection)
-            self.assertIn(f"Username=admin_{suffix};", connection)
-            self.assertIn(f"Password=synthetic-{suffix}-password;", connection)
-            self.assertIn("SSL Mode=Require;", connection)
-            self.assertIn("GSS Encryption Mode=Disable", connection)
+            self.assertEqual(connection,
+                             f"Host=postgres.internal;Port=5432;Database=tactical_heroes_{suffix};"
+                             f"Username=api_{suffix};Password=synthetic-{suffix}-password;"
+                             "SSL Mode=Require;Trust Server Certificate=true;GSS Encryption Mode=Disable")
 
     def test_initial_provisioning_creates_both_application_secrets(self):
         result = self.reconcile("{}")
