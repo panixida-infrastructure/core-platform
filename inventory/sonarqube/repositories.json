@@ -26,6 +26,11 @@
       "projectName": "PANiXiDA Core Infrastructure Persistence EF"
     },
     {
+      "repository": "panixida-dotnet-core/infrastructure-storage-s3",
+      "projectKey": "panixida-dotnet-core-infrastructure-storage-s3",
+      "projectName": "PANiXiDA Core Infrastructure Storage S3"
+    },
+    {
       "repository": "panixida-dotnet-core/observability",
       "projectKey": "panixida-dotnet-core-observability",
       "projectName": "PANiXiDA Core Observability"
