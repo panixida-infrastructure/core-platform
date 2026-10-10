@@ -71,6 +71,16 @@ sonarqube:
   namespace: quality
   host: sonar.panixida.ru
   image: public.ecr.aws/docker/library/sonarqube:26.9.0.129388-community
+  # TODO: replace the 26.9 fork with a compatible mc1arke release after staging verification.
+  branchPlugin:
+    enabled: true
+    sourceCommit: a68cf75cc414a0725e54ec73d7a1ff6d51afadd7
+    jarName: sonarqube-community-branch-plugin-26.9.0-SNAPSHOT.jar
+    jarUrl: https://github.com/panixida-infrastructure/core-platform/releases/download/sonarqube-26.9-cbp-a68cf75/sonarqube-community-branch-plugin-26.9.0-SNAPSHOT.jar
+    jarSha256: 9b34223d7c8096e7b5ccd12e7f42d041f5fec269259c48aed6eec3aeb7965edf
+    webappUrl: https://github.com/panixida-infrastructure/core-platform/releases/download/sonarqube-26.9-cbp-a68cf75/sonarqube-webapp.zip
+    webappSha256: decd691b9529ad966c6d68385566521e0b6bef174343985b045a7d9eb65b1f9d
+  newCodeDays: 30
   secretName: sonarqube-secrets
   externalSecrets:
     enabled: true

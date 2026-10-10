@@ -153,6 +153,23 @@ jq -r '.GITHUB_APP_PRIVATE_KEY' <<<"$github_provisioner_secret" >"$github_privat
 chmod 600 "$github_private_key_file"
 unset sonar_secret github_provisioner_secret
 
+# A main push also starts the GitOps rollout; do not reconcile against the old
+# stock server or fail while the Recreate deployment is starting.
+branch_support_ready=false
+for _ in $(seq 1 120); do
+  if curl -fsS -u "admin:${sonar_admin_password}" \
+    "${sonar_url}/api/plugins/installed" 2>/dev/null \
+    | jq -e 'any(.plugins[]?; .key == "communityBranchPlugin")' >/dev/null; then
+    branch_support_ready=true
+    break
+  fi
+  sleep 10
+done
+if [[ "$branch_support_ready" != true ]]; then
+  echo "::error::SonarQube branch plugin did not become available before reconciliation timeout"
+  exit 1
+fi
+
 github_app_jwt="$(create_github_app_jwt "$github_app_id" "$github_private_key_file")"
 installations="$(curl -fsS \
   -H "Accept: application/vnd.github+json" \
@@ -192,6 +209,11 @@ for entry in "${repository_entries[@]}"; do
   repository="$(jq -r '.repository' <<<"$entry")"
   project_key="$(jq -r '.projectKey' <<<"$entry")"
   project_name="$(jq -r '.projectName' <<<"$entry")"
+  new_code_type="$(jq -r '.newCode' <<<"$entry")"
+  new_code_value=null
+  if [[ "$new_code_type" == "NUMBER_OF_DAYS" ]]; then
+    new_code_value='"30"'
+  fi
   repository_owner="${repository%%/*}"
   repository_name="${repository#*/}"
   token_name="github-actions-${project_key}"
@@ -245,14 +267,16 @@ for entry in "${repository_entries[@]}"; do
     --arg project_name "$project_name" \
     --arg dop_setting_id "$github_dop_setting_id" \
     --arg repository "$repository" \
+    --arg new_code_type "$new_code_type" \
+    --argjson new_code_value "$new_code_value" \
     '{
       projectKey: $project_key,
       projectName: $project_name,
       devOpsPlatformSettingId: $dop_setting_id,
       repositoryIdentifier: $repository,
       projectIdentifier: null,
-      newCodeDefinitionType: "PREVIOUS_VERSION",
-      newCodeDefinitionValue: null,
+      newCodeDefinitionType: $new_code_type,
+      newCodeDefinitionValue: $new_code_value,
       monorepo: false
     }')"
   bound_project_response="$(curl -fsS -u "admin:${sonar_admin_password}" -X PUT \
@@ -264,6 +288,30 @@ for entry in "${repository_entries[@]}"; do
   else
     echo "Updated GitHub binding for SonarQube project ${project_key}"
   fi
+
+  policy_arguments=(--data-urlencode "project=${project_key}" --data-urlencode "type=${new_code_type}")
+  if [[ "$new_code_type" == "NUMBER_OF_DAYS" ]]; then
+    policy_arguments+=(--data-urlencode "value=30")
+  fi
+  curl -fsS -u "admin:${sonar_admin_password}" -X POST \
+    "${sonar_url}/api/new_code_periods/set" "${policy_arguments[@]}" >/dev/null
+
+  # Existing branch overrides would otherwise retain the old accumulated period.
+  branches="$(curl -fsS -u "admin:${sonar_admin_password}" --get \
+    "${sonar_url}/api/project_branches/list" --data-urlencode "project=${project_key}")"
+  while IFS= read -r branch; do
+    curl -fsS -u "admin:${sonar_admin_password}" -X POST \
+      "${sonar_url}/api/new_code_periods/unset" \
+      --data-urlencode "project=${project_key}" --data-urlencode "branch=${branch}" >/dev/null
+  done < <(jq -r '.branches[].name' <<<"$branches")
+
+  curl -fsS -u "admin:${sonar_admin_password}" -X POST \
+    "${sonar_url}/api/alm_settings/set_github_binding" \
+    --data-urlencode "project=${project_key}" \
+    --data-urlencode "almSetting=${sonar_github_integration_key}" \
+    --data-urlencode "repository=${repository}" \
+    --data-urlencode "summaryCommentEnabled=true" \
+    --data-urlencode "monorepo=false" >/dev/null
 
   curl -fsS -u "admin:${sonar_admin_password}" -X POST \
     "${sonar_url}/api/projects/update_visibility" \
