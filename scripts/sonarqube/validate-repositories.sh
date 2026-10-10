@@ -15,7 +15,8 @@ if ! jq -e '
     (type == "object") and
     (.repository | type == "string" and test("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")) and
     (.projectKey | type == "string" and test("^[A-Za-z0-9._:-]+$") and test("[^0-9]")) and
-    (.projectName | type == "string" and length > 0)
+    (.projectName | type == "string" and length > 0) and
+    (.newCode == "NUMBER_OF_DAYS" or .newCode == "PREVIOUS_VERSION")
   )
 ' "$inventory_file" >/dev/null; then
   echo "::error::Invalid SonarQube repository inventory: ${inventory_file}"

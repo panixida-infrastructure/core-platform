@@ -3,77 +3,92 @@
     {
       "repository": "panixida-dotnet-core/application",
       "projectKey": "panixida-dotnet-core-application",
-      "projectName": "PANiXiDA Core Application"
+      "projectName": "PANiXiDA Core Application",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/domain",
       "projectKey": "panixida-dotnet-core-domain",
-      "projectName": "PANiXiDA Core Domain"
+      "projectName": "PANiXiDA Core Domain",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/ef-migrator",
       "projectKey": "panixida-dotnet-core-ef-migrator",
-      "projectName": "PANiXiDA Core EF Migrator"
+      "projectName": "PANiXiDA Core EF Migrator",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/infrastructure-messaging-wolverine",
       "projectKey": "panixida-dotnet-core-infrastructure-messaging-wolverine",
-      "projectName": "PANiXiDA Core Infrastructure Messaging Wolverine"
+      "projectName": "PANiXiDA Core Infrastructure Messaging Wolverine",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/infrastructure-persistence-ef",
       "projectKey": "panixida-dotnet-core-infrastructure-persistence-ef",
-      "projectName": "PANiXiDA Core Infrastructure Persistence EF"
+      "projectName": "PANiXiDA Core Infrastructure Persistence EF",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/infrastructure-storage-s3",
       "projectKey": "panixida-dotnet-core-infrastructure-storage-s3",
-      "projectName": "PANiXiDA Core Infrastructure Storage S3"
+      "projectName": "PANiXiDA Core Infrastructure Storage S3",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/observability",
       "projectKey": "panixida-dotnet-core-observability",
-      "projectName": "PANiXiDA Core Observability"
+      "projectName": "PANiXiDA Core Observability",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/presentation-http",
       "projectKey": "panixida-dotnet-core-presentation-http",
-      "projectName": "PANiXiDA Core Presentation HTTP"
+      "projectName": "PANiXiDA Core Presentation HTTP",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/result-pattern",
       "projectKey": "panixida-dotnet-core-result-pattern",
-      "projectName": "PANiXiDA Core Result Pattern"
+      "projectName": "PANiXiDA Core Result Pattern",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-dotnet-core/specification-pattern",
       "projectKey": "panixida-dotnet-core-specification-pattern",
-      "projectName": "PANiXiDA Core Specification Pattern"
+      "projectName": "PANiXiDA Core Specification Pattern",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "panixida-infrastructure/telegram-alert-gateway",
       "projectKey": "panixida-infrastructure-telegram-alert-gateway",
-      "projectName": "PANiXiDA Telegram Alert Gateway"
+      "projectName": "PANiXiDA Telegram Alert Gateway",
+      "newCode": "NUMBER_OF_DAYS"
     },
     {
       "repository": "panixida-templates/dotnet-backend-template",
       "projectKey": "panixida-templates-dotnet-backend-template",
-      "projectName": "PANiXiDA .NET Backend Template"
+      "projectName": "PANiXiDA .NET Backend Template",
+      "newCode": "NUMBER_OF_DAYS"
     },
     {
       "repository": "panixida-templates/nuget-package-template",
       "projectKey": "panixida-templates-nuget-package-template",
-      "projectName": "PANiXiDA NuGet Package Template"
+      "projectName": "PANiXiDA NuGet Package Template",
+      "newCode": "PREVIOUS_VERSION"
     },
     {
       "repository": "tactical-heroes/admin",
       "projectKey": "tactical-heroes-admin",
-      "projectName": "Tactical Heroes Admin"
+      "projectName": "Tactical Heroes Admin",
+      "newCode": "NUMBER_OF_DAYS"
     },
     {
       "repository": "tactical-heroes/api",
       "projectKey": "tactical-heroes-api",
-      "projectName": "Tactical Heroes API"
+      "projectName": "Tactical Heroes API",
+      "newCode": "NUMBER_OF_DAYS"
     }
   ]
 }

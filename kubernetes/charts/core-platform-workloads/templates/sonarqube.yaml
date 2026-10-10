@@ -64,6 +64,39 @@ spec:
             - name: sonarqube-data
               mountPath: /opt/sonarqube/logs
               subPath: logs
+        - name: branch-plugin
+          image: public.ecr.aws/docker/library/busybox:1.37
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: [sh, /plugin-config/install.sh]
+          securityContext:
+            runAsUser: 0
+          env:
+            - name: BRANCH_PLUGIN_ENABLED
+              value: {{ .Values.sonarqube.branchPlugin.enabled | quote }}
+            - name: BRANCH_PLUGIN_JAR_NAME
+              value: {{ .Values.sonarqube.branchPlugin.jarName | quote }}
+            - name: BRANCH_PLUGIN_JAR_URL
+              value: {{ .Values.sonarqube.branchPlugin.jarUrl | quote }}
+            - name: BRANCH_PLUGIN_JAR_SHA256
+              value: {{ .Values.sonarqube.branchPlugin.jarSha256 | quote }}
+            - name: BRANCH_PLUGIN_WEBAPP_URL
+              value: {{ .Values.sonarqube.branchPlugin.webappUrl | quote }}
+            - name: BRANCH_PLUGIN_WEBAPP_SHA256
+              value: {{ .Values.sonarqube.branchPlugin.webappSha256 | quote }}
+          volumeMounts:
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/extensions
+              subPath: extensions
+            - name: branch-plugin-config
+              mountPath: /plugin-config
+              readOnly: true
+            {{- if .Values.sonarqube.branchPlugin.enabled }}
+            - name: sonarqube-web
+              mountPath: /web
+            {{- end }}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
       containers:
         - name: sonarqube
           image: {{ .Values.sonarqube.image | quote }}
@@ -100,6 +133,12 @@ spec:
               value: {{ .Values.sonarqube.javaOpts.web | quote }}
             - name: SONAR_CE_JAVAOPTS
               value: {{ .Values.sonarqube.javaOpts.ce | quote }}
+            {{- if .Values.sonarqube.branchPlugin.enabled }}
+            - name: SONAR_WEB_JAVAADDITIONALOPTS
+              value: "-javaagent:/opt/sonarqube/extensions/plugins/{{ .Values.sonarqube.branchPlugin.jarName }}=web"
+            - name: SONAR_CE_JAVAADDITIONALOPTS
+              value: "-javaagent:/opt/sonarqube/extensions/plugins/{{ .Values.sonarqube.branchPlugin.jarName }}=ce"
+            {{- end }}
             - name: SONAR_SEARCH_JAVAOPTS
               value: {{ .Values.sonarqube.javaOpts.search | quote }}
             - name: SONAR_CORE_SERVERBASEURL
@@ -136,6 +175,10 @@ spec:
             periodSeconds: 30
             failureThreshold: 6
           volumeMounts:
+            {{- if .Values.sonarqube.branchPlugin.enabled }}
+            - name: sonarqube-web
+              mountPath: /opt/sonarqube/web
+            {{- end }}
             - name: sonarqube-data
               mountPath: /opt/sonarqube/data
               subPath: data
@@ -148,6 +191,14 @@ spec:
           resources:
             {{- toYaml .Values.sonarqube.resources | nindent 12 }}
       volumes:
+        - name: branch-plugin-config
+          configMap:
+            name: sonarqube-branch-plugin
+        {{- if .Values.sonarqube.branchPlugin.enabled }}
+        - name: sonarqube-web
+          emptyDir:
+            sizeLimit: 100Mi
+        {{- end }}
         - name: sonarqube-data
           {{- if .Values.sonarqube.persistence.enabled }}
           persistentVolumeClaim:
@@ -173,6 +224,15 @@ spec:
     requests:
       storage: {{ .Values.sonarqube.storageSize }}
 {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-branch-plugin
+  namespace: {{ .Values.sonarqube.namespace }}
+data:
+  install.sh: |
+{{ .Files.Get "files/sonarqube-branch-plugin.sh" | indent 4 }}
 ---
 apiVersion: v1
 kind: Service
@@ -320,6 +380,10 @@ data:
     set_setting sonar.auth.saml.user.email email
     set_setting sonar.auth.saml.group.name groups
     set_setting sonar.auth.saml.signature.enabled false
+
+    curl -fsS -u "$auth" -X POST "$sonar_url/api/new_code_periods/set" \
+      --data-urlencode "type=NUMBER_OF_DAYS" \
+      --data-urlencode "value={{ .Values.sonarqube.newCodeDays }}" >/dev/null
 
     reconcile_github_integration() {
       github_credentials_count=0
