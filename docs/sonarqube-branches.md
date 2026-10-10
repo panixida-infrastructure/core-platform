@@ -3,6 +3,8 @@
 The server stays on SonarQube Community Build **26.9.0.129388**. The chart installs
 the Community Branch Plugin JAR and its matching patched webapp, with SHA256
 verification, and enables both Java agents. The stock server image is retained.
+The configuration job records plugin consent when this explicitly enabled plugin
+is installed, so the web UI is usable after reconciliation.
 
 ## Pinned fork
 

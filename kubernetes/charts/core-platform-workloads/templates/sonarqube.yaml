@@ -368,6 +368,9 @@ data:
     }
 
     set_setting sonar.core.serverBaseURL "$public_url"
+    {{- if .Values.sonarqube.branchPlugin.enabled }}
+    set_setting sonar.plugins.risk.consent ACCEPTED
+    {{- end }}
     set_setting sonar.forceAuthentication true
     set_setting sonar.auth.saml.enabled true
     set_setting sonar.auth.saml.applicationId sonarqube
