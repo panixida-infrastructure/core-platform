@@ -153,6 +153,23 @@ jq -r '.GITHUB_APP_PRIVATE_KEY' <<<"$github_provisioner_secret" >"$github_privat
 chmod 600 "$github_private_key_file"
 unset sonar_secret github_provisioner_secret
 
+# A main push also starts the GitOps rollout; do not reconcile against the old
+# stock server or fail while the Recreate deployment is starting.
+branch_support_ready=false
+for _ in $(seq 1 120); do
+  if curl -fsS -u "admin:${sonar_admin_password}" \
+    "${sonar_url}/api/plugins/installed" 2>/dev/null \
+    | jq -e 'any(.plugins[]?; .key == "communityBranchPlugin")' >/dev/null; then
+    branch_support_ready=true
+    break
+  fi
+  sleep 10
+done
+if [[ "$branch_support_ready" != true ]]; then
+  echo "::error::SonarQube branch plugin did not become available before reconciliation timeout"
+  exit 1
+fi
+
 github_app_jwt="$(create_github_app_jwt "$github_app_id" "$github_private_key_file")"
 installations="$(curl -fsS \
   -H "Accept: application/vnd.github+json" \
