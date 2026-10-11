@@ -8847,19 +8847,12 @@ data:
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / mean",
               "instant": false,
               "range": true
-            },
-            {
-              "refId": "B",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_bucket{service_name=~\"${service:regex}\"}[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{service_name=~\"${service:regex}\",le=\"0.001\"}))",
-              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / p95",
-              "instant": false,
-              "range": true
             }
           ],
-          "title": "Quartz job duration",
+          "title": "Quartz mean job duration / 15 min",
           "type": "timeseries",
           "id": 113,
-          "description": "Mean uses native seconds. p95 uses only instances exporting the improved 0.001-second bucket layout; older releases have a coarse 0-5 second bucket and are excluded from p95. A window with no executions has no latency value."
+          "description": "Mean duration of completed executions over the last 15 minutes, weighted by execution count across replicas. Uses native sum and count, independently of histogram bucket boundaries. A window with no executions has no latency value."
         },
         {
           "datasource": {
@@ -8991,7 +8984,7 @@ data:
           },
           "options": {
             "mode": "markdown",
-            "content": "Inbox/outbox and scheduled total are native Wolverine metrics. DLQ inventory/age, due messages and recurring state require the Core persistence metrics release. Empty means **not measured**, unless an observed queue reports zero.\n\n`IScheduler` and Wolverine recurring commands share durable delayed-message storage. Quartz is a separate job scheduler. Services without a scheduler have no corresponding series.\n\nQueue inventory is shared across replicas (max); event counters and active Quartz jobs are summed. DLQ age starts at original send time. Recurring delay tracks the next occurrence, not business success.\n\nQuartz p95 appears after the seconds-bucket update. Old and new bucket layouts are not combined. No telemetry freshness alerts are configured."
+            "content": "Inbox/outbox and scheduled total are native Wolverine metrics. DLQ inventory/age, due messages and recurring state require the Core persistence metrics release. Empty means **not measured**, unless an observed queue reports zero.\n\n`IScheduler` and Wolverine recurring commands share durable delayed-message storage. Quartz is a separate job scheduler. Services without a scheduler have no corresponding series.\n\nQueue inventory is shared across replicas (max); event counters and active Quartz jobs are summed. DLQ age starts at original send time. Recurring delay tracks the next occurrence, not business success.\n\nQuartz duration is the mean of completed executions over 15 minutes, calculated from sum/count independently of histogram bucket boundaries. No telemetry freshness alerts are configured."
           }
         }
       ],

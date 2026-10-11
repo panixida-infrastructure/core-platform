@@ -1243,15 +1243,15 @@ data:
               description: The scheduler reported at least one trigger misfire in the last 15 minutes.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 115 "variables" (dict "service" "service_name")) | quote }}
           - alert: QuartzJobSlow
-            expr: (histogram_quantile(0.95, sum by (le, service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_bucket[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{le="0.001"})) > {{ .Values.observability.backgroundWork.quartzJobP95Seconds }}) and on (service_name, quartz_job_group, quartz_job_name) (sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{le="0.001"}) >= 5)
+            expr: ((sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count[15m]))) > {{ .Values.observability.backgroundWork.quartzJobMeanSeconds }}) and on (service_name, quartz_job_group, quartz_job_name) (sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count[15m])) >= 5)
             for: 15m
             labels:
               severity: warning
               alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
-              summary: Quartz job {{`{{ $labels.quartz_job_group }}/{{ $labels.quartz_job_name }}`}} p95 is {{`{{ $value | humanizeDuration }}`}}.
-              description: Job p95 exceeds the configured duration for 15 minutes, with at least five executions per window. Only the corrected histogram layout is evaluated; this does not detect an execution that never finishes.
+              summary: Quartz job {{`{{ $labels.quartz_job_group }}/{{ $labels.quartz_job_name }}`}} mean duration is {{`{{ $value | humanizeDuration }}`}}.
+              description: Mean duration exceeds the configured limit for 15 minutes, with at least five completed executions per 15-minute window. The mean is weighted by execution count across replicas; this does not detect an execution that never finishes.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 113 "variables" (dict "service" "service_name")) | quote }}
           {{- end }}
           - alert: ApplicationSlowHttpRequests
