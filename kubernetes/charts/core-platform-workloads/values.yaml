@@ -81,6 +81,10 @@ sonarqube:
     webappUrl: https://github.com/panixida-infrastructure/core-platform/releases/download/sonarqube-26.9-cbp-a68cf75/sonarqube-webapp.zip
     webappSha256: decd691b9529ad966c6d68385566521e0b6bef174343985b045a7d9eb65b1f9d
   newCodeDays: 30
+  prCleanup:
+    enabled: true
+    schedule: "* * * * *"
+    image: python:3.14.8-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
   secretName: sonarqube-secrets
   externalSecrets:
     enabled: true

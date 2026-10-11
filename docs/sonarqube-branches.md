@@ -47,6 +47,22 @@ analysis, then PR analysis. Verify `api/project_branches/list`,
 `api/project_pull_requests/list`, the PR's base branch/head SHA, the Quality Gate
 check and the summary comment posted by the Sonar App.
 
+## Closed pull request cleanup
+
+The `quality/sonarqube-pr-cleanup` CronJob checks GitHub-bound Sonar projects every
+minute, using the existing Sonar GitHub App with repository-scoped read tokens.
+It deletes closed, unmerged PR analyses on the next pass. Merged PR analyses wait
+for a completed target-branch analysis with an OK Quality Gate, dated after the
+merge, whose Git revision contains the merge commit. Open PRs, running PR analyses
+and entries with missing metadata or API failures are retained. GitHub state is
+rechecked immediately before deletion. Only Sonar PR analyses are deleted.
+
+The script defaults to dry run; `--apply` enables deletion and `--project KEY`
+limits it to one project. The CronJob reads only the three required keys from
+`sonarqube-secrets` and has no Kubernetes API token. Disable it with
+`sonarqube.prCleanup.enabled=false`. Sonar's existing age-based housekeeping is
+independent of this job.
+
 ## Rollout and recovery
 
 Before changing the plugin, create a fresh database backup and verify restoring
