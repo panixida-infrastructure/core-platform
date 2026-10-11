@@ -17,6 +17,7 @@ def verify(rendered):
         labels = re.search(r"            labels:\n(.*?)            annotations:", block, re.S)[1]
         rules.append({"alert": name, "expr": re.search(r"expr: (.+)", block)[1],
                       "for": re.search(r"for: (.+)", block)[1],
+                      "annotations": {"summary": re.search(r"summary: (.+)", block)[1]},
                       "labels": {k: v.strip("'") for k, v in re.findall(r"              (\w+): (.+)", labels)}})
 
     epoch = 946684800  # vmalert-tool's fixture epoch.
@@ -24,6 +25,14 @@ def verify(rendered):
     base = {"namespace": "dotnet-template-production", "pod": "api-123", "container": "api", "uid": "pod-a"}
     definitions = {"restarts_total": "0+0x25", 'waiting_reason|reason=CrashLoopBackOff': "0+0x25"}
     tests = []
+
+    def summary(name, labels):
+        if name == names[3]:
+            return "Kubernetes container state monitoring is unavailable."
+        who = f"Container {labels['namespace']}/{labels['pod']} ({labels['container']})"
+        suffix = {names[0]: "is restarting repeatedly.", names[1]: "is stuck in CrashLoopBackOff.",
+                  names[2]: f"terminated abnormally ({labels.get('reason', '')})."}
+        return f"{who} {suffix[name]}"
 
     def add(changes=None, expected=None, times=("2m", "6m", "12m"), dimensions=None,
             init=False, deleted=False, succeeded=False, missing=False, up="1+0x25", extra=None):
@@ -48,7 +57,7 @@ def verify(rendered):
                 sample("kube_pod_status_phase", {k: v for k, v in dimensions.items() if k != "container"} | {"phase": "Succeeded"}, "1+0x25")
         series.extend(extra or [])
         checks = [{"eval_time": when, "alertname": name,
-                   "exp_alerts": [{"exp_labels": labels, "exp_annotations": {}}
+                   "exp_alerts": [{"exp_labels": labels, "exp_annotations": {"summary": summary(name, labels)}}
                                   for labels in (expected or {}).get((name, when), [])]}
                   for when in times for name in names]
         tests.append({"interval": "1m", "input_series": series, "alert_rule_test": checks})

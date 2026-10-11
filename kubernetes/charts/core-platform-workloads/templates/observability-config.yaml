@@ -694,7 +694,7 @@ data:
               alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
-              summary: A Kubernetes container is restarting repeatedly.
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) is restarting repeatedly.
               description: At least 3 observed restarts in 15 minutes. Check the container logs and previous termination reason. New pods from a rollout do not count as restarts.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 18 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
           - alert: KubernetesContainerCrashLoopBackOff
@@ -705,7 +705,7 @@ data:
               alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
-              summary: A Kubernetes container is stuck in CrashLoopBackOff.
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) is stuck in CrashLoopBackOff.
               description: CrashLoopBackOff has kept recurring for 10 minutes. The five-minute observation window covers the backoff between attempts.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 19 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
           - alert: KubernetesContainerTerminatedAbnormally
@@ -716,7 +716,7 @@ data:
               alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
               environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
             annotations:
-              summary: A Kubernetes container terminated abnormally.
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) terminated abnormally ({{ "{{" }} $labels.reason {{ "}}" }}).
               description: The container is currently terminated with a failure, or exited with a non-zero code in the last 10 minutes. The reason label includes OOMKilled and Error; successful Completed containers are excluded.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 20 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
           - alert: KubernetesContainerStateMonitoringDown
