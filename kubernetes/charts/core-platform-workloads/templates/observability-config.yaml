@@ -138,6 +138,9 @@ data:
               relabel_configs:
                 - target_label: instance
                   replacement: managed-postgres
+            - job_name: kube-state-metrics
+              static_configs:
+                - targets: [kube-state-metrics.{{ .Values.observability.namespace }}.svc.cluster.local:8080]
             - job_name: kubernetes-pods
               kubernetes_sd_configs:
                 - role: pod
@@ -683,6 +686,50 @@ data:
     groups:
       - name: kubernetes-basic
         rules:
+          - alert: KubernetesContainerRestartsHigh
+            expr: max by (namespace, pod, container, uid) (increase_prometheus({__name__=~"kube_pod_(init_)?container_status_restarts_total"}[15m])) >= 3 unless on (namespace, pod, uid) (kube_pod_deletion_timestamp > 0) unless on (namespace, pod, uid) (kube_pod_status_phase{phase="Succeeded"} == 1)
+            for: 2m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) is restarting repeatedly.
+              description: At least 3 observed restarts in 15 minutes. Check the container logs and previous termination reason. New pods from a rollout do not count as restarts.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 18 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
+          - alert: KubernetesContainerCrashLoopBackOff
+            expr: max by (namespace, pod, container, uid) (max_over_time({__name__=~"kube_pod_(init_)?container_status_waiting_reason",reason="CrashLoopBackOff"}[5m])) == 1 unless on (namespace, pod, uid) (kube_pod_deletion_timestamp > 0) unless on (namespace, pod, uid) (kube_pod_status_phase{phase="Succeeded"} == 1)
+            for: 10m
+            labels:
+              severity: critical
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) is stuck in CrashLoopBackOff.
+              description: CrashLoopBackOff has kept recurring for 10 minutes. The five-minute observation window covers the backoff between attempts.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 19 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
+          - alert: KubernetesContainerTerminatedAbnormally
+            expr: ((max by (namespace, pod, container, uid, reason) ({__name__=~"kube_pod_(init_)?container_status_last_terminated_reason",reason!="Completed"} == 1) and on (namespace, pod, uid, container) (max by (namespace, pod, container, uid) ({__name__=~"kube_pod_(init_)?container_status_last_terminated_exitcode"}) != 0) and on (namespace, pod, uid, container) (time() - max by (namespace, pod, container, uid) ({__name__=~"kube_pod_(init_)?container_status_last_terminated_timestamp"}) < 600)) or max by (namespace, pod, container, uid, reason) ({__name__=~"kube_pod_(init_)?container_status_terminated_reason",reason!="Completed"} == 1)) unless on (namespace, pod, uid) (kube_pod_deletion_timestamp > 0) unless on (namespace, pod, uid) (kube_pod_status_phase{phase="Succeeded"} == 1)
+            for: 1m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.namespace {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.namespace {{ "}}" }}tactical-heroes{{ "{{" }} else if eq $labels.namespace "observability" {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}core-platform{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.namespace {{ "}}" }}development{{ "{{" }} else {{ "}}" }}production{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Container {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} ({{ "{{" }} $labels.container {{ "}}" }}) terminated abnormally ({{ "{{" }} $labels.reason {{ "}}" }}).
+              description: The container is currently terminated with a failure, or exited with a non-zero code in the last 10 minutes. The reason label includes OOMKilled and Error; successful Completed containers are excluded.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 20 "variables" (dict "namespace" "namespace" "pod" "pod" "container" "container")) | quote }}
+          - alert: KubernetesContainerStateMonitoringDown
+            expr: max(up{service_name="kube-state-metrics"}) == 0 or absent(max(up{service_name="kube-state-metrics"})) or absent(kube_pod_container_status_restarts_total)
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Kubernetes container state monitoring is unavailable.
+              description: kube-state-metrics cannot be scraped or container state metrics are missing. Restart and crash status is unknown.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "kubernetes-workloads" "panel" 21) | quote }}
           - alert: KubernetesNodeDown
             expr: up{service_name="kubernetes-nodes"} == 0
             for: 5m
