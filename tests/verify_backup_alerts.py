@@ -79,15 +79,18 @@ def verify(rendered):
         case({}, fires("TimewebPostgresBackupMonitoringStalled", {}, "16m", "31m"), missing=True),
         case({stale: f"{epoch - 40 * 3600}+0x14 {epoch}+0x75"}, {}),
     ]
-    # Execute every dashboard query too: valid JSON alone cannot catch MetricsQL syntax errors.
-    dashboard_json = re.search(r"  postgresql-backups\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1]
+    # Execute every backup panel query too: valid JSON alone cannot catch MetricsQL syntax errors.
+    dashboard_json = re.search(r"  postgresql-managed\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1]
     dashboard = json.loads(dashboard_json)
     dashboard_checks = {}
     for panel in dashboard["panels"]:
         for target in panel.get("targets", []):
+            if prefix not in target["expr"]:
+                continue
             name = f"BackupDashboardPanel{panel['id']}{target['refId']}"
             rules.append({"alert": name, "expr": f"count({target['expr']}) > 0"})
             dashboard_checks.update(fires(name, {}, "4m"))
+    assert dashboard_checks, "Missing backup queries in Managed PostgreSQL"
     tests.append(case({}, dashboard_checks, evaluations=("4m",)))
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1]
     with tempfile.TemporaryDirectory(prefix="backup-alerts-") as directory:
