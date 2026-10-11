@@ -91,7 +91,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "timeweb_postgres_backup_poll_success * on (db_cluster_id) group_left ((time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds) < bool 3600)",
+          "expr": "timeweb_postgres_backup_poll_success * on (db_cluster_id) group_left() ((time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds) < bool 3600)",
           "legendFormat": "{{db_cluster}}",
           "instant": true,
           "range": false

@@ -23,7 +23,7 @@ def verify(rendered):
     epoch = 946684800  # vmalert-tool fixture epoch: 2000-01-01 UTC.
     definitions = {
         "poll_last_success_timestamp_seconds": f"{epoch}+60x90",
-        "poll_success": "1+0x90", "auto_enabled": "1+0x90", "max_age_seconds": "129600+0x90",
+        "poll_success": "1+0x90", "auto_enabled": "1+0x90", "retention_copies": "1+0x90", "max_age_seconds": "129600+0x90",
         'count|backup_type=auto,status=done': "1+0x90",
         'count|backup_type=manual,status=done': "1+0x90",
         'last_success_timestamp_seconds|backup_type=auto': f"{epoch - 86400}+0x90",
@@ -79,6 +79,16 @@ def verify(rendered):
         case({}, fires("TimewebPostgresBackupMonitoringStalled", {}, "16m", "31m"), missing=True),
         case({stale: f"{epoch - 40 * 3600}+0x14 {epoch}+0x75"}, {}),
     ]
+    # Execute every dashboard query too: valid JSON alone cannot catch MetricsQL syntax errors.
+    dashboard_json = re.search(r"  postgresql-backups\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1]
+    dashboard = json.loads(dashboard_json)
+    dashboard_checks = {}
+    for panel in dashboard["panels"]:
+        for target in panel.get("targets", []):
+            name = f"BackupDashboardPanel{panel['id']}{target['refId']}"
+            rules.append({"alert": name, "expr": f"count({target['expr']}) > 0"})
+            dashboard_checks.update(fires(name, {}, "4m"))
+    tests.append(case({}, dashboard_checks, evaluations=("4m",)))
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1]
     with tempfile.TemporaryDirectory(prefix="backup-alerts-") as directory:
         work = Path(directory)
