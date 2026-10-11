@@ -182,6 +182,14 @@ observability:
     - https://dev.tactical-heroes.panixida.ru/health
     - https://tactical-heroes.panixida.ru/health
     - http://telegram-alert-gateway.observability.svc.cluster.local/health/ready
+  backgroundWork:
+    enabled: true
+    inboxBacklog: 100
+    outboxBacklog: 100
+    deadLetterBacklog: 10
+    deadLetterAgeSeconds: 3600
+    scheduledOverdueSeconds: 300
+    quartzJobP95Seconds: 60
   alerts:
     telegram:
       chatId: "-1003738995665"
