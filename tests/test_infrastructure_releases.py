@@ -6,7 +6,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+import urllib.error
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,6 +107,20 @@ class VersionTests(unittest.TestCase):
         for auth in ("timeweb", "kubernetes"):
             with self.subTest(auth=auth), self.assertRaises(ValueError):
                 client.get("https://example.com/", auth)
+
+    def test_transient_http_failure_retries_but_rate_limit_waits_for_next_cycle(self):
+        opener = MagicMock()
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"ok":true}'
+        opener.open.side_effect = [urllib.error.HTTPError("https://example.com", 503, "unavailable", {}, None), response]
+        with patch.object(releases.urllib.request, "build_opener", return_value=opener), patch.object(releases.time, "sleep"):
+            self.assertEqual(releases.Client().get("https://example.com"), {"ok": True})
+        self.assertEqual(opener.open.call_count, 2)
+        opener.open.reset_mock()
+        opener.open.side_effect = urllib.error.HTTPError("https://example.com", 429, "limited", {}, None)
+        with patch.object(releases.urllib.request, "build_opener", return_value=opener), self.assertRaises(urllib.error.HTTPError):
+            releases.Client().get("https://example.com")
+        self.assertEqual(opener.open.call_count, 1)
 
 
 class InventoryTests(unittest.TestCase):

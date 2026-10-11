@@ -12,6 +12,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 
 
 DAY = 86400
@@ -86,12 +87,22 @@ class Client:
             headers["Authorization"] = "Bearer " + (KUBE_AUTH / "token").read_text().strip()
             context = ssl.create_default_context(cafile=str(KUBE_AUTH / "ca.crt"))
         opener = urllib.request.build_opener(NoRedirect(), urllib.request.HTTPSHandler(context=context))
-        with opener.open(urllib.request.Request(url, headers=headers), timeout=20) as response:
-            # Bound memory even when a public endpoint returns unexpected content.
-            body = response.read(8 * 1024 * 1024 + 1)
-            if len(body) > 8 * 1024 * 1024:
-                raise ValueError("Response too large")
-            result = json.loads(body)
+        for attempt in range(3):
+            try:
+                with opener.open(urllib.request.Request(url, headers=headers), timeout=20) as response:
+                    # Bound memory even when a public endpoint returns unexpected content.
+                    body = response.read(8 * 1024 * 1024 + 1)
+                    if len(body) > 8 * 1024 * 1024:
+                        raise ValueError("Response too large")
+                    result = json.loads(body)
+                break
+            except urllib.error.HTTPError as error:
+                if error.code not in (408, 500, 502, 503, 504) or attempt == 2:
+                    raise
+            except (urllib.error.URLError, TimeoutError, ConnectionError):
+                if attempt == 2:
+                    raise
+            time.sleep(attempt + 1)
         self.cache[url] = result
         return result
 
@@ -322,8 +333,12 @@ class Monitor:
 
     def render(self):
         lines = []
+        declared = set()
 
         def sample(name, value, labels=None):
+            if name not in declared:
+                lines.append(f"# TYPE infrastructure_release_{name} gauge")
+                declared.add(name)
             suffix = ""
             if labels:
                 suffix = "{" + ",".join(f'{key}="{escape(value)}"' for key, value in labels.items()) + "}"
