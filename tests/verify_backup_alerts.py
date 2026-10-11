@@ -17,6 +17,12 @@ def verify(rendered):
         match = re.search(r'- alert: ' + name + r'\n\s+expr: ([^\n]+)\n\s+for: ([^\n]+)', rendered)
         assert match is not None, name
         rules.append({"alert": name, "expr": match[1], "for": match[2]})
+        if name == "TimewebPostgresAutomaticBackupStale":
+            description = re.search(r'\n              description: >-\n((?:                [^\n]*\n)+)',
+                                    rendered[match.end():])
+            assert description is not None, "Missing last automatic backup details"
+            rules[-1]["annotations"] = {
+                "description": " ".join(line.strip() for line in description[1].splitlines())}
 
     labels = {"db_cluster_id": "4169562", "db_cluster": "postgres"}
     prefix = "timeweb_postgres_backup_"
@@ -43,22 +49,29 @@ def verify(rendered):
         for when in evaluations:
             for rule in rules:
                 matches = expected.get((rule["alert"], when), [])
-                checks.append({"eval_time": when, "alertname": rule["alert"], "exp_alerts": [
-                    {"exp_labels": item, "exp_annotations": {}} for item in matches]})
+                checks.append({"eval_time": when, "alertname": rule["alert"], "exp_alerts": matches})
         return {"interval": "1m", "input_series": series, "alert_rule_test": checks}
 
-    def fires(name, dimensions, *times):
-        return {(name, when): [dimensions] for when in times}
+    def fires(name, dimensions, *times, description=None):
+        annotations = {} if description is None else {"description": description}
+        return {(name, when): [{"exp_labels": dimensions, "exp_annotations": annotations}] for when in times}
 
     stale = 'last_success_timestamp_seconds|backup_type=auto'
     auto_count, manual_count = 'count|backup_type=auto,status=done', 'count|backup_type=manual,status=done'
+    stale_explanation = ("The newest automatic backup in done state is older than the configured limit "
+                         "(36 hours by default), or none exists. "
+                         "Manual backups do not satisfy the daily automatic schedule.")
     tests = [
         case({}, {}),
         # A recent manual copy must not hide a stale or absent automatic copy.
         case({stale: f"{epoch - 40 * 3600}+0x90"},
-             fires("TimewebPostgresAutomaticBackupStale", labels | {"backup_type": "auto"}, "31m")),
+             fires("TimewebPostgresAutomaticBackupStale", labels | {"backup_type": "auto"}, "31m",
+                   description="Last successful automatic backup (creation time): "
+                               "1999-12-30 08:00:00 +0000 UTC (1d 16h 31m 0s ago). " + stale_explanation)),
         case({stale: "0+0x90", auto_count: "0+0x90"},
-             fires("TimewebPostgresAutomaticBackupStale", labels | {"backup_type": "auto"}, "31m")),
+             fires("TimewebPostgresAutomaticBackupStale", labels | {"backup_type": "auto"}, "31m",
+                   description="Last successful automatic backup (creation time): "
+                               "none in the provider inventory. " + stale_explanation)),
         # In-progress copies are not recoverable, and the critical no-copy rule suppresses stale-auto noise.
         case({auto_count: "0+0x90", manual_count: "0+0x90", stale: "0+0x90",
               'count|backup_type=auto,status=create': "1+0x90"},
