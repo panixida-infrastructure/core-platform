@@ -4749,6 +4749,256 @@ data:
           ],
           "title": "Container file descriptors",
           "type": "timeseries"
+        },
+        {
+          "id": 17,
+          "type": "row",
+          "title": "Container restarts and failures",
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 58
+          },
+          "panels": []
+        },
+        {
+          "id": 18,
+          "title": "Container restarts in 15 minutes",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 59
+          },
+          "maxDataPoints": 2000,
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 2,
+                "fillOpacity": 5,
+                "showPoints": "auto",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "(max by (namespace, pod, container, uid) (increase_prometheus({__name__=~\"kube_pod_(init_)?container_status_restarts_total\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}[15m]))) * on (namespace, pod, uid) group_left(node) max by (namespace, pod, uid, node) (kube_pod_info{node=~\"${node:pipe}\"})",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} {{`{{container}}`}}",
+              "refId": "A",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 19,
+          "title": "Containers in CrashLoopBackOff",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 59
+          },
+          "maxDataPoints": 2000,
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 2,
+                "fillOpacity": 5,
+                "showPoints": "auto",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "(max by (namespace, pod, container, uid) ({__name__=~\"kube_pod_(init_)?container_status_waiting_reason\",reason=\"CrashLoopBackOff\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}) or max by (namespace, pod, container, uid) ({__name__=~\"kube_pod_(init_)?container_status_restarts_total\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}) * 0) * on (namespace, pod, uid) group_left(node) max by (namespace, pod, uid, node) (kube_pod_info{node=~\"${node:pipe}\"})",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} {{`{{container}}`}}",
+              "refId": "A",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 20,
+          "title": "Abnormal container terminations",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 16,
+            "x": 0,
+            "y": 67
+          },
+          "maxDataPoints": 2000,
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "decimals": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 2,
+                "fillOpacity": 5,
+                "showPoints": "auto",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "expr": "((((max by (namespace, pod, container, uid, reason) ({__name__=~\"kube_pod_(init_)?container_status_last_terminated_reason\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",reason!=\"Completed\"} == 1) and on (namespace, pod, uid, container) (max by (namespace, pod, container, uid) ({__name__=~\"kube_pod_(init_)?container_status_last_terminated_exitcode\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}) != 0) and on (namespace, pod, uid, container) (time() - max by (namespace, pod, container, uid) ({__name__=~\"kube_pod_(init_)?container_status_last_terminated_timestamp\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}) < 600)) or max by (namespace, pod, container, uid, reason) ({__name__=~\"kube_pod_(init_)?container_status_terminated_reason\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\",reason!=\"Completed\"} == 1)) unless on (namespace, pod, uid) (kube_pod_deletion_timestamp > 0) unless on (namespace, pod, uid) (kube_pod_status_phase{phase=\"Succeeded\"} == 1)) or max by (namespace, pod, container, uid) ({__name__=~\"kube_pod_(init_)?container_status_restarts_total\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\",container=~\"${container:regex}\"}) * 0) * on (namespace, pod, uid) group_left(node) max by (namespace, pod, uid, node) (kube_pod_info{node=~\"${node:pipe}\"})",
+              "legendFormat": "{{`{{namespace}}`}}/{{`{{pod}}`}} {{`{{container}}`}} {{`{{reason}}`}}",
+              "refId": "A",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "description": "1 means a current failed termination or a non-zero exit in the last 10 minutes, including OOMKilled. Completed containers and terminating pods are excluded. No data means unknown; check state collection."
+        },
+        {
+          "id": 21,
+          "type": "stat",
+          "title": "Container state collection",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 16,
+            "y": 67
+          },
+          "targets": [
+            {
+              "expr": "min(up{service_name=\"kube-state-metrics\"}) * (count(kube_pod_container_status_restarts_total) > bool 0)",
+              "refId": "A",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "Unknown",
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "DOWN",
+                      "color": "red"
+                    },
+                    "1": {
+                      "text": "UP",
+                      "color": "green"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto"
+          }
+        },
+        {
+          "id": 22,
+          "type": "text",
+          "title": "How to read container failures",
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 16,
+            "y": 71
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "Regular and init containers are monitored. A rollout creates new pod identities; this is not a restart. Successful Completed jobs are excluded.\n\nThe failure graph stays at 1 for a current failed termination or for 10 minutes after a non-zero exit (including OOMKilled). History starts when collection is enabled. **No data** is unknown: check Container state collection."
+          }
         }
       ],
       "refresh": "30s",
@@ -4794,14 +5044,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\"}, namespace)",
+            "definition": "label_values(kube_pod_info{node=~\"${node:pipe}\"}, namespace)",
             "hide": 0,
             "includeAll": true,
             "label": "Namespace",
             "multi": true,
             "name": "namespace",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\"}, namespace)",
+            "query": "label_values(kube_pod_info{node=~\"${node:pipe}\"}, namespace)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -4818,14 +5068,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
+            "definition": "label_values(kube_pod_info{node=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
             "hide": 0,
             "includeAll": true,
             "label": "Pod",
             "multi": true,
             "name": "pod",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
+            "query": "label_values(kube_pod_info{node=~\"${node:pipe}\",namespace=~\"${namespace:regex}\"}, pod)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -4842,14 +5092,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
+            "definition": "label_values({__name__=~\"kube_pod_(init_)?container_status_restarts_total\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
             "hide": 0,
             "includeAll": true,
             "label": "Container",
             "multi": true,
             "name": "container",
             "options": [],
-            "query": "label_values(container_cpu_usage_seconds_total{container!=\"\",pod!=\"\",kubernetes_io_hostname=~\"${node:pipe}\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
+            "query": "label_values({__name__=~\"kube_pod_(init_)?container_status_restarts_total\",namespace=~\"${namespace:regex}\",pod=~\"${pod:regex}\"}, container)",
             "refresh": 1,
             "regex": "",
             "sort": 1,

@@ -199,6 +199,7 @@ observability:
     vmalert: victoriametrics/vmalert:v1.153.0
     alertmanager: prom/alertmanager:v0.34.1
     nodeExporter: quay.io/prometheus/node-exporter:v1.12.1
+    kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
     otelCollector: otel/opentelemetry-collector-contrib:0.161.0
     gluetun: ghcr.io/qdm12/gluetun:v3.41.3
     squid: ubuntu/squid:7.2-26.04_edge
@@ -240,6 +241,12 @@ observability:
       limits:
         memory: 256Mi
     nodeExporter:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+    kubeStateMetrics:
       requests:
         cpu: 25m
         memory: 32Mi

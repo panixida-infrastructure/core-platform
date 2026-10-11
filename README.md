@@ -113,3 +113,14 @@ A successful provider apply alone is insufficient verification of a resize.
 See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed before we model real resources.
 See [docs/kubernetes-migration.md](docs/kubernetes-migration.md) for the Kubernetes migration plan and cutover rules.
 See [docs/platform-domains.md](docs/platform-domains.md) and [docs/secrets.md](docs/secrets.md) for platform UI domains and the OpenBao bootstrap model.
+
+## Container restarts and failures
+
+The **Container restarts and failures** section of [Kubernetes Workloads](https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads) shows regular and init container restarts, CrashLoopBackOff, abnormal terminations, and state collection health. kube-state-metrics reads only Pods (`list`/`watch`) and exposes an allowlist of container lifecycle metrics to the existing OpenTelemetry/VictoriaMetrics pipeline.
+
+- `KubernetesContainerRestartsHigh`: at least 3 observed restarts in 15 minutes, sustained for 2 minutes. A new Pod UID or a previously accumulated counter does not count as new restarts.
+- `KubernetesContainerCrashLoopBackOff`: recurring CrashLoopBackOff over a five-minute observation window, sustained for 10 minutes (critical).
+- `KubernetesContainerTerminatedAbnormally`: a current failed termination or a non-zero exit within 10 minutes, sustained for 1 minute. The reason includes OOMKilled/Error; Completed containers and Pods being deleted are excluded.
+- `KubernetesContainerStateMonitoringDown`: exporter scrape or container inventory absent for 5 minutes.
+
+Application namespaces route to their existing Tactical Heroes or .NET Template Telegram topics; `observability` routes to Observability and other system namespaces to Core Platform. The alert links retain namespace, Pod, and container filters. History is collected from deployment onward.
