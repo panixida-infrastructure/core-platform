@@ -678,6 +678,12 @@ data:
           ],
           "transformations": [
             {
+              "id": "labelsToFields",
+              "options": {
+                "mode": "columns"
+              }
+            },
+            {
               "id": "organize",
               "options": {
                 "excludeByName": {
