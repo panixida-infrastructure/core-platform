@@ -965,6 +965,63 @@ data:
               summary: Managed PostgreSQL connection usage is high.
               description: PostgreSQL connection usage has stayed above 80 percent for at least 10 minutes.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed" "panel" 3) | quote }}
+          {{- if .Values.observability.postgresBackups.enabled }}
+          - alert: TimewebPostgresBackupMonitoringStalled
+            expr: time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds > 3600 or absent(timeweb_postgres_backup_poll_last_success_timestamp_seconds)
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: postgresql
+              environment: production
+            annotations:
+              summary: Timeweb PostgreSQL backup monitoring is unavailable.
+              description: No complete successful backup API poll for over an hour, or collector metrics are missing. Backup state is unknown; this does not mean that backups failed.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-backups" "panel" 1) | quote }}
+          - alert: TimewebPostgresAutomaticBackupsDisabled
+            expr: (timeweb_postgres_backup_auto_enabled == 0) and on (db_cluster_id) (timeweb_postgres_backup_poll_success == 1) and on (db_cluster_id) (time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds < 3600)
+            for: 10m
+            labels:
+              severity: warning
+              alert_owner: postgresql
+              environment: production
+            annotations:
+              summary: Timeweb PostgreSQL automatic backups are disabled.
+              description: The provider reports that the managed PostgreSQL automatic backup schedule is disabled.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-backups" "panel" 2) | quote }}
+          - alert: TimewebPostgresAutomaticBackupStale
+            expr: ((time() - timeweb_postgres_backup_last_success_timestamp_seconds{backup_type="auto"}) > on (db_cluster_id) group_left timeweb_postgres_backup_max_age_seconds) and on (db_cluster_id) (timeweb_postgres_backup_auto_enabled == 1) and on (db_cluster_id) (sum by (db_cluster_id) (timeweb_postgres_backup_count{status="done"}) > 0) and on (db_cluster_id) (timeweb_postgres_backup_poll_success == 1) and on (db_cluster_id) (time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds < 3600)
+            for: 30m
+            labels:
+              severity: warning
+              alert_owner: postgresql
+              environment: production
+            annotations:
+              summary: Timeweb PostgreSQL has no recent successful automatic backup.
+              description: The newest automatic backup in done state is older than the configured limit (36 hours by default), or none exists. Manual backups do not satisfy the daily automatic schedule.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-backups" "panel" 7) | quote }}
+          - alert: TimewebPostgresNoSuccessfulBackup
+            expr: (sum by (db_cluster_id, db_cluster) (timeweb_postgres_backup_count{status="done"}) == 0) and on (db_cluster_id) (timeweb_postgres_backup_poll_success == 1) and on (db_cluster_id) (time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds < 3600)
+            for: 10m
+            labels:
+              severity: critical
+              alert_owner: postgresql
+              environment: production
+            annotations:
+              summary: Timeweb PostgreSQL has no completed physical backup.
+              description: A complete provider API inventory contains no automatic or manual backup in done state. In-progress copies are not counted as successful backups.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-backups" "panel" 5) | quote }}
+          - alert: TimewebPostgresBackupFailed
+            expr: (timeweb_postgres_backup_last_attempt_failed == 1) and on (db_cluster_id) (timeweb_postgres_backup_poll_success == 1) and on (db_cluster_id) (time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds < 3600)
+            for: 15m
+            labels:
+              severity: warning
+              alert_owner: postgresql
+              environment: production
+            annotations:
+              summary: The latest Timeweb PostgreSQL backup attempt failed.
+              description: The newest backup of this type is in fail state. Older failed copies do not trigger this alert after a newer successful or in-progress attempt.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-backups" "panel" 9) | quote }}
+          {{- end }}
           - alert: HostHighCpu
             expr: 100 * (1 - avg by (service_name, service_instance_id, k8s_node_name) (rate(node_cpu_seconds_total{service_name=~"linux-node-exporter|timeweb-dbaas-node|timeweb-kubernetes-node",mode="idle"}[5m]))) > 85
             for: 10m

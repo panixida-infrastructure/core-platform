@@ -26,7 +26,7 @@ def verify(rendered):
     links = dict(re.findall(
         r"- alert: (\w+)\n(?:(?!- alert:).)*?dashboard_url: (\"[^\n]+\")",
         rendered, re.S))
-    assert len(links) == 34, f"Expected 34 metric alert links, got {len(links)}"
+    assert len(links) == 39, f"Expected 39 metric alert links, got {len(links)}"
     links = {name: json.loads(value) for name, value in links.items()}
     for name, link in links.items():
         parsed = urlsplit(re.sub(r"{{.*?}}", "", link))
@@ -47,6 +47,7 @@ def verify(rendered):
         ("ApplicationHighMemoryUsage", "kubernetes-workloads", 2,
          {"container": "api", "namespace": "test-ns", "pod": "test-pod"}),
         ("TelegramAlertGatewayDeliveryFailures", "core-platform-overview", None, {}),
+        ("TimewebPostgresAutomaticBackupStale", "postgresql-backups", 7, {}),
     ]
     rules, checks = [], []
     # vmalert-tool >= 1.148 starts fixture series at 2000-01-01 UTC.
@@ -88,7 +89,7 @@ def verify(rendered):
         subprocess.run(["docker", "run", "--rm", "-v", f"{work}:/work", "-w", "/work",
                         image.replace("/vmalert:", "/vmalert-tool:"), "unittest",
                         "--disableAlertgroupLabel", "--files=/work/tests.json"], check=True)
-    print("34 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
+    print("39 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
 
     # Mixed emergency groups must retain each alert's link even without CommonAnnotations.
     document = next(doc for doc in rendered.split("\n---") if "  name: alertmanager\n" in doc)

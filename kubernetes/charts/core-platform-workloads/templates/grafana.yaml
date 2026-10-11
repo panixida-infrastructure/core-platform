@@ -135,6 +135,10 @@ metadata:
 data:
   kubernetes-control-plane.json: |
     {{- .Files.Get "files/kubernetes-control-plane.json" | nindent 4 }}
+  {{- if .Values.observability.postgresBackups.enabled }}
+  postgresql-backups.json: |
+    {{- .Files.Get "files/postgresql-backups.json" | nindent 4 }}
+  {{- end }}
   core-platform-overview.json: |
     {
       "annotations": {
@@ -190,6 +194,14 @@ data:
           "type": "link",
           "url": "/d/postgresql-managed/postgresql-managed"
         },
+        {{- if .Values.observability.postgresBackups.enabled }}
+        {
+          "title": "PostgreSQL Backups",
+          "type": "link",
+          "keepTime": true,
+          "url": "/d/postgresql-backups/postgresql-backups"
+        },
+        {{- end }}
         {
           "asDropdown": false,
           "icon": "external link",

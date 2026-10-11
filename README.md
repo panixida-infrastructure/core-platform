@@ -75,6 +75,20 @@ Production state is stored in the Timeweb S3-compatible bucket `panixida-storage
 
 Managed PostgreSQL automatic backups run daily and retain one copy. Both OpenTofu and the `Managed PostgreSQL` workflow enforce this retention.
 
+The `timeweb-postgres-backups` collector reads the Timeweb physical backup inventory and automatic backup settings every 15 minutes. It uses the existing observability Timeweb credential through External Secrets and performs GET requests only. It does not create, delete, restore, or reschedule backups. Configuration is under `observability.postgresBackups` in the workloads chart.
+
+Grafana's [PostgreSQL Backups](https://grafana.panixida.ru/d/postgresql-backups/postgresql-backups) dashboard shows automatic and manual copies separately, their creation dates and ages, provider statuses, retention, and API polling health. It is also linked from Core Platform Overview. Only copies currently in `done` state count as successful; their age is based on the provider's `created_at`, not a completion timestamp or a restore test.
+
+Backup alerts route to the `postgresql` Telegram topic:
+
+- Automatic backups disabled for 10 minutes: warning.
+- No successful automatic backup within 36 hours, for 30 minutes: warning. A manual copy does not reset this check; when no completed copy of either type exists, the critical alert below takes precedence.
+- No completed automatic or manual copy for 10 minutes: critical.
+- The latest attempt of either type is in `fail` state for 15 minutes: warning. An older failed copy does not keep this alert active after a newer attempt.
+- No successful API poll for an hour, or missing collector metrics, for 5 minutes: warning. Failed or stale polls suppress backup-state alerts rather than turning unknown state into missing copies.
+
+Local validation: `python3 -B -m unittest discover -s tests`, `helm lint kubernetes/charts/core-platform-workloads`, then render the chart and run `tests/verify_backup_alerts.py` and `tests/verify_metric_links.py` against the rendered YAML (these two checks require Docker). Validate runs the same checks in CI.
+
 Do not commit real tokens or state. In GitHub Actions, `secrets.TIMEWEB_TOKEN` is mapped to `TF_VAR_twc_token` for OpenTofu commands that need provider access.
 
 Manual workflows:

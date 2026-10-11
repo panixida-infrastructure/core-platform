@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Test managed control-plane automation
+      - name: Test Timeweb automation
         run: python3 -B -m unittest discover -s tests
 
       - name: Install Kubernetes tooling
@@ -94,6 +94,9 @@ jobs:
 
       - name: Verify metric alert dashboard links
         run: python3 -B tests/verify_metric_links.py /tmp/core-platform-workloads.yaml
+
+      - name: Verify Timeweb backup alert conditions
+        run: python3 -B tests/verify_backup_alerts.py /tmp/core-platform-workloads.yaml
 
   notify:
     if: ${{ always() && github.event_name == 'push' && github.ref_name == 'main' }}
