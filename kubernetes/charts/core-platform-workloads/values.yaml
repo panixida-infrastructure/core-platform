@@ -135,6 +135,16 @@ observability:
       remoteKey: core-platform/observability
   nodeExporter:
     enabled: true
+  postgresBackups:
+    enabled: true
+    clusterId: 4169562
+    clusterName: postgres
+    secretName: timeweb-postgres-backups
+    # Reuse the existing observability Timeweb API credential through a separate Secret.
+    remoteKey: core-platform/observability-timeweb-logs
+    pollIntervalSeconds: 900
+    maxAgeSeconds: 129600
+    image: python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72
   controlPlane:
     enabled: true
     clusterId: 1091532
