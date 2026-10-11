@@ -77,7 +77,7 @@ Managed PostgreSQL automatic backups run daily and retain one copy. Both OpenTof
 
 The `timeweb-postgres-backups` collector reads the Timeweb physical backup inventory and automatic backup settings every 15 minutes. It uses the existing observability Timeweb credential through External Secrets and performs GET requests only. It does not create, delete, restore, or reschedule backups. Configuration is under `observability.postgresBackups` in the workloads chart.
 
-Grafana's [PostgreSQL Backups](https://grafana.panixida.ru/d/postgresql-backups/postgresql-backups) dashboard shows automatic and manual copies separately, their creation dates and ages, provider statuses, retention, and API polling health. It is also linked from Core Platform Overview. Only copies currently in `done` state count as successful; their age is based on the provider's `created_at`, not a completion timestamp or a restore test.
+The **Timeweb backups** section of Grafana's [Managed PostgreSQL](https://grafana.panixida.ru/d/postgresql-managed/postgresql-managed) dashboard shows automatic and manual copies separately, their creation dates and ages, provider statuses, retention, and API polling health. It is also linked from Core Platform Overview. Only copies currently in `done` state count as successful; their age is based on the provider's `created_at`, not a completion timestamp or a restore test.
 
 Backup alerts route to the `postgresql` Telegram topic:
 

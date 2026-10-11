@@ -47,7 +47,7 @@ def verify(rendered):
         ("ApplicationHighMemoryUsage", "kubernetes-workloads", 2,
          {"container": "api", "namespace": "test-ns", "pod": "test-pod"}),
         ("TelegramAlertGatewayDeliveryFailures", "core-platform-overview", None, {}),
-        ("TimewebPostgresAutomaticBackupStale", "postgresql-backups", 7, {}),
+        ("TimewebPostgresAutomaticBackupStale", "postgresql-managed", 41, {}),
     ]
     rules, checks = [], []
     # vmalert-tool >= 1.148 starts fixture series at 2000-01-01 UTC.
