@@ -189,7 +189,7 @@ observability:
     deadLetterBacklog: 10
     deadLetterAgeSeconds: 3600
     scheduledOverdueSeconds: 300
-    quartzJobP95Seconds: 60
+    quartzJobMeanSeconds: 60
   alerts:
     telegram:
       chatId: "-1003738995665"

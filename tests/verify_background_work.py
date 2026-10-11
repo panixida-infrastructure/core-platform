@@ -74,23 +74,23 @@ def verify(rendered):
                            for instance in ("a", "b")], fires(alert, expected_labels, ("4m", "16m", "31m"))))
 
     histogram = "quartz_job_execution_duration_seconds"
-    def histogram_series(new_layout=True, slow=True, instance="new"):
+    def duration_series(duration=90, executions=1, instance="a"):
         dimensions = job | {"service_instance_id": instance, "quartz_scheduler_name": "QuartzScheduler",
                             "quartz_scheduler_id": "NON_CLUSTERED"}
-        data = [series(histogram + "_count", "0+1x40", dimensions),
-                series(histogram + "_sum", "0+90x40" if slow else "0+0.1x40", dimensions)]
-        buckets = {"0.001": "0+0x40", "0.1": "0+0x40" if slow else "0+1x40",
-                   "60": "0+0x40" if slow else "0+1x40", "120": "0+1x40", "+Inf": "0+1x40"}
-        if not new_layout:
-            buckets = {"0": "0+0x40", "5": "0+1x40", "+Inf": "0+1x40"}
-        data += [series(histogram + "_bucket", values, dimensions | {"le": bound})
-                 for bound, values in buckets.items()]
-        return data
+        return [series(histogram + "_count", f"0+{executions}x40", dimensions),
+                series(histogram + "_sum", f"0+{duration * executions}x40", dimensions)]
 
-    tests += [case(histogram_series(), fires("QuartzJobSlow", job, ("31m",))),
-              case(histogram_series(slow=False)),
-              case(histogram_series(new_layout=False)),
-              case(histogram_series(slow=False) + histogram_series(new_layout=False, instance="old"))]
+    weighted_durations = duration_series(duration=200) + duration_series(duration=10, executions=9, instance="b")
+    tests += [case(duration_series(), fires("QuartzJobSlow", job, ("31m",))),
+              case(duration_series(duration=60)),
+              case(duration_series(duration=0.1)),
+              case(duration_series(executions=0)),
+              case(weighted_durations),
+              case(duration_series() + duration_series(instance="b"), fires("QuartzJobSlow", job, ("31m",))),
+              case([series(histogram + "_count", "0+0x9 1+0x9 2+0x9 3+0x10", job),
+                    series(histogram + "_sum", "0+0x9 900+0x9 1800+0x9 2700+0x10", job)]),
+              case([series(histogram + "_count", "0+1x20 0+1x19", job),
+                    series(histogram + "_sum", "0+90x20 0+90x19", job)], fires("QuartzJobSlow", job, ("31m",)))]
 
     dashboard = json.loads(re.search(r"  application-telemetry\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1])
     panels = [p for p in dashboard["panels"] if p["id"] >= 100]
@@ -112,8 +112,15 @@ def verify(rendered):
                  series("quartz_job_execution_active", "0+0x40", job),
                  series("quartz_trigger_acquisition_duration_seconds_count", "0+1x40", scheduler)]
     # Arrival, error and misfire counters deliberately absent: anchored zero fallbacks still render.
-    tests.append(case(fixtures + histogram_series(slow=False),
+    tests.append(case(fixtures + duration_series(duration=0.1),
                       {(r["alert"], "4m"): [{}] for r in panel_rules}, times=("4m",), selected=panel_rules))
+    duration_panel = next(panel for panel in panels if panel["id"] == 113)
+    assert len(duration_panel["targets"]) == 1
+    mean_expr = duration_panel["targets"][0]["expr"].replace("${service:regex}", ".*")
+    mean_rule = {"alert": "QuartzMeanDurationValue", "expr": f"abs(({mean_expr}) - 29) < 0.000001"}
+    panel_rules.append(mean_rule)
+    tests.append(case(weighted_durations, fires(mean_rule["alert"], job, ("4m",)),
+                      times=("4m",), selected=[mean_rule]))
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1]
     with tempfile.TemporaryDirectory(prefix="background-work-") as directory:
         work = Path(directory)
