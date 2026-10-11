@@ -124,3 +124,17 @@ The **Container restarts and failures** section of [Kubernetes Workloads](https:
 - `KubernetesContainerStateMonitoringDown`: exporter scrape or container inventory absent for 5 minutes.
 
 Application namespaces route to their existing Tactical Heroes or .NET Template Telegram topics; `observability` routes to Observability and other system namespaces to Core Platform. The alert links retain namespace, Pod, and container filters. History is collected from deployment onward.
+
+## Infrastructure release monitoring
+
+The **Infrastructure updates** section of [Core Platform Overview](https://grafana.panixida.ru/d/core-platform-overview/core-platform-overview?viewPanel=10) shows installed and available versions, source links, compatibility notes and the last successful release check. The collector reads observed Pod image tags and Helm labels every five minutes. Public stable release metadata is checked every 24 hours, with hourly retries after a failed check. Errors retain the last successful result but display a failed status.
+
+The catalog is `kubernetes/charts/core-platform-workloads/files/infrastructure-releases.json`. It covers the platform services, observability stack, Helm charts and helper images. Kubernetes and managed PostgreSQL use Timeweb's supported version catalogs. Provider add-ons are displayed as a bundle; own application builds use their existing delivery pipelines. An unknown image in a configured infrastructure namespace appears as `untracked` and raises a warning after 30 minutes. Add its official source to the catalog instead of treating it as current.
+
+`InfrastructureUpdateAvailable` is informational and goes to **Core Platform (960)** through Alertmanager's native Telegram receiver and the existing Telegram egress proxy. It includes both versions, an official source link and a dashboard link. The collector stores the highest announced version on a dedicated 1 GiB PVC; daily checks, restarts and application rollbacks do not repeat it. The notification event lasts one hour, the route repeats only after 24 hours, and resolved messages are disabled: expiration of a notification does not mean an upgrade happened. A notification-pipeline outage longer than the event window can miss a message; the dashboard still retains the available version. Deleting the PVC resets this history.
+
+`InfrastructureReleaseCheckFailed` reports a failed source, unreadable installed version or an untracked image after 30 minutes. `InfrastructureReleaseMonitorDown` reports missing/stale inventory or a state-write failure after 10 minutes. Existing Telegram delivery-failure monitoring covers the native receiver.
+
+Availability is not compatibility approval: SonarQube Community Build requires checking the custom branch plugin and database upgrade path; Redis and Envoy must stay compatible with their parent charts/controllers. Image variants and pinned digests must be reviewed when updating. This monitor neither installs updates nor scans CVEs or host OS packages. It has Kubernetes `list` access only to Pods and Deployments, and uses the existing Timeweb credential only for GET requests.
+
+Validate with `python3 -B -m unittest discover -s tests`, `helm lint kubernetes/charts/core-platform-workloads`, then render the chart and run `python3 -B tests/verify_release_alerts.py <rendered-manifests.yaml>` (Docker required).

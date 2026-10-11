@@ -135,6 +135,10 @@ observability:
       remoteKey: core-platform/observability
   nodeExporter:
     enabled: true
+  releases:
+    enabled: true
+    remoteKey: core-platform/observability-timeweb-logs
+    image: python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72
   postgresBackups:
     enabled: true
     clusterId: 4169562

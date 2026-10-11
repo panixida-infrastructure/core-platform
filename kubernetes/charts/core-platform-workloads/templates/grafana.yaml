@@ -629,6 +629,392 @@ data:
           "title": "Scrape health by service",
           "type": "timeseries"
         }
+        {{- if .Values.observability.releases.enabled }},
+        {
+          "id": 9,
+          "title": "Infrastructure updates",
+          "type": "row",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 17,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 10,
+          "title": "Infrastructure versions",
+          "type": "table",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "description": "Installed versions come from Kubernetes inventory and Timeweb. Stable release sources are checked daily. Availability does not confirm upgrade compatibility. Provider bundles and own builds have no independent upstream comparison.",
+          "gridPos": {
+            "x": 0,
+            "y": 18,
+            "w": 24,
+            "h": 18
+          },
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "displayName": "Component",
+                "desc": false
+              }
+            ]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (component, current_version, latest_version, status, release_url, note) (infrastructure_release_info) * on (component) group_left max by (component) (infrastructure_release_last_success_timestamp_seconds) * 1000",
+              "format": "table",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true
+                },
+                "indexByName": {
+                  "component": 0,
+                  "current_version": 1,
+                  "latest_version": 2,
+                  "status": 3,
+                  "Value": 4,
+                  "release_url": 5,
+                  "note": 6
+                },
+                "renameByName": {
+                  "component": "Component",
+                  "current_version": "Installed",
+                  "latest_version": "Available",
+                  "status": "Status",
+                  "Value": "Last successful release check",
+                  "release_url": "Release source",
+                  "note": "Upgrade notes"
+                }
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Status"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "current": {
+                            "text": "Current",
+                            "color": "green"
+                          },
+                          "update_available": {
+                            "text": "Update available",
+                            "color": "blue"
+                          },
+                          "check_failed": {
+                            "text": "Check failed",
+                            "color": "red"
+                          },
+                          "inventory_failed": {
+                            "text": "Inventory unavailable",
+                            "color": "red"
+                          },
+                          "not_installed": {
+                            "text": "Not installed",
+                            "color": "gray"
+                          },
+                          "provider_managed": {
+                            "text": "Timeweb bundle",
+                            "color": "purple"
+                          },
+                          "own_build": {
+                            "text": "Own build",
+                            "color": "gray"
+                          },
+                          "untracked": {
+                            "text": "Source not configured",
+                            "color": "orange"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Last successful release check"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "dateTimeAsIso"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "0": {
+                            "text": "—"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Release source"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "title": "Open release source",
+                        "url": "${__value.raw}",
+                        "targetBlank": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": 11,
+          "title": "Release monitor health",
+          "type": "stat",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 36,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "(min(infrastructure_release_inventory_success) * min(infrastructure_release_state_success)) * (time() - max(infrastructure_release_inventory_last_success_timestamp_seconds) < bool 900)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "Unknown",
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "Unavailable",
+                      "color": "red"
+                    },
+                    "1": {
+                      "text": "OK",
+                      "color": "green"
+                    }
+                  }
+                }
+              ]
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 12,
+          "title": "Components with updates",
+          "type": "stat",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 6,
+            "y": 36,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count(infrastructure_release_info{status=\"update_available\"}) or (0 * count(infrastructure_release_info))",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "Unknown",
+              "mappings": []
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 13,
+          "title": "Checks requiring attention",
+          "type": "stat",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 36,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count(infrastructure_release_info{status=~\"check_failed|inventory_failed|untracked\"}) or (0 * count(infrastructure_release_info))",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "Unknown",
+              "mappings": []
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 14,
+          "title": "Oldest successful release check",
+          "type": "stat",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "x": 18,
+            "y": 36,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "time() - min(infrastructure_release_last_success_timestamp_seconds > 0)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "Unknown",
+              "mappings": []
+            },
+            "overrides": []
+          }
+        },
+        {
+          "id": 15,
+          "title": "How release monitoring works",
+          "type": "text",
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 24,
+            "h": 5
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "Stable release sources are checked every 24 hours; failed sources retry hourly. Installed versions refresh every 5 minutes. New versions produce an informational notification in **Core Platform (960)**; the persistent state prevents daily repeats and repeats after collector restarts.\n\n**Available** means that an upstream release exists, not that its image, chart, database migration or plugin is compatible. SonarQube requires checking the custom branch plugin. Redis and Envoy are bundled dependencies. Timeweb Kubernetes/PostgreSQL use the provider catalog; Timeweb node add-ons are shown as a bundle. Own application builds use their project delivery pipelines.\n\nThe monitor does not install updates, scan CVEs or inspect Linux package updates. A failed source stays visible with its last successful check. The notification event lasts one hour; prolonged notification-pipeline outages may miss that notification, while the table retains the available version."
+          }
+        }
+        {{- end }}
       ],
       "refresh": "30s",
       "schemaVersion": 41,
