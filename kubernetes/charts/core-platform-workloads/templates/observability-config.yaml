@@ -1142,6 +1142,118 @@ data:
               summary: Host filesystem usage is high.
               description: Host filesystem usage has stayed above 85 percent for at least 10 minutes.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "infrastructure-nodes" "panel" 13 "variables" (dict "node" "service_instance_id")) | quote }}
+          {{- if .Values.observability.backgroundWork.enabled }}
+          - alert: WolverineInboxBacklogHigh
+            expr: max by (service_name) (wolverine_inbox_count_Messages) > {{ .Values.observability.backgroundWork.inboxBacklog }}
+            for: 10m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine durable inbox contains {{`{{ $value | humanize }}`}} messages.
+              description: The shared inbox has exceeded the configured message threshold for 10 minutes.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 101 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineOutboxBacklogHigh
+            expr: max by (service_name) (wolverine_outbox_count_Messages) > {{ .Values.observability.backgroundWork.outboxBacklog }}
+            for: 10m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine durable outbox contains {{`{{ $value | humanize }}`}} messages.
+              description: The shared outbox has exceeded the configured message threshold for 10 minutes; inspect delivery and transport availability.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 101 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineDeadLettersArriving
+            expr: sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total[15m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine DLQ received {{`{{ $value | humanize }}`}} messages in 15 minutes.
+              description: New messages entered dead-letter handling during the last 15 minutes. This event count is separate from current inventory.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 103 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineDeadLetterBacklogHigh
+            expr: max by (service_name) (wolverine_persistence_dead_letters) > {{ .Values.observability.backgroundWork.deadLetterBacklog }}
+            for: 5m
+            labels:
+              severity: critical
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine DLQ contains {{`{{ $value | humanize }}`}} messages.
+              description: Current persisted dead letters have exceeded the configured limit for five minutes.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 104 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineDeadLetterOldMessages
+            expr: (max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds) > {{ .Values.observability.backgroundWork.deadLetterAgeSeconds }}) and on (service_name) (max by (service_name) (wolverine_persistence_dead_letters) > 0)
+            for: 10m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: The oldest Wolverine DLQ message is {{`{{ $value | humanizeDuration }}`}} old.
+              description: The oldest DLQ message exceeds the age limit measured from original sent_at, not time of DLQ insertion.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 105 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineScheduledMessagesOverdue
+            expr: max by (service_name) (wolverine_persistence_scheduled_overdue_seconds) > {{ .Values.observability.backgroundWork.scheduledOverdueSeconds }}
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine delayed messages are {{`{{ $value | humanizeDuration }}`}} overdue.
+              description: The oldest scheduled inbox message is past its execution time by more than the configured delay; future scheduled messages are excluded.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 106 "variables" (dict "service" "service_name")) | quote }}
+          - alert: WolverineRecurringScheduleOverdue
+            expr: max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds) > {{ .Values.observability.backgroundWork.scheduledOverdueSeconds }}
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Wolverine schedule {{`{{ $labels.schedule_name }}`}} is {{`{{ $value | humanizeDuration }}`}} overdue.
+              description: An unpaused schedule has a recorded next occurrence older than the delay limit. Inspect the recurring agent and durable delivery; this is not a business-success check.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 109 "variables" (dict "service" "service_name")) | quote }}
+          - alert: QuartzJobFailed
+            expr: sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{error_type!=""}[15m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Quartz job {{`{{ $labels.quartz_job_group }}/{{ $labels.quartz_job_name }}`}} failed.
+              description: At least one job execution completed with an error in the last 15 minutes. Inspect the linked job metrics and traces.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 112 "variables" (dict "service" "service_name")) | quote }}
+          - alert: QuartzTriggerMisfires
+            expr: sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total[15m])) > 0
+            for: 1m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Quartz scheduler {{`{{ $labels.quartz_scheduler_name }}`}} reported {{`{{ $value | humanize }}`}} misfires.
+              description: The scheduler reported at least one trigger misfire in the last 15 minutes.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 115 "variables" (dict "service" "service_name")) | quote }}
+          - alert: QuartzJobSlow
+            expr: (histogram_quantile(0.95, sum by (le, service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_bucket[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{le="0.001"})) > {{ .Values.observability.backgroundWork.quartzJobP95Seconds }}) and on (service_name, quartz_job_group, quartz_job_name) (sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{le="0.001"}) >= 5)
+            for: 15m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}observability{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
+            annotations:
+              summary: Quartz job {{`{{ $labels.quartz_job_group }}/{{ $labels.quartz_job_name }}`}} p95 is {{`{{ $value | humanizeDuration }}`}}.
+              description: Job p95 exceeds the configured duration for 15 minutes, with at least five executions per window. Only the corrected histogram layout is evaluated; this does not detect an execution that never finishes.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 113 "variables" (dict "service" "service_name")) | quote }}
+          {{- end }}
           - alert: ApplicationSlowHttpRequests
             expr: histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=""}[5m]))) > 2
             for: 5m

@@ -114,6 +114,42 @@ See [docs/timeweb-inputs.md](docs/timeweb-inputs.md) for the Timeweb data needed
 See [docs/kubernetes-migration.md](docs/kubernetes-migration.md) for the Kubernetes migration plan and cutover rules.
 See [docs/platform-domains.md](docs/platform-domains.md) and [docs/secrets.md](docs/secrets.md) for platform UI domains and the OpenBao bootstrap model.
 
+## Background work monitoring
+
+[Application Telemetry](https://grafana.panixida.ru/d/application-telemetry/application-telemetry)
+includes shared sections for Wolverine inbox/outbox, DLQ arrivals/inventory/message age,
+delayed messages, recurring commands and Quartz jobs. The service selector also discovers
+workers without HTTP request metrics. Queue inventory uses `max` across replicas sharing
+the same store; counter increases and active Quartz jobs are summed across instances.
+
+`IScheduler` commands/events and published Wolverine recurring occurrences share the
+durable scheduled inbox. Future messages do not count as overdue. The recurring section
+shows durable pause state and delay past the recorded next occurrence, not business-job
+success. Quartz is a separate scheduler: its section shows executions, failures, mean/p95
+duration, active jobs and misfires. Misfire/error counters may be absent before the first
+event; zero fallbacks are anchored to an observed scheduler/job, never a global zero.
+
+Defaults under `observability.backgroundWork`:
+
+- Inbox/outbox: more than 100 messages for 10 minutes.
+- DLQ: new arrivals during the last 15 minutes, more than 10 remaining for 5 minutes,
+  or oldest message age over 1 hour for 10 minutes.
+- Delayed messages/recurring schedules: overdue by more than 5 minutes for 5 minutes.
+- Quartz: errors or misfires in the last 15 minutes, sustained for 1 minute; p95 over
+  60 seconds for 15 minutes with at least five completed executions per window.
+
+Thresholds are starting operational limits and can be tuned in Helm values. Quartz duration
+does not detect a job that never finishes. DLQ age is measured from original `sent_at`,
+not DLQ insertion. New Core persistence gauges require the messaging-library release;
+without it their panels remain empty and inventory/age/overdue alerts remain inactive.
+Quartz p95 evaluates only instances with the improved seconds histogram (the 0.001 bucket),
+avoiding mixed layouts during rollout. No telemetry freshness alerts are added.
+
+Alerts use existing application owner/environment routing and link to their panel.
+For Tactical Heroes this is its Telegram topic (955). Validate with Helm lint/render,
+`python3 -B tests/verify_background_work.py <rendered-manifests.yaml>` and
+`python3 -B tests/verify_metric_links.py <rendered-manifests.yaml>` (Docker required).
+
 ## Container restarts and failures
 
 The **Container restarts and failures** section of [Kubernetes Workloads](https://grafana.panixida.ru/d/kubernetes-workloads/kubernetes-workloads) shows regular and init container restarts, CrashLoopBackOff, abnormal terminations, and state collection health. kube-state-metrics reads only Pods (`list`/`watch`) and exposes an allowlist of container lifecycle metrics to the existing OpenTelemetry/VictoriaMetrics pipeline.

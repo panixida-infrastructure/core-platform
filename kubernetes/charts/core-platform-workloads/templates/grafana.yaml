@@ -8148,6 +8148,848 @@ data:
           "title": "DB client bytes read/write",
           "type": "timeseries",
           "id": 53
+        },
+        {
+          "id": 100,
+          "title": "Wolverine inbox, outbox and delayed messages",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 163
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 164
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name) (wolverine_inbox_count_Messages{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / inbox",
+              "instant": false,
+              "range": true
+            },
+            {
+              "refId": "B",
+              "expr": "max by (service_name) (wolverine_outbox_count_Messages{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / outbox",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Durable inbox and outbox",
+          "type": "timeseries",
+          "id": 101,
+          "description": "Shared PostgreSQL inventory. Max across replicas avoids counting the same database more than once. Inbox excludes handled idempotency records and future scheduled messages."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 164
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name) (wolverine_scheduled_count_Messages{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / total",
+              "instant": false,
+              "range": true
+            },
+            {
+              "refId": "B",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_due{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / due",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Scheduled messages: total and due",
+          "type": "timeseries",
+          "id": 102,
+          "description": "IScheduler commands/events and published recurring Wolverine occurrences share the scheduled inbox. Total includes future work; due counts only messages whose execution time has arrived."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 172
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total{service_name=~\"${service:regex}\"}[15m])) or on (service_name) (0 * max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\"}))",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "DLQ arrivals / 15 min",
+          "type": "timeseries",
+          "id": 103,
+          "description": "New dead-letter events, summed across instances with counter-reset handling. This is not the current inventory. Zero before the first event is shown only when the persistence collector reports queue state."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 172
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "DLQ remaining messages",
+          "type": "timeseries",
+          "id": 104,
+          "description": "Current persisted DLQ rows, including replayable messages until removed. Replay, deletion and expiration decrease this gauge. Missing metrics mean unknown, not an empty queue."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 180
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "DLQ oldest message age (since send)",
+          "type": "timeseries",
+          "id": 105,
+          "description": "Age from the oldest original sent_at timestamp, not time spent in the DLQ. Empty inventory reports zero; unknown send timestamps omit age. Core currently expires dead letters after seven days unless a message has its own delivery deadline."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 180
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_overdue_seconds{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Oldest overdue scheduled message",
+          "type": "timeseries",
+          "id": 106,
+          "description": "Delay past execution_time of due scheduled inbox messages. A future scheduled message is healthy and does not trigger overdue alerts."
+        },
+        {
+          "id": 107,
+          "title": "Wolverine recurring command schedules",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 188
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 189
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_paused{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Recurring schedule paused state",
+          "type": "timeseries",
+          "id": 108,
+          "description": "0 = running, 1 = administratively paused. Only configured schedules with persisted state appear. Applications without recurring Wolverine commands have no series here."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 189
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Recurring next occurrence overdue",
+          "type": "timeseries",
+          "id": 109,
+          "description": "Delay past the durable next occurrence. Paused schedules are excluded. This monitors scheduling progress, not successful completion of the business command."
+        },
+        {
+          "id": 110,
+          "title": "Quartz jobs",
+          "type": "row",
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 197
+          },
+          "panels": []
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 198
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Quartz completed executions / 15 min",
+          "type": "timeseries",
+          "id": 111,
+          "description": "Histogram counts include successful and failed completed job executions. Job name/group are reusable across application services; no HTTP traffic is required."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 198
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",error_type!=\"\"}[15m])) or on (service_name, quartz_job_group, quartz_job_name) (0 * sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Quartz failed executions / 15 min",
+          "type": "timeseries",
+          "id": 112,
+          "description": "Failed completed executions have error_type. A missing error series becomes zero only for an observed job. A job that has never executed remains absent."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 206
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum{service_name=~\"${service:regex}\"}[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / mean",
+              "instant": false,
+              "range": true
+            },
+            {
+              "refId": "B",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_bucket{service_name=~\"${service:regex}\"}[15m]) and on (service_name, quartz_job_group, quartz_job_name, service_instance_id, quartz_scheduler_name, quartz_scheduler_id) quartz_job_execution_duration_seconds_bucket{service_name=~\"${service:regex}\",le=\"0.001\"}))",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / p95",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Quartz job duration",
+          "type": "timeseries",
+          "id": 113,
+          "description": "Mean uses native seconds. p95 uses only instances exporting the improved 0.001-second bucket layout; older releases have a coarse 0-5 second bucket and are excluded from p95. A window with no executions has no latency value."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 206
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_active{service_name=~\"${service:regex}\"})",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Quartz active jobs",
+          "type": "timeseries",
+          "id": 114,
+          "description": "Currently executing jobs, summed across instances. This is concurrency, not a count of registered jobs. It appears after the job is first observed."
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 214
+          },
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total{service_name=~\"${service:regex}\"}[15m])) or on (service_name, quartz_scheduler_name) (0 * max by (service_name, quartz_scheduler_name) (quartz_trigger_acquisition_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_scheduler_name}}`}}",
+              "instant": false,
+              "range": true
+            }
+          ],
+          "title": "Quartz misfires / 15 min",
+          "type": "timeseries",
+          "id": 115,
+          "description": "Triggers that missed their scheduled firing time. The counter appears after the first misfire. Zero is shown only for a scheduler with acquisition telemetry."
+        },
+        {
+          "id": 116,
+          "title": "Reading background work metrics",
+          "type": "text",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 214
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "Inbox/outbox and scheduled total are native Wolverine metrics. DLQ inventory/age, due messages and recurring state require the Core persistence metrics release. Empty means **not measured**, unless an observed queue reports zero.\n\n`IScheduler` and Wolverine recurring commands share durable delayed-message storage. Quartz is a separate job scheduler. Services without a scheduler have no corresponding series.\n\nQueue inventory is shared across replicas (max); event counters and active Quartz jobs are summed. DLQ age starts at original send time. Recurring delay tracks the next occurrence, not business success.\n\nQuartz p95 appears after the seconds-bucket update. Old and new bucket layouts are not combined. No telemetry freshness alerts are configured."
+          }
         }
       ],
       "refresh": "30s",
@@ -8169,14 +9011,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values(http_server_request_duration_seconds_count, service_name)",
+            "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
             "hide": 0,
             "includeAll": true,
             "label": "Service",
             "multi": true,
             "name": "service",
             "options": [],
-            "query": "label_values(http_server_request_duration_seconds_count, service_name)",
+            "query": "label_values({__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
