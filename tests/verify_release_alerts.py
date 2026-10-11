@@ -56,6 +56,11 @@ def verify(rendered):
         tests.append(case({f'info{{component="Other",status="{status}"}}': "1+0x90"}, {}))
 
     dashboard = json.loads(re.search(r"  core-platform-overview\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1])
+    table = next(panel for panel in dashboard["panels"] if panel["id"] == 10)
+    # VictoriaMetrics returns one labeled Time/Value frame per component even for
+    # format=table. Convert and merge those frames before organizing table columns.
+    assert [step["id"] for step in table["transformations"]] == ["labelsToFields", "organize"]
+    assert table["transformations"][0]["options"]["mode"] == "columns"
     expected = {}
     for panel in dashboard["panels"]:
         for target in panel.get("targets", []):
