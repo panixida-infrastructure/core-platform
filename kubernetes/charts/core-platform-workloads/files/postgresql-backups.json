@@ -8,7 +8,7 @@
   "refresh": "1m",
   "timezone": "browser",
   "time": {
-    "from": "now-7d",
+    "from": "now-6h",
     "to": "now"
   },
   "tags": [
@@ -438,7 +438,8 @@
             "lineWidth": 2,
             "fillOpacity": 5,
             "spanNulls": false,
-            "showPoints": "never"
+            "showPoints": "auto",
+            "pointSize": 5
           }
         },
         "overrides": [
@@ -490,7 +491,8 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "maxDataPoints": 2000
     },
     {
       "id": 8,
@@ -529,7 +531,8 @@
             "lineWidth": 2,
             "fillOpacity": 5,
             "spanNulls": false,
-            "showPoints": "never"
+            "showPoints": "auto",
+            "pointSize": 5
           }
         },
         "overrides": []
@@ -555,7 +558,8 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "maxDataPoints": 2000
     },
     {
       "id": 9,
@@ -670,10 +674,11 @@
             "lineWidth": 2,
             "fillOpacity": 5,
             "spanNulls": false,
-            "showPoints": "never",
+            "showPoints": "auto",
             "thresholdsStyle": {
               "mode": "line"
-            }
+            },
+            "pointSize": 5
           }
         },
         "overrides": []
@@ -699,7 +704,8 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "maxDataPoints": 2000
     },
     {
       "id": 11,
@@ -713,7 +719,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "Timeweb creates the physical backups. This collector only reads the API.\n\nAutomatic schedule: **daily**, configured retention: **one automatic copy**. Manual copies are tracked separately.\n\n**No data** is not a healthy backup result: check API polling first. Successful means provider status `done`; restoration is not tested by these metrics. Dates use `created_at`."
+        "content": "Timeweb creates the physical backups. This collector only reads the API.\n\nAutomatic schedule: **daily**, configured retention: **one automatic copy**. Manual copies are tracked separately.\n\n**No data** is not a healthy backup result: check API polling first. Successful means provider status `done`; restoration is not tested by these metrics. Dates use `created_at`.\n\nMetric history starts when this collector was deployed. For a newly deployed collector, use a short time range (for example, Last 1 hour); there is no earlier monitoring history."
       }
     }
   ]
