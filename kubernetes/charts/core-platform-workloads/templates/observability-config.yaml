@@ -997,7 +997,10 @@ data:
               environment: production
             annotations:
               summary: Timeweb PostgreSQL has no recent successful automatic backup.
-              description: The newest automatic backup in done state is older than the configured limit (36 hours by default), or none exists. Manual backups do not satisfy the daily automatic schedule.
+              description: >-
+                Last successful automatic backup (creation time): {{`{{ with printf "timeweb_postgres_backup_last_success_timestamp_seconds{db_cluster_id=%q,backup_type=\"auto\"}" $labels.db_cluster_id | query }}{{ if gt (first . | value) 0.0 }}{{ first . | value | humanizeTimestamp }} ({{ $value | humanizeDuration }} ago){{ else }}none in the provider inventory{{ end }}{{ else }}timestamp unavailable{{ end }}`}}.
+                The newest automatic backup in done state is older than the configured limit (36 hours by default), or none exists.
+                Manual backups do not satisfy the daily automatic schedule.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "postgresql-managed" "panel" 41) | quote }}
           - alert: TimewebPostgresNoSuccessfulBackup
             expr: (sum by (db_cluster_id, db_cluster) (timeweb_postgres_backup_count{status="done"}) == 0) and on (db_cluster_id) (timeweb_postgres_backup_poll_success == 1) and on (db_cluster_id) (time() - timeweb_postgres_backup_poll_last_success_timestamp_seconds < 3600)
