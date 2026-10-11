@@ -1,0 +1,442 @@
+{
+  "infrastructureNamespaces": [
+    "argocd",
+    "cert-manager",
+    "csi-driver-timeweb-cloud",
+    "envoy-gateway-system",
+    "external-secrets",
+    "headlamp",
+    "identity",
+    "kargo",
+    "kube-system",
+    "observability",
+    "quality",
+    "secrets"
+  ],
+  "providerNamespaces": [
+    "kube-system",
+    "csi-driver-timeweb-cloud"
+  ],
+  "ownImagePrefixes": [
+    "ghcr.io/panixida-infrastructure/"
+  ],
+  "components": [
+    {
+      "name": "SonarQube Community Build",
+      "installed": {
+        "imagePattern": "(?:public\\.ecr\\.aws|ecr-public\\.aws\\.com)/docker/library/sonarqube|(?:docker\\.io/library/)?sonarqube",
+        "tagPattern": "(\\d{2}\\.\\d+\\.\\d+\\.\\d+)-community"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "SonarSource/sonarqube",
+        "pattern": "(\\d{2}\\.\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Verify the custom branch plugin and database upgrade path before updating."
+    },
+    {
+      "name": "Keycloak",
+      "installed": {
+        "imagePattern": "quay\\.io/keycloak/keycloak",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "keycloak/keycloak",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "OpenBao",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?openbao/openbao",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "openbao/openbao",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Grafana",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?grafana/grafana",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "grafana/grafana",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "VictoriaMetrics",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?victoriametrics/victoria-metrics",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "VictoriaMetrics/VictoriaMetrics",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "vmalert",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?victoriametrics/vmalert",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "VictoriaMetrics/VictoriaMetrics",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "VictoriaLogs",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?victoriametrics/victoria-logs",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "VictoriaMetrics/VictoriaLogs",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "VictoriaTraces",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?victoriametrics/victoria-traces",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "VictoriaMetrics/VictoriaTraces",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Alertmanager",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?prom/alertmanager",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "prometheus/alertmanager",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Node Exporter",
+      "installed": {
+        "imagePattern": "quay\\.io/prometheus/node-exporter",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "prometheus/node_exporter",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "kube-state-metrics",
+      "installed": {
+        "imagePattern": "registry\\.k8s\\.io/kube-state-metrics/kube-state-metrics",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "kubernetes/kube-state-metrics",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "OpenTelemetry Collector",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?otel/opentelemetry-collector-contrib",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "open-telemetry/opentelemetry-collector-releases",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Gluetun",
+      "installed": {
+        "imagePattern": "ghcr\\.io/(?:qdm12|passteque)/gluetun",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "passteque/gluetun",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Squid",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?ubuntu/squid",
+        "tagPattern": "(\\d+\\.\\d+)-\\d+\\.\\d+_edge"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "squid-cache/squid",
+        "pattern": "SQUID_(\\d+_\\d+)"
+      },
+      "note": "Upstream Squid release; verify availability and compatibility of the Ubuntu image variant."
+    },
+    {
+      "name": "Redis (Argo CD)",
+      "installed": {
+        "imagePattern": "(?:public\\.ecr\\.aws|ecr-public\\.aws\\.com)/docker/library/redis|(?:docker\\.io/library/)?redis",
+        "tagPattern": "(\\d+\\.\\d+\\.\\d+)-alpine"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "redis/redis",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Bundled dependency: update through the Argo CD chart and its supported configuration."
+    },
+    {
+      "name": "Argo CD",
+      "installed": {
+        "imagePattern": "quay\\.io/argoproj/argocd",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "argoproj/argo-cd",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Update through the Argo CD Helm chart."
+    },
+    {
+      "name": "cert-manager",
+      "installed": {
+        "imagePattern": "quay\\.io/jetstack/cert-manager-(?:controller|webhook|cainjector)",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "cert-manager/cert-manager",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Update chart, CRDs and all controller components together."
+    },
+    {
+      "name": "Envoy Gateway",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?envoyproxy/gateway",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "envoyproxy/gateway",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Update gateway chart and CRDs together."
+    },
+    {
+      "name": "Envoy",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/)?envoyproxy/envoy",
+        "tagPattern": "distroless-v(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "envoyproxy/envoy",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Gateway-managed dependency: verify the Envoy Gateway compatibility matrix."
+    },
+    {
+      "name": "External Secrets",
+      "installed": {
+        "imagePattern": "ghcr\\.io/external-secrets/external-secrets",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "external-secrets/external-secrets",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Update through the Helm chart with compatible CRDs."
+    },
+    {
+      "name": "Headlamp",
+      "installed": {
+        "imagePattern": "ghcr\\.io/headlamp-k8s/headlamp",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "kubernetes-sigs/headlamp",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": ""
+    },
+    {
+      "name": "Kargo",
+      "installed": {
+        "imagePattern": "ghcr\\.io/akuity/kargo",
+        "tagPattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "akuity/kargo",
+        "pattern": "v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Update the Argo CD Application chart revision."
+    },
+    {
+      "name": "Python helpers",
+      "installed": {
+        "imagePattern": "(?:docker\\.io/library/)?python",
+        "tagPattern": "(\\d+\\.\\d+\\.\\d+)-(?:alpine|slim)"
+      },
+      "source": {
+        "kind": "dockerhub",
+        "repo": "library/python",
+        "pattern": "(\\d+\\.\\d+\\.\\d+)-alpine",
+        "filter": "alpine",
+        "excludeAliases": []
+      },
+      "note": "Preserve image variant and pin a verified digest when updating."
+    },
+    {
+      "name": "BusyBox",
+      "installed": {
+        "imagePattern": "(?:public\\.ecr\\.aws|ecr-public\\.aws\\.com)/docker/library/busybox|(?:docker\\.io/library/)?busybox",
+        "tagPattern": "(\\d+\\.\\d+(?:\\.\\d+)?)"
+      },
+      "source": {
+        "kind": "dockerhub",
+        "repo": "library/busybox",
+        "pattern": "(\\d+\\.\\d+\\.\\d+)",
+        "filter": "",
+        "excludeAliases": [
+          "unstable"
+        ]
+      },
+      "note": "Preserve image variant and pin a verified digest when updating."
+    },
+    {
+      "name": "Argo CD chart",
+      "installed": {
+        "namespace": "argocd",
+        "chartPattern": "argo-cd-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "argoproj/argo-helm",
+        "pattern": "argo-cd-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Chart version is independent of the application version; review bundled dependencies."
+    },
+    {
+      "name": "cert-manager chart",
+      "installed": {
+        "namespace": "cert-manager",
+        "chartPattern": "cert-manager-v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "cert-manager/cert-manager",
+        "pattern": "v(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Chart version is independent of the application version; review bundled dependencies."
+    },
+    {
+      "name": "External Secrets chart",
+      "installed": {
+        "namespace": "external-secrets",
+        "chartPattern": "external-secrets-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "external-secrets/external-secrets",
+        "pattern": "helm-chart-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Chart version is independent of the application version; review bundled dependencies."
+    },
+    {
+      "name": "Kargo chart",
+      "installed": {
+        "namespace": "kargo",
+        "chartPattern": "kargo-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "akuity/kargo",
+        "pattern": "v(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Chart version is independent of the application version; review bundled dependencies."
+    },
+    {
+      "name": "Kubernetes (Timeweb)",
+      "installed": {
+        "kind": "timeweb-kubernetes"
+      },
+      "source": {
+        "kind": "timeweb-kubernetes",
+        "pattern": "v(\\d+\\.\\d+\\.\\d+\\+k0s\\.\\d+)"
+      },
+      "note": "Available in the Timeweb catalog; confirm the permitted upgrade path for this cluster."
+    },
+    {
+      "name": "PostgreSQL (Timeweb)",
+      "installed": {
+        "kind": "timeweb-postgresql"
+      },
+      "source": {
+        "kind": "timeweb-postgresql"
+      },
+      "note": "Provider-supported major version; migration planning is required. Patch versions are managed separately."
+    },
+    {
+      "name": "Headlamp chart",
+      "installed": {
+        "namespace": "headlamp",
+        "chartPattern": "headlamp-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "kubernetes-sigs/headlamp",
+        "pattern": "headlamp-helm-(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Review chart changes and compatible CRDs before updating."
+    },
+    {
+      "name": "Envoy Gateway chart",
+      "installed": {
+        "namespace": "envoy-gateway-system",
+        "chartPattern": "gateway-helm-v?(\\d+\\.\\d+\\.\\d+)"
+      },
+      "source": {
+        "kind": "github",
+        "repo": "envoyproxy/gateway",
+        "pattern": "v(\\d+\\.\\d+\\.\\d+)"
+      },
+      "note": "Review chart changes and compatible CRDs before updating."
+    }
+  ]
+}

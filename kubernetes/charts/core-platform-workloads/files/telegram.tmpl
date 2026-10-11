@@ -1,3 +1,17 @@
+{{ define "telegram.panixida.release" -}}
+{{ range .Alerts.Firing -}}
+📦 <b>Доступно обновление: {{ .Labels.component | html }}</b>
+
+Установлено: <code>{{ .Labels.current_version | html }}</code>
+Доступно: <code>{{ .Labels.latest_version | html }}</code>
+{{ with .Labels.note }}
+{{ . | html }}
+{{ end }}
+{{ if match `^https://(github\.com|hub\.docker\.com|timeweb\.cloud)/` .Labels.release_url }}<a href="{{ .Labels.release_url | html }}">Релиз / источник</a>{{ end }}
+<a href="{{ .Annotations.dashboard_url | html }}">Версии инфраструктуры в Grafana</a>
+{{ end -}}
+{{- end }}
+
 {{ define "telegram.panixida.message" -}}
 {{- $originPattern := `(?i)^https?://(?:[^/?#]*@)?(?:\[[0-9a-f:]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]{1,5})?(?:[/?#].*)?$` -}}
 {{- $body := "" -}}

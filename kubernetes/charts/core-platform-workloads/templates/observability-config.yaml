@@ -684,6 +684,43 @@ metadata:
 data:
   rules.yml: |
     groups:
+      {{- if .Values.observability.releases.enabled }}
+      - name: infrastructure-releases
+        rules:
+          - alert: InfrastructureUpdateAvailable
+            expr: max by (component, current_version, latest_version, release_url, note) (infrastructure_release_new_version) == 1 and on () (max(infrastructure_release_inventory_success) == 1) and on () (time() - max(infrastructure_release_inventory_last_success_timestamp_seconds) < 900)
+            for: 1m
+            labels:
+              severity: info
+              alert_owner: core-platform
+              environment: production
+            annotations:
+              summary: 'Update available for {{ "{{" }} $labels.component {{ "}}" }}: {{ "{{" }} $labels.current_version {{ "}}" }} → {{ "{{" }} $labels.latest_version {{ "}}" }}.'
+              description: '{{ "{{" }} $labels.note {{ "}}" }}'
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 10) | quote }}
+          - alert: InfrastructureReleaseCheckFailed
+            expr: max by (component, status) (infrastructure_release_info{status=~"check_failed|inventory_failed|untracked"}) == 1
+            for: 30m
+            labels:
+              severity: warning
+              alert_owner: core-platform
+              environment: production
+            annotations:
+              summary: 'Release check needs attention for {{ "{{" }} $labels.component {{ "}}" }} ({{ "{{" }} $labels.status {{ "}}" }}).'
+              description: The release source failed, the installed version could not be read, or a new infrastructure image needs a catalog entry. Cached versions are not proof that the component is current.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 10) | quote }}
+          - alert: InfrastructureReleaseMonitorDown
+            expr: max(infrastructure_release_inventory_success) == 0 or max(infrastructure_release_state_success) == 0 or time() - max(infrastructure_release_inventory_last_success_timestamp_seconds) > 900 or absent(infrastructure_release_inventory_success)
+            for: 10m
+            labels:
+              severity: warning
+              alert_owner: core-platform
+              environment: production
+            annotations:
+              summary: Infrastructure release monitoring is unavailable.
+              description: Check collector availability, Kubernetes read access and the persistent state volume. Release notifications require a successful inventory and durable deduplication state.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "core-platform-overview" "panel" 11) | quote }}
+      {{- end }}
       - name: kubernetes-basic
         rules:
           - alert: KubernetesContainerRestartsHigh
@@ -1191,6 +1228,16 @@ data:
       group_interval: 5m
       repeat_interval: 4h
       routes:
+        {{- if .Values.observability.releases.enabled }}
+        - receiver: telegram-infrastructure-updates
+          matchers:
+            - alertname="InfrastructureUpdateAvailable"
+          group_by: ["alertname", "component", "latest_version"]
+          group_wait: 30s
+          group_interval: 5m
+          # The durable collector event lasts one hour; never repeat it daily.
+          repeat_interval: 24h
+        {{- end }}
         - receiver: telegram-gateway-emergency
           matchers:
             - alertname=~"TelegramAlertGatewayDown|TelegramAlertGatewayDeliveryFailures|AlertmanagerGatewayDeliveryFailures"
@@ -1228,6 +1275,18 @@ data:
           matchers:
             - alert_owner="tests"
     receivers:
+      {{- if .Values.observability.releases.enabled }}
+      - name: telegram-infrastructure-updates
+        telegram_configs:
+          - chat_id: {{ .Values.observability.alerts.telegram.chatId }}
+            message_thread_id: {{ index .Values.observability.alerts.telegram.topics "core-platform" }}
+            bot_token_file: /etc/alertmanager-secrets/telegram-bot-token
+            http_config:
+              proxy_url: http://telegram-egress.{{ .Values.observability.namespace }}.svc.cluster.local:8888
+            send_resolved: false
+            parse_mode: HTML
+            message: '{{ "{{" }} template "telegram.panixida.release" . {{ "}}" }}'
+      {{- end }}
       - name: telegram-gateway-emergency
         telegram_configs:
           - chat_id: {{ .Values.observability.alerts.telegram.chatId }}

@@ -21,12 +21,14 @@ def verify(rendered):
     dashboards = {}
     for match in re.finditer(r"^  ([\w-]+)\.json: \|\n((?:    .*\n|\n)+)", rendered, re.M):
         dashboard = json.loads(textwrap.dedent(match[2]))
+        if "panels" not in dashboard:
+            continue
         dashboards[dashboard["uid"]] = dashboard
 
     links = dict(re.findall(
         r"- alert: (\w+)\n(?:(?!- alert:).)*?dashboard_url: (\"[^\n]+\")",
         rendered, re.S))
-    assert len(links) == 43, f"Expected 43 metric alert links, got {len(links)}"
+    assert len(links) == 46, f"Expected 46 metric alert links, got {len(links)}"
     links = {name: json.loads(value) for name, value in links.items()}
     for name, link in links.items():
         parsed = urlsplit(re.sub(r"{{.*?}}", "", link))
@@ -91,7 +93,7 @@ def verify(rendered):
         subprocess.run(["docker", "run", "--rm", "-v", f"{work}:/work", "-w", "/work",
                         image.replace("/vmalert:", "/vmalert-tool:"), "unittest",
                         "--disableAlertgroupLabel", "--files=/work/tests.json"], check=True)
-    print("43 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
+    print("46 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
 
     # Mixed emergency groups must retain each alert's link even without CommonAnnotations.
     document = next(doc for doc in rendered.split("\n---") if "  name: alertmanager\n" in doc)
