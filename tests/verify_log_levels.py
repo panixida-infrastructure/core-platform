@@ -60,6 +60,8 @@ def fixtures():
     # Preserve existing JSON, logfmt and klog parsing.
     add("app", '{"level":"error","msg":"failed"}', 17)
     add("app", '{"level":"warning","msg":"retry"}', 13)
+    add("cleanup", '{"alert_owner":"core-platform","level":"error","action":"keep","error":"HTTP 500"}', 17)
+    add("cleanup", '{"alert_owner":"core-platform","level":"warning","action":"retry","error":"HTTP 500"}', 13)
     add("app", 'time="2026-10-03T08:00:00Z" level=info msg="failed previously"', 9)
     add("app", 'level=critical msg="cannot start"', 21)
     add("konnectivity-agent", "I1003 08:00:00.123456 1 server.go:42] ready", 9)
@@ -302,6 +304,10 @@ def verify_collector(rendered):
                         assert log["severityText"] in ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"], log
                     assert all(attribute["key"] != "log.multiline.source"
                                for attribute in log.get("attributes", [])), log
+                    if container == "cleanup":
+                        attributes = {attribute["key"]: attribute["value"].get("stringValue")
+                                      for attribute in log.get("attributes", [])}
+                        assert attributes["alert_owner"] == "core-platform", log
                 print(f"{image}: {len(cases)} filelog records, severity and unchanged body: OK", flush=True)
             finally:
                 subprocess.run(["docker", "stop", "--time", "2", name],

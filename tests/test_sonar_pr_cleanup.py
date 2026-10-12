@@ -1,13 +1,112 @@
+import contextlib
 import importlib.util
+import io
+import json
 import pathlib
 import unittest
-from unittest.mock import Mock
+import urllib.error
+from unittest.mock import Mock, call, patch
 
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[1] / 'kubernetes/charts/core-platform-workloads/files/sonarqube_pr_cleanup.py'
 SPEC = importlib.util.spec_from_file_location('sonar_pr_cleanup', SCRIPT)
 cleanup = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(cleanup)
+
+
+class CleanupRequestTests(unittest.TestCase):
+    def response(self, body=b'{"token":"private-token"}'):
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.read.return_value = body
+        return response
+
+    def http_error(self, code, headers=None):
+        return urllib.error.HTTPError('https://api.github.com', code, 'private-body', headers or {}, io.BytesIO(b'private-body'))
+
+    def test_token_creation_recovers_after_transient_server_error(self):
+        github = cleanup.GitHub('https://api.github.com', 'app', 'unused')
+        with patch.object(github, 'app_jwt', return_value='private-jwt'), \
+                patch.object(cleanup.urllib.request, 'urlopen', side_effect=[
+                    self.response(b'{"id":123}'), self.http_error(500), self.response(),
+                ]) as urlopen, patch.object(cleanup.time, 'sleep') as sleep, \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(github.token('owner/repo'), 'private-token')
+            self.assertEqual(github.token('owner/repo'), 'private-token')
+        self.assertEqual(urlopen.call_count, 3)
+        self.assertEqual(urlopen.call_args.args[0].method, 'POST')
+        self.assertEqual(json.loads(urlopen.call_args.args[0].data)['permissions'],
+                         {'contents': 'read', 'pull_requests': 'read'})
+        sleep.assert_called_once_with(2)
+        event = json.loads(output.getvalue())
+        self.assertEqual(event['level'], 'warning')
+        self.assertEqual(event['alert_owner'], 'core-platform')
+        self.assertNotIn('private-', output.getvalue())
+
+    def test_persistent_server_errors_stop_after_four_attempts(self):
+        with patch.object(cleanup.urllib.request, 'urlopen', side_effect=[self.http_error(503) for _ in range(4)]) as urlopen, \
+                patch.object(cleanup.time, 'sleep') as sleep, patch.object(cleanup, 'log'):
+            with self.assertRaisesRegex(cleanup.ApiError, 'HTTP 503'):
+                cleanup.request('https://api.github.com', '/test', 'private-token', retry=True)
+        self.assertEqual(urlopen.call_count, 4)
+        self.assertEqual(sleep.call_args_list, [call(2), call(4), call(8)])
+
+    def test_client_errors_are_not_retried(self):
+        for code in (401, 403, 404, 422, 429):
+            with self.subTest(code=code), \
+                    patch.object(cleanup.urllib.request, 'urlopen', side_effect=self.http_error(code)) as urlopen, \
+                    patch.object(cleanup.time, 'sleep') as sleep:
+                with self.assertRaisesRegex(cleanup.ApiError, f'HTTP {code}'):
+                    cleanup.request('https://api.github.com', '/test', 'unused', retry=True)
+                urlopen.assert_called_once()
+                sleep.assert_not_called()
+
+    def test_sonar_deletion_is_not_retried(self):
+        with patch.object(cleanup.urllib.request, 'urlopen', side_effect=self.http_error(500)) as urlopen, \
+                patch.object(cleanup.time, 'sleep') as sleep:
+            with self.assertRaises(cleanup.ApiError):
+                cleanup.Sonar('https://sonar.example', 'unused').delete_pr('project', '18')
+        urlopen.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_network_failure_is_retried(self):
+        for error in (urllib.error.URLError('private-details'), TimeoutError()):
+            with self.subTest(error=type(error).__name__), \
+                    patch.object(cleanup.urllib.request, 'urlopen', side_effect=[error, self.response()]), \
+                    patch.object(cleanup.time, 'sleep') as sleep, patch.object(cleanup, 'log'):
+                self.assertEqual(cleanup.request('https://api.github.com', '/test', 'unused', retry=True),
+                                 {'token': 'private-token'})
+                sleep.assert_called_once_with(2)
+
+    def test_retry_after_is_respected(self):
+        with patch.object(cleanup.urllib.request, 'urlopen', side_effect=[
+                self.http_error(503, {'Retry-After': '10'}), self.response()]), \
+                patch.object(cleanup.time, 'sleep') as sleep, patch.object(cleanup, 'log'):
+            cleanup.request('https://api.github.com', '/test', 'unused', retry=True)
+        sleep.assert_called_once_with(10)
+
+    def test_long_or_unrecognized_retry_after_does_not_retry_early(self):
+        for value in ('60', 'Mon, 12 Oct 2026 13:00:00 GMT'):
+            with self.subTest(value=value), \
+                    patch.object(cleanup.urllib.request, 'urlopen', side_effect=self.http_error(503, {'Retry-After': value})), \
+                    patch.object(cleanup.time, 'sleep') as sleep:
+                with self.assertRaises(cleanup.ApiError):
+                    cleanup.request('https://api.github.com', '/test', 'unused', retry=True)
+                sleep.assert_not_called()
+
+    def test_invalid_json_is_not_retried(self):
+        with patch.object(cleanup.urllib.request, 'urlopen', return_value=self.response(b'not json')) as urlopen, \
+                patch.object(cleanup.time, 'sleep') as sleep:
+            with self.assertRaises(cleanup.ApiError):
+                cleanup.request('https://api.github.com', '/test', 'unused', retry=True)
+        urlopen.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_error_log_has_explicit_platform_owner(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            cleanup.log(level='error', action='keep', error='HTTP 500')
+        self.assertEqual(json.loads(output.getvalue())['alert_owner'], 'core-platform')
 
 
 class SonarPullRequestCleanupTests(unittest.TestCase):

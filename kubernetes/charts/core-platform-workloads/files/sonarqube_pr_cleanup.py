@@ -15,14 +15,14 @@ import urllib.request
 
 
 def log(**fields):
-    print(json.dumps(fields, ensure_ascii=True), flush=True)
+    print(json.dumps({'alert_owner': 'core-platform', **fields}, ensure_ascii=True), flush=True)
 
 
 class ApiError(RuntimeError):
     pass
 
 
-def request(base, path, authorization, *, method='GET', query=None, data=None, form=False):
+def request(base, path, authorization, *, method='GET', query=None, data=None, form=False, retry=False):
     url = base.rstrip('/') + path
     if query:
         url += '?' + urllib.parse.urlencode(query)
@@ -32,15 +32,32 @@ def request(base, path, authorization, *, method='GET', query=None, data=None, f
     if data is not None:
         body = (urllib.parse.urlencode(data) if form else json.dumps(data)).encode()
         headers['Content-Type'] = 'application/x-www-form-urlencoded' if form else 'application/json'
-    try:
-        with urllib.request.urlopen(urllib.request.Request(url, body, headers, method=method), timeout=20) as response:
-            content = response.read()
-            return json.loads(content) if content else {}
-    except urllib.error.HTTPError as error:
-        # Never include response bodies, credentials or request headers in logs.
-        raise ApiError(f'{method} {path}: HTTP {error.code}') from None
-    except (urllib.error.URLError, TimeoutError, ValueError):
-        raise ApiError(f'{method} {path}: request failed') from None
+    attempts = 4 if retry else 1
+    for attempt in range(attempts):
+        delay = 2 ** (attempt + 1)
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, body, headers, method=method), timeout=20) as response:
+                content = response.read()
+                return json.loads(content) if content else {}
+        except urllib.error.HTTPError as error:
+            # Never include response bodies, credentials or request headers in logs.
+            message = f'{method} {path}: HTTP {error.code}'
+            transient = error.code in (500, 502, 503, 504)
+            retry_after = error.headers.get('Retry-After', '') if error.headers else ''
+            if retry_after:
+                # Do not retry sooner than requested, or exceed the CronJob's time budget.
+                transient = transient and retry_after.isdecimal() and int(retry_after) <= 30
+                if transient:
+                    delay = max(delay, int(retry_after))
+            error.close()
+        except (urllib.error.URLError, TimeoutError):
+            message, transient = f'{method} {path}: request failed', True
+        except ValueError:
+            message, transient = f'{method} {path}: invalid response', False
+        if not transient or attempt + 1 == attempts:
+            raise ApiError(message) from None
+        log(level='warning', action='retry', error=message, attempt=attempt + 1, delay_seconds=delay)
+        time.sleep(delay)
 
 
 class Sonar:
@@ -87,9 +104,9 @@ class GitHub:
     def token(self, repository):
         if repository not in self.tokens:
             authorization = 'Bearer ' + self.app_jwt()
-            installation = request(self.url, f'/repos/{repository}/installation', authorization)
+            installation = request(self.url, f'/repos/{repository}/installation', authorization, retry=True)
             response = request(self.url, f'/app/installations/{installation["id"]}/access_tokens',
-                               authorization, method='POST', data={
+                               authorization, method='POST', retry=True, data={
                                    'repositories': [repository.split('/')[1]],
                                    'permissions': {'contents': 'read', 'pull_requests': 'read'},
                                })
@@ -98,7 +115,7 @@ class GitHub:
 
     def get(self, repository, suffix, **query):
         return request(self.url, f'/repos/{repository}/{suffix}',
-                       'Bearer ' + self.token(repository), query=query)
+                       'Bearer ' + self.token(repository), query=query, retry=True)
 
     def close(self):
         for token in self.tokens.values():
