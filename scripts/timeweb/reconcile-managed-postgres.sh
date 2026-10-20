@@ -723,8 +723,6 @@ tactical_heroes_common_app_config="$(jq -n '{
   "Identity__Provider__Clients__0__DisplayName": "Tactical Heroes Web",
   "Identity__Provider__Clients__0__GrantTypes__0": "authorization_code",
   "Identity__Provider__Clients__0__GrantTypes__1": "refresh_token",
-  "Identity__Provider__Clients__0__RedirectUris__0": "https://localhost:5173/oauth/callback",
-  "Identity__Provider__Clients__0__PostLogoutRedirectUris__0": "https://localhost:5173/",
   "Identity__Provider__Clients__0__Scopes__0": "openid",
   "Identity__Provider__Clients__0__Scopes__1": "offline_access",
   "Identity__Provider__Clients__0__Scopes__2": "profile",
@@ -749,6 +747,8 @@ tactical_heroes_common_app_config="$(jq -n '{
   "Notifications__Email__Smtp__Username": "tactical-heroes@panixida.ru",
   "Notifications__Email__Smtp__SenderEmail": "tactical-heroes@panixida.ru"
 }')"
+
+# Override all three callback slots from API appsettings.json; OpenIddict deduplicates URIs.
 tactical_heroes_dev_app_secret="$(jq -n \
   --argjson existing "$(bao_read_optional "$openbao_token" applications/tactical-heroes-api/development)" \
   --argjson common "$tactical_heroes_common_app_config" \
@@ -761,6 +761,12 @@ tactical_heroes_dev_app_secret="$(jq -n \
     OTEL_SERVICE_NAME: "tactical-heroes-api-development",
     Identity__Provider__Issuer: "https://dev.api.tactical-heroes.panixida.ru/",
     OAuthSpa__LoginUrl: "https://dev.tactical-heroes.panixida.ru/login",
+    Identity__Provider__Clients__0__RedirectUris__0: "https://localhost:5173/oauth/callback",
+    Identity__Provider__Clients__0__RedirectUris__1: "https://dev.tactical-heroes.panixida.ru/oauth/callback",
+    Identity__Provider__Clients__0__RedirectUris__2: "https://dev.tactical-heroes.panixida.ru/oauth/callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__0: "https://localhost:5173/oauth/logout-callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__1: "https://dev.tactical-heroes.panixida.ru/oauth/logout-callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__2: "https://dev.tactical-heroes.panixida.ru/oauth/logout-callback",
     ConnectionStrings__PostgreSqlConnectionString: $connection_string,
     Identity__Provider__Clients__1__ClientSecret: $client_secret,
     Notifications__Email__Smtp__Password: $smtp_password,
@@ -778,6 +784,12 @@ tactical_heroes_prod_app_secret="$(jq -n \
     OTEL_SERVICE_NAME: "tactical-heroes-api-production",
     Identity__Provider__Issuer: "https://api.tactical-heroes.panixida.ru/",
     OAuthSpa__LoginUrl: "https://tactical-heroes.panixida.ru/login",
+    Identity__Provider__Clients__0__RedirectUris__0: "https://tactical-heroes.panixida.ru/oauth/callback",
+    Identity__Provider__Clients__0__RedirectUris__1: "https://tactical-heroes.panixida.ru/oauth/callback",
+    Identity__Provider__Clients__0__RedirectUris__2: "https://tactical-heroes.panixida.ru/oauth/callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__0: "https://tactical-heroes.panixida.ru/oauth/logout-callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__1: "https://tactical-heroes.panixida.ru/oauth/logout-callback",
+    Identity__Provider__Clients__0__PostLogoutRedirectUris__2: "https://tactical-heroes.panixida.ru/oauth/logout-callback",
     ConnectionStrings__PostgreSqlConnectionString: $connection_string,
     Identity__Provider__Clients__1__ClientSecret: $client_secret,
     Notifications__Email__Smtp__Password: $smtp_password,

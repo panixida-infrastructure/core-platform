@@ -63,6 +63,37 @@ jq -n --argjson dev "$tactical_heroes_dev_app_secret" --argjson prod "$tactical_
         for config in json.loads(result.stdout).values():
             self.assertFalse(any("Certificates__" in key for key in config))
 
+    def test_isolates_callbacks_by_environment_after_repeated_reconciliation(self):
+        prefix = "Identity__Provider__Clients__0__"
+        existing = {
+            f"{prefix}RedirectUris__0": "https://localhost:5173/oauth/callback",
+            f"{prefix}PostLogoutRedirectUris__0": "https://localhost:5173/",
+            f"{prefix}RedirectUris__3": "https://obsolete.example/oauth/callback",
+        }
+        result = self.reconcile(json.dumps(existing))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        configs = json.loads(result.stdout)
+        for environment, hosts in {
+            "development": ["https://localhost:5173", "https://dev.tactical-heroes.panixida.ru"],
+            "production": ["https://tactical-heroes.panixida.ru"],
+        }.items():
+            config = configs[environment]
+            for setting, path in {
+                "RedirectUris": "/oauth/callback",
+                "PostLogoutRedirectUris": "/oauth/logout-callback",
+            }.items():
+                callbacks = {
+                    key: value for key, value in config.items()
+                    if key.startswith(f"{prefix}{setting}__")
+                }
+                self.assertEqual(set(callbacks), {f"{prefix}{setting}__{index}" for index in range(3)})
+                self.assertEqual(set(callbacks.values()), {host + path for host in hosts})
+
+            repeated = self.reconcile(json.dumps(config))
+            self.assertEqual(repeated.returncode, 0, repeated.stderr)
+            self.assertEqual(json.loads(repeated.stdout), configs)
+
     def test_stops_when_existing_secret_cannot_be_parsed(self):
         result = self.reconcile("invalid-json")
 
