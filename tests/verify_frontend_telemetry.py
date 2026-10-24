@@ -55,7 +55,7 @@ def verify(rendered):
                         with urllib.request.urlopen(request, timeout=5) as response:
                             assert response.status == 200
                         break
-                    except urllib.error.URLError:
+                    except (urllib.error.URLError, ConnectionResetError):
                         if attempt == 29:
                             raise
                         time.sleep(0.2)
