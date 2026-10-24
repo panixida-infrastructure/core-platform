@@ -24,6 +24,12 @@ data:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      otlp/frontend:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4319
+            include_metadata: true
+            max_request_body_size: 65536
 
       prometheus/kubernetes:
         config:
@@ -217,6 +223,21 @@ data:
           - key: platform.name
             value: core-platform
             action: upsert
+      resource/frontend:
+        attributes:
+          - key: service.name
+            action: delete
+          - key: service.name
+            from_context: metadata.x-frontend-service
+            action: upsert
+          - key: deployment.environment
+            action: delete
+          - key: deployment.environment
+            from_context: metadata.x-frontend-environment
+            action: upsert
+          - key: service.namespace
+            value: browser
+            action: upsert
       resource/telegram-vpn:
         attributes:
           - key: service.name
@@ -318,6 +339,18 @@ data:
         traces:
           receivers: [otlp]
           processors: [memory_limiter, resource/core-platform, batch]
+          exporters: [otlphttp/victoriatraces]
+        metrics/frontend:
+          receivers: [otlp/frontend]
+          processors: [memory_limiter, resource/frontend, resource/core-platform, batch]
+          exporters: [otlphttp/victoriametrics]
+        logs/frontend:
+          receivers: [otlp/frontend]
+          processors: [memory_limiter, resource/frontend, resource/core-platform, transform/logs, batch]
+          exporters: [otlphttp/victorialogs]
+        traces/frontend:
+          receivers: [otlp/frontend]
+          processors: [memory_limiter, resource/frontend, resource/core-platform, batch]
           exporters: [otlphttp/victoriatraces]
 ---
 apiVersion: v1
