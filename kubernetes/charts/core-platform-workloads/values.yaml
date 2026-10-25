@@ -121,6 +121,8 @@ observability:
   enabled: true
   namespace: observability
   secretName: observability-secrets
+  frontendTelemetry:
+    maxRequestBodySize: 1048576
   externalSecrets:
     enabled: true
     refreshInterval: 1h

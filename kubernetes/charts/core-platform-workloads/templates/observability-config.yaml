@@ -1,4 +1,7 @@
 {{- if .Values.observability.enabled }}
+{{- if le (int .Values.observability.frontendTelemetry.maxRequestBodySize) 0 }}
+{{- fail "observability.frontendTelemetry.maxRequestBodySize must be positive" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -29,7 +32,7 @@ data:
           http:
             endpoint: 0.0.0.0:4319
             include_metadata: true
-            max_request_body_size: 65536
+            max_request_body_size: {{ .Values.observability.frontendTelemetry.maxRequestBodySize | int }}
 
       prometheus/kubernetes:
         config:
