@@ -174,3 +174,33 @@ The catalog is `kubernetes/charts/core-platform-workloads/files/infrastructure-r
 Availability is not compatibility approval: SonarQube Community Build requires checking the custom branch plugin and database upgrade path; Redis and Envoy must stay compatible with their parent charts/controllers. Image variants and pinned digests must be reviewed when updating. This monitor neither installs updates nor scans CVEs or host OS packages. It has Kubernetes `list` access only to Pods and Deployments, and uses the existing Timeweb credential only for GET requests.
 
 Validate with `python3 -B -m unittest discover -s tests`, `helm lint kubernetes/charts/core-platform-workloads`, then render the chart and run `python3 -B tests/verify_release_alerts.py <rendered-manifests.yaml>` (Docker required).
+
+## Browser telemetry ingestion
+
+Browser OTLP traffic enters through an application's authenticated BFF, then the
+Collector's internal `otlp/frontend` HTTP receiver on port 4319. This is a
+ClusterIP service port; no public HTTPRoute is created. The existing server OTLP
+receivers on 4317/4318 are unchanged.
+
+The frontend receiver body limit is configured by
+`observability.frontendTelemetry.maxRequestBodySize` (1048576 bytes / 1 MiB by default).
+Keep the client exporter limit <= BFF body limit <= this Collector limit. The .NET
+OpenTelemetry 1.19.1 exporter requires at least 750000 bytes, so a 64 KiB limit is
+not compatible with its request-size setting. Before batching or exporting,
+`resource/frontend` removes client-supplied service/environment identities and
+sets them from the BFF's `X-Frontend-Service` and `X-Frontend-Environment` headers.
+It sets `service.namespace=browser`. The BFF must assign these headers itself and
+must not pass through copies supplied by the browser. Browser metrics, logs and
+traces then use the existing VictoriaMetrics, VictoriaLogs and VictoriaTraces
+exporters.
+
+Deploy this receiver before enabling the admin's browser exports. A local
+validation with Docker and a rendered chart is available:
+
+```bash
+python3 -B tests/verify_frontend_telemetry.py /tmp/core-platform-workloads.yaml
+```
+
+The check uses the Collector image pinned by the chart, submits all three OTLP
+signals with forged resource identities, and verifies that the exported resource
+identities were overwritten from the BFF metadata.
