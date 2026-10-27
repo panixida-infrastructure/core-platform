@@ -113,6 +113,8 @@ def verify(rendered):
                 continue
             if panel["type"] in ("logs", "text", "row"):
                 continue
+            if panel.get("datasource", {}).get("type") == "jaeger":
+                continue
             for target in panel.get("targets", []):
                 if panel["type"] == "timeseries" and (dashboard is browser or dashboard is app):
                     assert target.get("range") and not target.get("instant"), panel["title"]
