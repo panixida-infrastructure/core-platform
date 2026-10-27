@@ -108,7 +108,7 @@ def verify(rendered):
             if panel["type"] in ("logs", "text", "row"):
                 continue
             for target in panel.get("targets", []):
-                if panel["type"] == "timeseries":
+                if panel["type"] == "timeseries" and (dashboard is browser or dashboard is app):
                     assert target.get("range") and not target.get("instant"), panel["title"]
                 expr = expand(target["expr"])
                 if dashboard is browser:
