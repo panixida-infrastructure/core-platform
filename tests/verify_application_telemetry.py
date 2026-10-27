@@ -104,7 +104,7 @@ def verify(rendered):
     def expand(expr, overrides=None):
         variables = {name: ".*" for name in ("service", "environment", "instance", "page", "collector", "receiver", "exporter")}
         variables.update(overrides or {})
-        return re.sub(r"\$\{(\w+):regex\}", lambda m: json.dumps(variables[m[1]])[1:-1], expr)
+        return re.sub(r"\$\{(\w+):regex\}", lambda m: variables[m[1]], expr)
 
     syntax_rules = []
     for dashboard in (browser, app, pipeline):
@@ -165,7 +165,7 @@ def verify(rendered):
 
     page = runtime | {"page_route": "/computers/{Id:int}"}
     page_selection = {"service": service["service_name"], "environment": "development", "instance": "a",
-                      "page": r"/computers/\{Id:int\}"}
+                      "page": r"\/computers\/\{Id:int\}"}
     navigation_metric = "browser_page_navigation_duration_seconds"
     page_expression = expand(panels[21]["targets"][0]["expr"], page_selection)
     navigation_labels = page | {"browser_navigation_type": "navigation", "browser_navigation_phase": "first_frame"}
