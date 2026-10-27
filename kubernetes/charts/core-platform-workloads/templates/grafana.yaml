@@ -9472,9 +9472,9 @@ data:
           {
             "allValue": ".*",
             "current": {
-              "selected": false,
-              "text": "dotnet-template-api-development",
-              "value": "dotnet-template-api-development"
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
             },
             "datasource": {
               "type": "victoriametrics-metrics-datasource",
@@ -9550,7 +9550,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 29,
+      "version": 30,
       "weekStart": ""
     }
 
