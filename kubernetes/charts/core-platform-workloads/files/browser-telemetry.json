@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 7,
+  "version": 8,
   "tags": [
     "application",
     "browser",
@@ -532,7 +532,7 @@
     },
     {
       "id": 31,
-      "title": "WASM startup p95 by entry page",
+      "title": "WASM startup p95 — reporting runtimes",
       "type": "timeseries",
       "datasource": {
         "type": "victoriametrics-metrics-datasource",
@@ -577,14 +577,14 @@
       },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_wasm_phase) (rate(browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_wasm_phase) (browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_wasm_phase}}",
           "refId": "A",
           "range": true,
           "instant": false
         }
       ],
-      "description": "Initial WASM runtime starts grouped by the entry route, not soft navigations. document_to_runtime starts at document navigation; runtime starts at the Blazor initializer; first_frame follows runtime startup. Phases overlap and must not be added."
+      "description": "Startup duration distribution across runtimes reporting within the last 3 minutes, grouped by document entry route and phase. Each runtime contributes one startup observation per phase; this is not a count of recent page loads. Runtime and document-to-runtime phases overlap. First frame is a rendering opportunity after runtime startup, not completion of asynchronous page data."
     },
     {
       "id": 32,
