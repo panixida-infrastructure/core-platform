@@ -5784,7 +5784,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5845,7 +5845,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5906,7 +5906,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5967,7 +5967,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\"}[15m])) or (0 * count(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "sum(increase(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\"}[15m])) or (0 * count(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "refId": "A"
             }
           ],
@@ -6028,7 +6028,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6089,7 +6089,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(dotnet_exceptions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or (0 * count(dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "sum(rate(dotnet_exceptions_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or (0 * count(dotnet_process_cpu_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": ".NET exceptions/sec",
               "refId": "A"
             }
@@ -6151,7 +6151,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6212,7 +6212,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6273,7 +6273,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6344,7 +6344,7 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (service_name, http_url) (label_replace(label_replace(label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.](dotnet-template|tactical-heroes)[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-development\", \"http_url\", \"https://dev[.]api[.]tactical-heroes[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-production\", \"http_url\", \"https://api[.]tactical-heroes[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "max by (service_name, http_url) (label_replace(label_replace(label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.](dotnet-template|tactical-heroes)[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-development\", \"http_url\", \"https://dev[.]api[.]tactical-heroes[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-production\", \"http_url\", \"https://api[.]tactical-heroes[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}}",
               "refId": "A"
             }
@@ -6397,8 +6397,8 @@ data:
           },
           "targets": [
             {
-              "expr": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\"",
-              "query": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\"",
+              "expr": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\" NOT service.namespace:\"browser\"",
+              "query": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\" NOT service.namespace:\"browser\"",
               "refId": "A"
             }
           ],
@@ -6542,7 +6542,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -6595,7 +6595,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))",
+              "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -6659,7 +6659,7 @@ data:
                 "type": "prometheus",
                 "uid": "victoriametrics"
               },
-              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (increase(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__range]))))",
+              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (increase(http_server_request_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__range]))))",
               "format": "table",
               "instant": true,
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
@@ -6749,7 +6749,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name) (http_server_active_requests{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -6807,7 +6807,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "format": "heatmap",
               "refId": "A"
             }
@@ -6861,7 +6861,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
             }
           ],
@@ -6914,7 +6914,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[$__rate_interval])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__rate_interval])))",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[$__rate_interval])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__rate_interval])))",
               "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
             }
           ],
@@ -6967,7 +6967,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "(100 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "(100 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -7037,7 +7037,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100",
+              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100",
               "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}"
             }
           ],
@@ -7090,12 +7090,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} allocated/sec"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} committed"
             }
           ],
@@ -7165,12 +7165,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "dotnet_process_memory_working_set_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} working set"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} GC committed"
             }
           ],
@@ -7223,7 +7223,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7276,7 +7276,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
+              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
               "legendFormat": "{{`{{service_name}}`}} pause %"
             }
           ],
@@ -7329,7 +7329,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7382,7 +7382,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} alloc bytes"
             }
           ],
@@ -7435,7 +7435,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7505,7 +7505,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "dotnet_thread_pool_queue_length_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7558,7 +7558,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "dotnet_thread_pool_thread_count_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7611,7 +7611,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_timer_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "dotnet_timer_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7664,7 +7664,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_thread_pool_work_item_count_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7734,7 +7734,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_jit_compiled_methods_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compiled_methods_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7787,7 +7787,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7857,7 +7857,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7927,7 +7927,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{error_type}}`}}"
             }
           ],
@@ -7997,12 +7997,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "kestrel_active_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "kestrel_active_connections{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} active"
             },
             {
               "refId": "B",
-              "expr": "kestrel_queued_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "kestrel_queued_connections{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} queued"
             }
           ],
@@ -8055,12 +8055,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "http_client_open_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "http_client_open_connections{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} {{`{{network_peer_address}}`}} open"
             },
             {
               "refId": "B",
-              "expr": "http_client_active_requests{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
+              "expr": "http_client_active_requests{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} active requests"
             }
           ],
@@ -8130,7 +8130,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{db_system_name}}`}}"
             }
           ],
@@ -8183,12 +8183,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{db_client_connection_state}}`}}"
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (db_client_connection_max{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} max"
             }
           ],
@@ -8241,7 +8241,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{server_address}}`}}"
             }
           ],
@@ -8294,12 +8294,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_read_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_read_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} read"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_written_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_written_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} write"
             }
           ],
@@ -8368,14 +8368,14 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_inbox_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_inbox_count_Messages{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / inbox",
               "instant": false,
               "range": true
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (wolverine_outbox_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_outbox_count_Messages{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / outbox",
               "instant": false,
               "range": true
@@ -8434,14 +8434,14 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_scheduled_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_scheduled_count_Messages{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / total",
               "instant": false,
               "range": true
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (wolverine_persistence_scheduled_due{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_due{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / due",
               "instant": false,
               "range": true
@@ -8500,7 +8500,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name) (0 * max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name) (0 * max by (service_name) (wolverine_persistence_dead_letters{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8559,7 +8559,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letters{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8618,7 +8618,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8677,7 +8677,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_scheduled_overdue_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_overdue_seconds{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8749,7 +8749,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_paused{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_paused{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
               "instant": false,
               "range": true
@@ -8808,7 +8808,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
               "instant": false,
               "range": true
@@ -8880,7 +8880,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -8939,7 +8939,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",error_type!=\"\"}[15m])) or on (service_name, quartz_job_group, quartz_job_name) (0 * sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",error_type!=\"\"}[15m])) or on (service_name, quartz_job_group, quartz_job_name) (0 * sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -8998,7 +8998,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / mean",
               "instant": false,
               "range": true
@@ -9057,7 +9057,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -9116,7 +9116,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name, quartz_scheduler_name) (0 * max by (service_name, quartz_scheduler_name) (quartz_trigger_acquisition_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "expr": "sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name, quartz_scheduler_name) (0 * max by (service_name, quartz_scheduler_name) (quartz_trigger_acquisition_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_scheduler_name}}`}}",
               "instant": false,
               "range": true
@@ -9198,14 +9198,14 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name) (aspnetcore_components_circuit_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}} active`}}",
               "refId": "A",
               "range": true,
               "instant": false
             },
             {
-              "expr": "sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "expr": "sum by (service_name) (aspnetcore_components_circuit_connected{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}} connected`}}",
               "refId": "B",
               "range": true,
@@ -9257,7 +9257,7 @@ data:
           },
           "targets": [
             {
-              "expr": "clamp_min(sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) - sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), 0)",
+              "expr": "clamp_min(sum by (service_name) (aspnetcore_components_circuit_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) - sum by (service_name) (aspnetcore_components_circuit_connected{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), 0)",
               "legendFormat": "{{`{{service_name}}`}}",
               "refId": "A",
               "range": true,
@@ -9268,7 +9268,7 @@ data:
         },
         {
           "id": 123,
-          "title": "Completed circuit lifetime p95",
+          "title": "Завершённые circuits: время жизни p95 и количество",
           "type": "timeseries",
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
@@ -9294,7 +9294,28 @@ data:
                 "spanNulls": false
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "custom.axisLabel",
+                    "value": "Завершено / 15 мин"
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {
@@ -9309,18 +9330,25 @@ data:
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_circuit_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])))",
-              "legendFormat": "{{`{{service_name}}`}}",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_circuit_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])))",
+              "legendFormat": "{{`{{service_name}} lifetime p95`}}",
               "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "refId": "B",
+              "expr": "sum by(service_name)(increase(aspnetcore_components_circuit_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on(service_name) (0 * sum by(service_name)(aspnetcore_components_circuit_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "legendFormat": "{{`{{service_name}} completed / 15 min`}}",
               "range": true,
               "instant": false
             }
           ],
-          "description": "Completed circuits only; long-lived active circuits are not yet represented."
+          "description": "Левая ось: p95 времени жизни завершённых серверных circuits, в секундах. Правая: число завершений за 15 минут. При 0 завершений p95 не определяется — это нормальный простой, а не ошибка сбора. Открытые circuits в длительность ещё не входят. Отсутствующие измерения длительности не заменяются нулём."
         },
         {
           "id": 124,
-          "title": "Blazor event and render p95",
+          "title": "Blazor Server: обработчики и рендер (p95)",
           "type": "timeseries",
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
@@ -9346,7 +9374,48 @@ data:
                 "spanNulls": false
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "custom.axisLabel",
+                    "value": "Операций / 5 мин"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "D"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "custom.axisLabel",
+                    "value": "Операций / 5 мин"
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {
@@ -9361,21 +9430,35 @@ data:
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_handle_event_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}} events`}}",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_handle_event_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}} handlers p95`}}",
               "refId": "A",
               "range": true,
               "instant": false
             },
             {
-              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_render_diff_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
-              "legendFormat": "{{`{{service_name}} render`}}",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_render_diff_duration_seconds_bucket{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}} render p95`}}",
               "refId": "B",
+              "range": true,
+              "instant": false
+            },
+            {
+              "refId": "C",
+              "expr": "sum by(service_name)(increase(aspnetcore_components_handle_event_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or on(service_name) (0 * sum by(service_name)(aspnetcore_components_circuit_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "legendFormat": "{{`{{service_name}} handlers / 5 min`}}",
+              "range": true,
+              "instant": false
+            },
+            {
+              "refId": "D",
+              "expr": "sum by(service_name)(increase(aspnetcore_components_render_diff_duration_seconds_count{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or on(service_name) (0 * sum by(service_name)(aspnetcore_components_circuit_active{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
+              "legendFormat": "{{`{{service_name}} render / 5 min`}}",
               "range": true,
               "instant": false
             }
           ],
-          "description": "Use server services for server-side execution and browser services for WASM. Sparse histograms have unstable percentiles."
+          "description": "Левая ось: p95 длительности обработки событий и построения render diff на сервере, в секундах. Примерно 95% измерений укладываются в это время. Обработчики включают бизнес-логику и ожидание async-вызовов. Это не время загрузки страницы и не отрисовка браузерного кадра. Правая ось: число операций за 5 минут; при отсутствии операций линии p95 нет."
         }
       ],
       "refresh": "30s",
@@ -9397,14 +9480,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_client_request_duration_seconds_count|aspnetcore_components_navigate_total|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
+            "definition": "label_values({service_namespace!=\"browser\",__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
             "hide": 0,
             "includeAll": true,
             "label": "Service",
             "multi": true,
             "name": "service",
             "options": [],
-            "query": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_client_request_duration_seconds_count|aspnetcore_components_navigate_total|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
+            "query": "label_values({service_namespace!=\"browser\",__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -9421,14 +9504,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values({service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
+            "definition": "label_values({service_namespace!=\"browser\",service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
             "hide": 0,
             "includeAll": true,
             "label": "Environment",
             "multi": true,
             "name": "environment",
             "options": [],
-            "query": "label_values({service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
+            "query": "label_values({service_namespace!=\"browser\",service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -9445,14 +9528,14 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values({service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
+            "definition": "label_values({service_namespace!=\"browser\",service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
             "hide": 0,
             "includeAll": true,
             "label": "Instance",
             "multi": true,
             "name": "instance",
             "options": [],
-            "query": "label_values({service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
+            "query": "label_values({service_namespace!=\"browser\",service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -9467,7 +9550,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 28,
+      "version": 29,
       "weekStart": ""
     }
 
