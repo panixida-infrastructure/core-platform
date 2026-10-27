@@ -216,6 +216,22 @@ def verify(rendered):
                 [series(active, "2+0x40", server), series(active, "50+0x40", server | {"service_instance_id": "b"}),
                  series(active, "100+0x40", runtime)], 2)
     query_check("AbsentYarpMetricsStayEmpty", expand(app_panels[131]["targets"][0]["expr"]), [])
+    yarp_errors = expand(app_panels[132]["targets"][0]["expr"], selected)
+    query_check("ReportingYarpWithoutErrorsShowsZero", yarp_errors, [series(active, "0+0x40", server)], 0)
+    query_check("UnknownYarpErrorsStayEmpty", yarp_errors, [])
+    query_check("StaleYarpCannotFakeZeroErrors", yarp_errors,
+                [series(active, " ".join(["0"] * 7 + ["_"] * 34), server)])
+    query_check("OtherRuntimeCannotFakeZeroErrors", yarp_errors,
+                [series(active, "0+0x40", server | {"service_instance_id": "b"})])
+    query_check("BrowserCannotFakeZeroYarpErrors", expand(app_panels[132]["targets"][0]["expr"]),
+                [series(active, "0+0x40", runtime)])
+    query_check("KnownYarpErrorsDoNotAddFallback", "count(" + yarp_errors + ")",
+                [series(active, "0+0x40", server),
+                 series("yarp_proxy_errors_total", "0+1x40", server | {"error_type": "Request"})], 1)
+    query_check("FirstYarpErrorIsNotReplacedByZero", yarp_errors,
+                [series(active, "0+0x40", server),
+                 series("yarp_proxy_errors_total", " ".join(["_"] * 10 + ["1"]),
+                        server | {"error_type": "Request"})])
     query_check("YarpErrorsKeepReasons", "count(" + expand(app_panels[132]["targets"][0]["expr"]) + ")",
                 [series("yarp_proxy_errors_total", "0+1x40", server | {"error_type": "Request"}),
                  series("yarp_proxy_errors_total", "0+1x40", server | {"error_type": "RequestCanceled"}),

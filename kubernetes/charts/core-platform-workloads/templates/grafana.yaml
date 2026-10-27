@@ -9576,14 +9576,14 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (service_name, deployment_environment_name, error_type) (rate(yarp_proxy_errors_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "expr": "sum by (service_name, deployment_environment_name, error_type) (rate(yarp_proxy_errors_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or on (service_name, deployment_environment_name) (label_replace(sum by (service_name, deployment_environment_name) (0 * (yarp_proxy_active_requests{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"} and (time() - timestamp(yarp_proxy_active_requests{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) < 180))), \"error_type\", \"no_errors_observed\", \"\", \"\") unless on (service_name, deployment_environment_name) sum by (service_name, deployment_environment_name) (yarp_proxy_errors_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}} {{deployment_environment_name}} {{error_type}}`}}",
               "refId": "A",
               "range": true,
               "instant": false
             }
           ],
-          "description": "ForwarderError reasons such as Request and RequestCanceled, not HTTP 4xx/5xx returned by the destination. No error series is created until an error is observed. A rate requires multiple samples; absence is not replaced with a fabricated error count."
+          "description": "ForwarderError reasons such as Request and RequestCanceled, not destination HTTP 4xx/5xx. no_errors_observed is zero only while the selected proxy reported active-request telemetry within 3 minutes and has no error counter. Missing proxy telemetry stays empty; an existing error counter needs enough samples for a rate."
         }
       ],
       "refresh": "30s",
@@ -9675,7 +9675,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 31,
+      "version": 32,
       "weekStart": ""
     }
 ---
