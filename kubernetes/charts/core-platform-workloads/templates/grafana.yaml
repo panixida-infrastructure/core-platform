@@ -136,6 +136,8 @@ metadata:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
     app.kubernetes.io/name: grafana
 data:
+  browser-telemetry.json: |
+    {{- .Files.Get "files/browser-telemetry.json" | nindent 4 }}
   kubernetes-control-plane.json: |
     {{- .Files.Get "files/kubernetes-control-plane.json" | nindent 4 }}
   core-platform-overview.json: |
@@ -214,6 +216,17 @@ data:
           "title": "Observability Pipeline",
           "type": "link",
           "url": "/d/observability-pipeline/observability-pipeline"
+        },
+        {
+          "asDropdown": false,
+          "icon": "external link",
+          "includeVars": false,
+          "keepTime": true,
+          "tags": [],
+          "targetBlank": false,
+          "title": "Browser Telemetry",
+          "type": "link",
+          "url": "/d/browser-telemetry/browser-telemetry"
         }
       ],
       "panels": [
@@ -1069,6 +1082,65 @@ data:
       "links": [],
       "panels": [
         {
+          "id": 19,
+          "title": "Collector scrape health",
+          "type": "stat",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "value_and_name",
+            "justifyMode": "auto"
+          },
+          "targets": [
+            {
+              "expr": "min by(app_kubernetes_io_name) (up{app_kubernetes_io_name=~\"otel-collector|otel-logs\",app_kubernetes_io_name=~\"${collector:regex}\"})",
+              "legendFormat": "{{`{{app_kubernetes_io_name}}`}}",
+              "refId": "A",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "description": "One is healthy; zero is a failed scrape. Missing data is unknown, including when the central collector cannot scrape itself."
+        },
+        {
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
             "uid": "victoriametrics"
@@ -1083,7 +1155,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 0
+            "y": 5
           },
           "id": 1,
           "options": {
@@ -1122,7 +1194,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 0
+            "y": 5
           },
           "id": 2,
           "options": {
@@ -1161,7 +1233,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 7
+            "y": 12
           },
           "id": 3,
           "options": {
@@ -1177,17 +1249,17 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_metric_points_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "metrics -> {{`{{exporter}}`}}",
               "refId": "A"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_log_records_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "logs -> {{`{{exporter}}`}}",
               "refId": "B"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_sent_spans_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "traces -> {{`{{exporter}}`}}",
               "refId": "C"
             }
@@ -1210,7 +1282,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 7
+            "y": 12
           },
           "id": 4,
           "options": {
@@ -1249,7 +1321,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 14
+            "y": 19
           },
           "id": 5,
           "options": {
@@ -1288,7 +1360,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 14
+            "y": 19
           },
           "id": 6,
           "options": {
@@ -1327,7 +1399,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 21
+            "y": 26
           },
           "id": 7,
           "options": {
@@ -1343,17 +1415,17 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_metric_points_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_metric_points_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "metrics <- {{`{{receiver}}`}}",
               "refId": "A"
             },
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_log_records_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "logs <- {{`{{receiver}}`}}",
               "refId": "B"
             },
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_spans_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_accepted_spans_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "traces <- {{`{{receiver}}`}}",
               "refId": "C"
             }
@@ -1376,7 +1448,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 21
+            "y": 26
           },
           "id": 8,
           "options": {
@@ -1392,17 +1464,17 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_metric_points_total[5m]) + rate(otelcol_receiver_failed_metric_points_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_metric_points_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]) + rate(otelcol_receiver_failed_metric_points_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "metrics {{`{{receiver}}`}}",
               "refId": "A"
             },
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_log_records_total[5m]) + rate(otelcol_receiver_failed_log_records_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_log_records_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]) + rate(otelcol_receiver_failed_log_records_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "logs {{`{{receiver}}`}}",
               "refId": "B"
             },
             {
-              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_spans_total[5m]) + rate(otelcol_receiver_failed_spans_total[5m]))",
+              "expr": "sum by (receiver) (rate(otelcol_receiver_refused_spans_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]) + rate(otelcol_receiver_failed_spans_total{app_kubernetes_io_name=~\"${collector:regex}\",receiver=~\"${receiver:regex}\"}[5m]))",
               "legendFormat": "traces {{`{{receiver}}`}}",
               "refId": "C"
             }
@@ -1425,7 +1497,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 28
+            "y": 33
           },
           "id": 9,
           "options": {
@@ -1441,17 +1513,17 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_metric_points_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "metrics -> {{`{{exporter}}`}}",
               "refId": "A"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_log_records_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_log_records_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "logs -> {{`{{exporter}}`}}",
               "refId": "B"
             },
             {
-              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_spans_total[5m]))",
+              "expr": "sum by (exporter) (rate(otelcol_exporter_send_failed_spans_total{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}[5m]))",
               "legendFormat": "traces -> {{`{{exporter}}`}}",
               "refId": "C"
             }
@@ -1474,7 +1546,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 28
+            "y": 33
           },
           "id": 10,
           "options": {
@@ -1490,12 +1562,12 @@ data:
           },
           "targets": [
             {
-              "expr": "otelcol_exporter_queue_size",
+              "expr": "otelcol_exporter_queue_size{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}",
               "legendFormat": "{{`{{exporter}}`}} size",
               "refId": "A"
             },
             {
-              "expr": "otelcol_exporter_queue_capacity",
+              "expr": "otelcol_exporter_queue_capacity{app_kubernetes_io_name=~\"${collector:regex}\",exporter=~\"${exporter:regex}\"}",
               "legendFormat": "{{`{{exporter}}`}} capacity",
               "refId": "B"
             }
@@ -1518,7 +1590,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 35
+            "y": 40
           },
           "id": 11,
           "options": {
@@ -1557,7 +1629,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 35
+            "y": 40
           },
           "id": 12,
           "options": {
@@ -1601,7 +1673,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 42
+            "y": 47
           },
           "id": 13,
           "options": {
@@ -1640,7 +1712,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 42
+            "y": 47
           },
           "id": 14,
           "options": {
@@ -1679,7 +1751,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 49
+            "y": 54
           },
           "id": 15,
           "options": {
@@ -1718,7 +1790,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 49
+            "y": 54
           },
           "id": 16,
           "options": {
@@ -1757,7 +1829,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 56
+            "y": 61
           },
           "id": 17,
           "options": {
@@ -1796,7 +1868,7 @@ data:
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 56
+            "y": 61
           },
           "id": 18,
           "options": {
@@ -1828,7 +1900,80 @@ data:
         "observability"
       ],
       "templating": {
-        "list": []
+        "list": [
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values(up{app_kubernetes_io_name=~\"otel-collector|otel-logs\"}, app_kubernetes_io_name)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Collector",
+            "multi": true,
+            "name": "collector",
+            "options": [],
+            "query": "label_values(up{app_kubernetes_io_name=~\"otel-collector|otel-logs\"}, app_kubernetes_io_name)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values({__name__=~\"otelcol_receiver_accepted_(metric_points|log_records|spans)_total\",app_kubernetes_io_name=~\"${collector:regex}\"}, receiver)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Receiver",
+            "multi": true,
+            "name": "receiver",
+            "options": [],
+            "query": "label_values({__name__=~\"otelcol_receiver_accepted_(metric_points|log_records|spans)_total\",app_kubernetes_io_name=~\"${collector:regex}\"}, receiver)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values(otelcol_exporter_queue_capacity{app_kubernetes_io_name=~\"${collector:regex}\"}, exporter)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Exporter",
+            "multi": true,
+            "name": "exporter",
+            "options": [],
+            "query": "label_values(otelcol_exporter_queue_capacity{app_kubernetes_io_name=~\"${collector:regex}\"}, exporter)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          }
+        ]
       },
       "time": {
         "from": "now-6h",
@@ -1837,7 +1982,7 @@ data:
       "timezone": "browser",
       "title": "Observability Pipeline",
       "uid": "observability-pipeline",
-      "version": 1,
+      "version": 2,
       "weekStart": ""
     }
 
@@ -5556,6 +5701,17 @@ data:
           "title": "Explore traces",
           "type": "link",
           "url": "/explore?left=%7B%22datasource%22:%22victoriatraces%22%7D"
+        },
+        {
+          "title": "Browser Telemetry",
+          "type": "link",
+          "url": "/d/browser-telemetry/browser-telemetry",
+          "keepTime": true,
+          "includeVars": false,
+          "targetBlank": false,
+          "asDropdown": false,
+          "icon": "external link",
+          "tags": []
         }
       ],
       "panels": [
@@ -5628,7 +5784,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / sum by (service_name) (dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5689,7 +5845,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5750,7 +5906,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5811,13 +5967,14 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\"}[15m])) or vector(0)",
+              "expr": "sum(increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\"}[15m])) or (0 * count(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "refId": "A"
             }
           ],
           "title": "5xx за 15 мин",
           "type": "stat",
-          "id": 5
+          "id": 5,
+          "description": "Zero is shown only for an observed HTTP server."
         },
         {
           "datasource": {
@@ -5871,7 +6028,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -5932,14 +6089,15 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m])) or vector(0)",
+              "expr": "sum(rate(dotnet_exceptions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) or (0 * count(dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": ".NET exceptions/sec",
               "refId": "A"
             }
           ],
           "title": "Application exceptions/sec",
           "type": "stat",
-          "id": 7
+          "id": 7,
+          "description": "Zero is shown only for an observed .NET server runtime. Browser exceptions are shown in Browser Telemetry."
         },
         {
           "datasource": {
@@ -5993,7 +6151,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[1m])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6054,7 +6212,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (increase(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__range])) / $__range_s, \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6115,7 +6273,7 @@ data:
           },
           "targets": [
             {
-              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
+              "expr": "label_replace(label_replace(label_replace(sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[$__rate_interval])), \"app\", \"$1\", \"service_name\", \"(.+)\"), \"app\", \"$1 / dev\", \"service_name\", \"(.+)-development\"), \"app\", \"$1 / prod\", \"service_name\", \"(.+)-production\")",
               "legendFormat": "{{`{{app}}`}}",
               "refId": "A"
             }
@@ -6186,7 +6344,7 @@ data:
           },
           "targets": [
             {
-              "expr": "max by (service_name, http_url) (label_replace(label_replace(label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.](dotnet-template|tactical-heroes)[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-development\", \"http_url\", \"https://dev[.]api[.]tactical-heroes[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-production\", \"http_url\", \"https://api[.]tactical-heroes[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "expr": "max by (service_name, http_url) (label_replace(label_replace(label_replace(label_replace(httpcheck_status_ratio{http_status_class=\"2xx\",http_url=~\"https://(dev[.])?api[.](dotnet-template|tactical-heroes)[.]panixida[.]ru/health\"}, \"service_name\", \"dotnet-template-api-development\", \"http_url\", \"https://dev[.]api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"dotnet-template-api-production\", \"http_url\", \"https://api[.]dotnet-template[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-development\", \"http_url\", \"https://dev[.]api[.]tactical-heroes[.]panixida[.]ru/health\"), \"service_name\", \"tactical-heroes-api-production\", \"http_url\", \"https://api[.]tactical-heroes[.]panixida[.]ru/health\") and on (service_name) max by (service_name) (http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}}",
               "refId": "A"
             }
@@ -6239,8 +6397,8 @@ data:
           },
           "targets": [
             {
-              "expr": "{service.name=~\"${service:regex}\"}",
-              "query": "{service.name=~\"${service:regex}\"}",
+              "expr": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\"",
+              "query": "{service.name=~\"${service:regex}\"} deployment.environment.name:~\"${environment:regex}\" service.instance.id:~\"${instance:regex}\"",
               "refId": "A"
             }
           ],
@@ -6319,7 +6477,8 @@ data:
           "title": "Recent application traces",
           "transformations": [],
           "type": "table",
-          "id": 13
+          "id": 13,
+          "description": "Service-level trace search. For an exact environment and instance, follow the trace link in the filtered logs."
         },
         {
           "collapsed": false,
@@ -6383,7 +6542,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -6436,7 +6595,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))",
+              "expr": "sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -6448,16 +6607,6 @@ data:
           "datasource": {
             "type": "victoriametrics-metrics-datasource",
             "uid": "victoriametrics"
-          },
-          "fieldConfig": {
-            "defaults": {},
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 24,
-            "x": 0,
-            "y": 45
           },
           "fieldConfig": {
             "defaults": {},
@@ -6479,6 +6628,12 @@ data:
                 ]
               }
             ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 45
           },
           "options": {
             "cellHeight": "sm",
@@ -6504,7 +6659,7 @@ data:
                 "type": "prometheus",
                 "uid": "victoriametrics"
               },
-              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (increase(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",http_route!=\"\"}[$__range]))))",
+              "expr": "topk(20, histogram_quantile(0.95, sum by (le, service_name, http_route) (increase(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__range]))))",
               "format": "table",
               "instant": true,
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}",
@@ -6594,7 +6749,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name) (http_server_active_requests{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -6631,7 +6786,7 @@ data:
               "color": "rgba(255,0,255,0.7)"
             },
             "filterValues": {
-              "le": 1e-9
+              "le": 1e-09
             },
             "legend": {
               "show": true
@@ -6652,7 +6807,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "format": "heatmap",
               "refId": "A"
             }
@@ -6706,7 +6861,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
             }
           ],
@@ -6759,7 +6914,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[$__rate_interval])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[$__rate_interval])))",
+              "expr": "sum by (service_name, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"4..\",http_route!=\"\"}[$__rate_interval])) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[$__rate_interval])))",
               "legendFormat": "{{`{{http_response_status_code}}`}} {{`{{http_route}}`}} {{`{{service_name}}`}}"
             }
           ],
@@ -6812,7 +6967,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "(100 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m]))) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",http_route!=\"\"}[5m])))",
+              "expr": "(100 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"5..\",http_route!=\"\"}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m]))) or (0 * sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_route!=\"\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{http_route}}`}}"
             }
           ],
@@ -6882,7 +7037,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\"}) * 100",
+              "expr": "sum by (service_name, service_instance_id) (rate(dotnet_process_cpu_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) / max by (service_name, service_instance_id) (dotnet_process_cpu_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) * 100",
               "legendFormat": "{{`{{service_name}}`}} {{`{{service_instance_id}}`}}"
             }
           ],
@@ -6935,12 +7090,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} allocated/sec"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} committed"
             }
           ],
@@ -7010,12 +7165,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\"}",
+              "expr": "dotnet_process_memory_working_set_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} working set"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name) (dotnet_gc_last_collection_memory_committed_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} GC committed"
             }
           ],
@@ -7068,7 +7223,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7121,7 +7276,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) * 100",
+              "expr": "sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
               "legendFormat": "{{`{{service_name}}`}} pause %"
             }
           ],
@@ -7174,7 +7329,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name, gc_heap_generation) (rate(dotnet_gc_collections_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7227,7 +7382,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_gc_heap_allocated_bytes_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} alloc bytes"
             }
           ],
@@ -7280,7 +7435,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name, gc_heap_generation) (dotnet_gc_last_collection_heap_fragmentation_size_bytes{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{gc_heap_generation}}`}}"
             }
           ],
@@ -7350,7 +7505,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\"}",
+              "expr": "dotnet_thread_pool_queue_length_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7403,7 +7558,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\"}",
+              "expr": "dotnet_thread_pool_thread_count_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7456,7 +7611,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "dotnet_timer_count{service_name=~\"${service:regex}\"}",
+              "expr": "dotnet_timer_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7509,7 +7664,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_thread_pool_work_item_count_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7579,7 +7734,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_jit_compiled_methods_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compiled_methods_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7632,7 +7787,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\"}[5m])) * 100",
+              "expr": "sum by (service_name) (rate(dotnet_jit_compilation_time_seconds_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])) * 100",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7702,7 +7857,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(dotnet_monitor_lock_contentions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}}"
             }
           ],
@@ -7772,7 +7927,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name, error_type) (rate(dotnet_exceptions_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{error_type}}`}}"
             }
           ],
@@ -7842,12 +7997,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "kestrel_active_connections{service_name=~\"${service:regex}\"}",
+              "expr": "kestrel_active_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} active"
             },
             {
               "refId": "B",
-              "expr": "kestrel_queued_connections{service_name=~\"${service:regex}\"}",
+              "expr": "kestrel_queued_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} queued"
             }
           ],
@@ -7900,12 +8055,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "http_client_open_connections{service_name=~\"${service:regex}\"}",
+              "expr": "http_client_open_connections{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} {{`{{network_peer_address}}`}} open"
             },
             {
               "refId": "B",
-              "expr": "http_client_active_requests{service_name=~\"${service:regex}\"}",
+              "expr": "http_client_active_requests{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}",
               "legendFormat": "{{`{{service_name}}`}} active requests"
             }
           ],
@@ -7975,7 +8130,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, db_system_name) (rate(db_client_operation_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{db_system_name}}`}}"
             }
           ],
@@ -8028,12 +8183,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name, db_client_connection_state) (db_client_connection_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} {{`{{db_client_connection_state}}`}}"
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (db_client_connection_max{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} max"
             }
           ],
@@ -8086,7 +8241,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\"}[5m])))",
+              "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}}`}} {{`{{server_address}}`}}"
             }
           ],
@@ -8139,12 +8294,12 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_read_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_read_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} read"
             },
             {
               "refId": "B",
-              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_written_total{service_name=~\"${service:regex}\"}[5m]))",
+              "expr": "sum by (service_name) (rate(db_client_operation_npgsql_bytes_written_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
               "legendFormat": "{{`{{service_name}}`}} write"
             }
           ],
@@ -8213,14 +8368,14 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_inbox_count_Messages{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_inbox_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / inbox",
               "instant": false,
               "range": true
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (wolverine_outbox_count_Messages{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_outbox_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / outbox",
               "instant": false,
               "range": true
@@ -8279,14 +8434,14 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_scheduled_count_Messages{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_scheduled_count_Messages{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / total",
               "instant": false,
               "range": true
             },
             {
               "refId": "B",
-              "expr": "max by (service_name) (wolverine_persistence_scheduled_due{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_due{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / due",
               "instant": false,
               "range": true
@@ -8345,7 +8500,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total{service_name=~\"${service:regex}\"}[15m])) or on (service_name) (0 * max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\"}))",
+              "expr": "sum by (service_name) (increase(wolverine_dead_letter_queue_Messages_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name) (0 * max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8404,7 +8559,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letters{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8463,7 +8618,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_dead_letter_oldest_age_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8522,7 +8677,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name) (wolverine_persistence_scheduled_overdue_seconds{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name) (wolverine_persistence_scheduled_overdue_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}}",
               "instant": false,
               "range": true
@@ -8594,7 +8749,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_paused{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_paused{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
               "instant": false,
               "range": true
@@ -8653,7 +8808,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds{service_name=~\"${service:regex}\"})",
+              "expr": "max by (service_name, schedule_name) (wolverine_persistence_recurring_overdue_seconds{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{schedule_name}}`}}",
               "instant": false,
               "range": true
@@ -8725,7 +8880,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -8784,7 +8939,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",error_type!=\"\"}[15m])) or on (service_name, quartz_job_group, quartz_job_name) (0 * sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (increase(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",error_type!=\"\"}[15m])) or on (service_name, quartz_job_group, quartz_job_name) (0 * sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -8843,7 +8998,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum{service_name=~\"${service:regex}\"}[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\"}[15m]))",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_sum{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) / sum by (service_name, quartz_job_group, quartz_job_name) (rate(quartz_job_execution_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m]))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}} / mean",
               "instant": false,
               "range": true
@@ -8902,7 +9057,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_active{service_name=~\"${service:regex}\"})",
+              "expr": "sum by (service_name, quartz_job_group, quartz_job_name) (quartz_job_execution_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_job_group}}`}} / {{`{{quartz_job_name}}`}}",
               "instant": false,
               "range": true
@@ -8961,7 +9116,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total{service_name=~\"${service:regex}\"}[15m])) or on (service_name, quartz_scheduler_name) (0 * max by (service_name, quartz_scheduler_name) (quartz_trigger_acquisition_duration_seconds_count{service_name=~\"${service:regex}\"}))",
+              "expr": "sum by (service_name, quartz_scheduler_name) (increase(quartz_trigger_misfire_total{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])) or on (service_name, quartz_scheduler_name) (0 * max by (service_name, quartz_scheduler_name) (quartz_trigger_acquisition_duration_seconds_count{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}))",
               "legendFormat": "{{`{{service_name}}`}} / {{`{{quartz_scheduler_name}}`}}",
               "instant": false,
               "range": true
@@ -8986,6 +9141,241 @@ data:
             "mode": "markdown",
             "content": "Inbox/outbox and scheduled total are native Wolverine metrics. DLQ inventory/age, due messages and recurring state require the Core persistence metrics release. Empty means **not measured**, unless an observed queue reports zero.\n\n`IScheduler` and Wolverine recurring commands share durable delayed-message storage. Quartz is a separate job scheduler. Services without a scheduler have no corresponding series.\n\nQueue inventory is shared across replicas (max); event counters and active Quartz jobs are summed. DLQ age starts at original send time. Recurring delay tracks the next occurrence, not business success.\n\nQuartz duration is the mean of completed executions over 15 minutes, calculated from sum/count independently of histogram bucket boundaries. No telemetry freshness alerts are configured."
           }
+        },
+        {
+          "id": 120,
+          "title": "Blazor Server",
+          "type": "row",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 222
+          }
+        },
+        {
+          "id": 121,
+          "title": "Server circuits",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 223
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "legendFormat": "{{`{{service_name}} active`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "expr": "sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "legendFormat": "{{`{{service_name}} connected`}}",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "Active circuits include retained disconnected circuits. Circuits are not unique users."
+        },
+        {
+          "id": 122,
+          "title": "Retained disconnected circuits",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 223
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "clamp_min(sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) - sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), 0)",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "Active minus connected. Compare with server RSS/GC; dividing RSS by circuits does not measure memory per user."
+        },
+        {
+          "id": 123,
+          "title": "Completed circuit lifetime p95",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 231
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_circuit_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])))",
+              "legendFormat": "{{`{{service_name}}`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "Completed circuits only; long-lived active circuits are not yet represented."
+        },
+        {
+          "id": 124,
+          "title": "Blazor event and render p95",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 231
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_handle_event_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}} events`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_render_diff_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
+              "legendFormat": "{{`{{service_name}} render`}}",
+              "refId": "B",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "Use server services for server-side execution and browser services for WASM. Sparse histograms have unstable percentiles."
         }
       ],
       "refresh": "30s",
@@ -9007,14 +9397,62 @@ data:
               "type": "victoriametrics-metrics-datasource",
               "uid": "victoriametrics"
             },
-            "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
+            "definition": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_client_request_duration_seconds_count|aspnetcore_components_navigate_total|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
             "hide": 0,
             "includeAll": true,
             "label": "Service",
             "multi": true,
             "name": "service",
             "options": [],
-            "query": "label_values({__name__=~\"http_server_request_duration_seconds_count|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
+            "query": "label_values({__name__=~\"http_server_request_duration_seconds_count|http_client_request_duration_seconds_count|aspnetcore_components_navigate_total|wolverine_inbox_count_Messages|wolverine_persistence_dead_letters|quartz_trigger_acquisition_duration_seconds_count\"}, service_name)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values({service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Environment",
+            "multi": true,
+            "name": "environment",
+            "options": [],
+            "query": "label_values({service_name!=\"\",service_name=~\"${service:regex}\"}, deployment_environment_name)",
+            "refresh": 1,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "victoriametrics-metrics-datasource",
+              "uid": "victoriametrics"
+            },
+            "definition": "label_values({service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Instance",
+            "multi": true,
+            "name": "instance",
+            "options": [],
+            "query": "label_values({service_name!=\"\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\"}, service_instance_id)",
             "refresh": 1,
             "regex": "",
             "sort": 1,
@@ -9029,7 +9467,7 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 27,
+      "version": 28,
       "weekStart": ""
     }
 
