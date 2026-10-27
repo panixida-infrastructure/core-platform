@@ -729,6 +729,63 @@ metadata:
 data:
   rules.yml: |
     groups:
+      - name: application-telemetry-delivery
+        rules:
+          - alert: TelemetryCollectorDown
+            expr: max(up{app_kubernetes_io_name="otel-collector"}) == 0 or absent_over_time(up{app_kubernetes_io_name="otel-collector"}[5m])
+            for: 1m
+            labels:
+              severity: critical
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Central telemetry collector is unavailable.
+              description: No collector target is healthy, or collector scrape samples have been absent for at least five minutes. Browser inactivity does not trigger this alert.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "observability-pipeline" "panel" 19) | quote }}
+          - alert: TelemetryReceiverRefusals
+            expr: sum by (receiver) (rate({__name__=~"otelcol_receiver_refused_(metric_points|log_records|spans)_total",app_kubernetes_io_name="otel-collector"}[1m])) > 0
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Telemetry receiver persistently refuses data.
+              description: The receiver has refused telemetry continuously for five minutes. Inspect request limits and collector capacity.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "observability-pipeline" "panel" 8 "variables" (dict "receiver" "receiver")) | quote }}
+          - alert: TelemetryExporterFailures
+            expr: sum by (exporter) (rate({__name__=~"otelcol_exporter_send_failed_(metric_points|log_records|spans)_total",app_kubernetes_io_name="otel-collector"}[1m])) > 0
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Telemetry export attempts keep failing.
+              description: Export attempts have failed continuously for five minutes. Retries may recover them; check the exporter queue and destination before concluding data was lost.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "observability-pipeline" "panel" 9 "variables" (dict "exporter" "exporter")) | quote }}
+          - alert: TelemetryExporterQueueHigh
+            expr: max by (exporter) (otelcol_exporter_queue_size{app_kubernetes_io_name="otel-collector"} / (otelcol_exporter_queue_capacity{app_kubernetes_io_name="otel-collector"} > 0)) > {{ .Values.observability.applicationTelemetry.exporterQueueRatio }}
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: observability
+              environment: production
+            annotations:
+              summary: Telemetry exporter queue is nearly full.
+              description: The exporter queue has exceeded {{ mulf .Values.observability.applicationTelemetry.exporterQueueRatio 100 }} percent of capacity for five minutes.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "observability-pipeline" "panel" 10 "variables" (dict "exporter" "exporter")) | quote }}
+          - alert: BrowserComponentErrors
+            expr: (sum by (service_name, deployment_environment_name) (increase({__name__=~"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count",service_namespace="browser",error_type!=""}[10m])) >= {{ .Values.observability.applicationTelemetry.browserMinErrors }}) and on(service_name, deployment_environment_name) ((sum by (service_name, deployment_environment_name) (increase({__name__=~"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count",service_namespace="browser",error_type!=""}[10m])) / sum by (service_name, deployment_environment_name) (increase({__name__=~"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count",service_namespace="browser"}[10m]))) > {{ .Values.observability.applicationTelemetry.browserErrorRatio }}) and on(service_name, deployment_environment_name) (sum by (service_name, deployment_environment_name) (increase({__name__=~"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count",service_namespace="browser"}[10m])) >= {{ .Values.observability.applicationTelemetry.browserMinEvents }})
+            for: 5m
+            labels:
+              severity: warning
+              alert_owner: '{{ "{{" }} if match "^tactical-heroes-" $labels.service_name {{ "}}" }}tactical-heroes{{ "{{" }} else if match "^dotnet-template-" $labels.service_name {{ "}}" }}dotnet-template{{ "{{" }} else {{ "}}" }}unclassified{{ "{{" }} end {{ "}}" }}'
+              environment: '{{ "{{" }} $labels.deployment_environment_name {{ "}}" }}'
+            annotations:
+              summary: Browser components repeatedly fail.
+              description: At least {{ .Values.observability.applicationTelemetry.browserMinErrors }} failing Blazor observations and {{ .Values.observability.applicationTelemetry.browserMinEvents }} total observations per ten minutes, with an error ratio above {{ mulf .Values.observability.applicationTelemetry.browserErrorRatio 100 }} percent, sustained for five minutes. These observations are not unique exceptions or users.
+              dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "browser-telemetry" "panel" 9 "variables" (dict "service" "service_name" "environment" "deployment_environment_name")) | quote }}
       {{- if .Values.observability.releases.enabled }}
       - name: infrastructure-releases
         rules:
@@ -1300,7 +1357,7 @@ data:
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 113 "variables" (dict "service" "service_name")) | quote }}
           {{- end }}
           - alert: ApplicationSlowHttpRequests
-            expr: histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=""}[5m]))) > 2
+            expr: (histogram_quantile(0.95, sum by (le, service_name, http_route) (rate(http_server_request_duration_seconds_bucket{http_route!=""}[5m]))) > 2) and on(service_name, http_route) (sum by (service_name, http_route) (increase(http_server_request_duration_seconds_count{http_route!=""}[5m])) >= {{ .Values.observability.applicationTelemetry.minHttpRequests }})
             for: 5m
             labels:
               severity: warning
@@ -1308,10 +1365,10 @@ data:
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application HTTP route is slow.
-              description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes.
+              description: Application route p95 latency has stayed above 2 seconds for at least 5 minutes, with at least {{ .Values.observability.applicationTelemetry.minHttpRequests }} requests per five-minute window.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 15 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHigh5xxErrorRate
-            expr: (sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5..",http_route!=""}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_route!=""}[5m]))) > 0.05
+            expr: ((sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5..",http_route!=""}[5m])) / sum by (service_name, http_route) (rate(http_server_request_duration_seconds_count{http_route!=""}[5m]))) > 0.05) and on(service_name, http_route) (sum by (service_name, http_route) (increase(http_server_request_duration_seconds_count{http_route!=""}[5m])) >= {{ .Values.observability.applicationTelemetry.minHttpRequests }})
             for: 1m
             labels:
               severity: critical
@@ -1319,7 +1376,7 @@ data:
               environment: '{{ "{{" }} if match "-development$" $labels.service_name {{ "}}" }}development{{ "{{" }} else if match "-production$" $labels.service_name {{ "}}" }}production{{ "{{" }} else if match "^telegram-alert-gateway$" $labels.service_name {{ "}}" }}production{{ "{{" }} else {{ "}}" }}unknown{{ "{{" }} end {{ "}}" }}'
             annotations:
               summary: Application 5xx error rate is high.
-              description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute.
+              description: Application route 5xx error ratio has stayed above 5 percent for at least 1 minute, with at least {{ .Values.observability.applicationTelemetry.minHttpRequests }} requests per five-minute window.
               dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "application-telemetry" "panel" 23 "variables" (dict "service" "service_name")) | quote }}
           - alert: ApplicationHighGcPause
             expr: sum by (service_name) (rate(dotnet_gc_pause_time_seconds_total[5m])) > 0.10

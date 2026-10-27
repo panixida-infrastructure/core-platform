@@ -110,6 +110,9 @@ jobs:
       - name: Verify background work monitoring
         run: python3 -B tests/verify_background_work.py /tmp/core-platform-workloads.yaml
 
+      - name: Verify Blazor dashboards and telemetry alert conditions
+        run: python3 -B tests/verify_application_telemetry.py /tmp/core-platform-workloads.yaml
+
   notify:
     if: ${{ always() && github.event_name == 'push' && github.ref_name == 'main' }}
     needs: [ shell, opentofu, kubernetes ]

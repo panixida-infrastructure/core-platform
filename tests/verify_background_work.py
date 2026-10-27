@@ -93,7 +93,7 @@ def verify(rendered):
                     series(histogram + "_sum", "0+90x20 0+90x19", job)], fires("QuartzJobSlow", job, ("31m",)))]
 
     dashboard = json.loads(re.search(r"  application-telemetry\.json: \|\n((?:    [^\n]*\n|\n)+)", rendered)[1])
-    panels = [p for p in dashboard["panels"] if p["id"] >= 100]
+    panels = [p for p in dashboard["panels"] if 100 <= p["id"] < 120]
     assert len(panels) == 17
     assert len({p['id'] for p in dashboard['panels']}) == len(dashboard['panels']), "Duplicate panel IDs"
     panel_rules = []
@@ -101,7 +101,7 @@ def verify(rendered):
         for target in panel.get("targets", []):
             assert target["range"] and not target["instant"], panel["title"]
             assert "vector(0)" not in target["expr"], panel["title"]
-            expr = target["expr"].replace("${service:regex}", ".*")
+            expr = target["expr"].replace("${service:regex}", ".*").replace("${environment:regex}", ".*").replace("${instance:regex}", ".*")
             panel_rules.append({"alert": f"Panel{panel['id']}{target['refId']}", "expr": f"count({expr}) > 0"})
     fixtures = [series(metric, "1+0x40") for metric in [
         "wolverine_inbox_count_Messages", "wolverine_outbox_count_Messages", "wolverine_scheduled_count_Messages",
@@ -116,7 +116,7 @@ def verify(rendered):
                       {(r["alert"], "4m"): [{}] for r in panel_rules}, times=("4m",), selected=panel_rules))
     duration_panel = next(panel for panel in panels if panel["id"] == 113)
     assert len(duration_panel["targets"]) == 1
-    mean_expr = duration_panel["targets"][0]["expr"].replace("${service:regex}", ".*")
+    mean_expr = duration_panel["targets"][0]["expr"].replace("${service:regex}", ".*").replace("${environment:regex}", ".*").replace("${instance:regex}", ".*")
     mean_rule = {"alert": "QuartzMeanDurationValue", "expr": f"abs(({mean_expr}) - 29) < 0.000001"}
     panel_rules.append(mean_rule)
     tests.append(case(weighted_durations, fires(mean_rule["alert"], job, ("4m",)),

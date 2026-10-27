@@ -28,7 +28,7 @@ def verify(rendered):
     links = dict(re.findall(
         r"- alert: (\w+)\n(?:(?!- alert:).)*?dashboard_url: (\"[^\n]+\")",
         rendered, re.S))
-    assert len(links) == 56, f"Expected 56 metric alert links, got {len(links)}"
+    assert len(links) == 61, f"Expected 61 metric alert links, got {len(links)}"
     links = {name: json.loads(value) for name, value in links.items()}
     for name, link in links.items():
         parsed = urlsplit(re.sub(r"{{.*?}}", "", link))
@@ -42,7 +42,7 @@ def verify(rendered):
         assert {key[4:] for key in params if key.startswith("var-")} <= variables, name
 
     labels = {"service_name": 'api &/"test', "service_instance_id": "node &/ 1",
-              "namespace": "test-ns", "pod": "test-pod", "container": "api"}
+              "namespace": "test-ns", "pod": "test-pod", "container": "api", "deployment_environment_name": "development"}
     cases = [
         ("ApplicationSlowHttpRequests", "application-telemetry", 15, {"service": labels["service_name"]}),
         ("HostHighCpu", "infrastructure-nodes", 1, {"node": labels["service_instance_id"]}),
@@ -52,6 +52,9 @@ def verify(rendered):
         ("KubernetesContainerCrashLoopBackOff", "kubernetes-workloads", 19,
          {"container": "api", "namespace": "test-ns", "pod": "test-pod"}),
         ("TimewebPostgresAutomaticBackupStale", "postgresql-managed", 41, {}),
+        ("BrowserComponentErrors", "browser-telemetry", 9,
+         {"environment": "development", "service": labels["service_name"]}),
+        ("TelemetryCollectorDown", "observability-pipeline", 19, {}),
     ]
     rules, checks = [], []
     # vmalert-tool >= 1.148 starts fixture series at 2000-01-01 UTC.
@@ -93,7 +96,7 @@ def verify(rendered):
         subprocess.run(["docker", "run", "--rm", "-v", f"{work}:/work", "-w", "/work",
                         image.replace("/vmalert:", "/vmalert-tool:"), "unittest",
                         "--disableAlertgroupLabel", "--files=/work/tests.json"], check=True)
-    print("56 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
+    print("61 dashboard links: panels and variables exist; contextual annotations render correctly.", flush=True)
 
     # Mixed emergency groups must retain each alert's link even without CommonAnnotations.
     document = next(doc for doc in rendered.split("\n---") if "  name: alertmanager\n" in doc)

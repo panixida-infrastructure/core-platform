@@ -208,3 +208,16 @@ python3 -B tests/verify_frontend_telemetry.py /tmp/core-platform-workloads.yaml
 The check uses the Collector image pinned by the chart, submits all three OTLP
 signals with forged resource identities, and verifies that the exported resource
 identities were overwritten from the BFF metadata.
+
+## Blazor dashboards and alerts
+
+`Application Telemetry` includes server circuits and Blazor processing times;
+`Browser Telemetry` shows WASM navigation, handlers, rendering, HTTP, and linked logs/traces.
+Filter by environment and runtime instance. Reporting runtimes are not unique users;
+missing reports from closed or sleeping tabs are normal. Runtime GUIDs increase metric
+series cardinality; the browser dashboard shows recently reporting series.
+
+`Observability Pipeline` filters collectors, receivers (including `otlp/frontend`), and exporters.
+Delivery failures, sustained queue pressure and repeated component errors are alerted.
+Thresholds and HTTP minimum traffic are configured under `observability.applicationTelemetry`.
+Validate rendered dashboards and rules with `tests/verify_application_telemetry.py` (Docker required).

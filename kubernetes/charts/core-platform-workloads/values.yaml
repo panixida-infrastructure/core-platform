@@ -192,6 +192,12 @@ observability:
     deadLetterAgeSeconds: 3600
     scheduledOverdueSeconds: 300
     quartzJobMeanSeconds: 60
+  applicationTelemetry:
+    minHttpRequests: 20
+    browserMinEvents: 20
+    browserMinErrors: 3
+    browserErrorRatio: 0.05
+    exporterQueueRatio: 0.8
   alerts:
     telegram:
       chatId: "-1003738995665"
