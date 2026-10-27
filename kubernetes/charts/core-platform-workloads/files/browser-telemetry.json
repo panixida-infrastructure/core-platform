@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 5,
+  "version": 6,
   "tags": [
     "application",
     "browser",
@@ -80,14 +80,14 @@
           "type": "victoriametrics-metrics-datasource",
           "uid": "victoriametrics"
         },
-        "definition": "label_values({service_namespace=\"browser\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count\"}, service_name)",
+        "definition": "label_values({service_namespace=\"browser\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, service_name)",
         "hide": 0,
         "includeAll": true,
         "label": "Service",
         "multi": true,
         "name": "service",
         "options": [],
-        "query": "label_values({service_namespace=\"browser\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count\"}, service_name)",
+        "query": "label_values({service_namespace=\"browser\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, service_name)",
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -104,14 +104,14 @@
           "type": "victoriametrics-metrics-datasource",
           "uid": "victoriametrics"
         },
-        "definition": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count\"}, deployment_environment_name)",
+        "definition": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, deployment_environment_name)",
         "hide": 0,
         "includeAll": true,
         "label": "Environment",
         "multi": true,
         "name": "environment",
         "options": [],
-        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count\"}, deployment_environment_name)",
+        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, deployment_environment_name)",
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -128,18 +128,43 @@
           "type": "victoriametrics-metrics-datasource",
           "uid": "victoriametrics"
         },
-        "definition": "label_values(aspnetcore_components_navigate_total{service_namespace=\"browser\",deployment_environment_name=~\"${environment:regex}\",service_name=~\"${service:regex}\"}, service_instance_id)",
+        "definition": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, service_instance_id)",
         "hide": 0,
         "includeAll": true,
         "label": "Runtime instance",
         "multi": true,
         "name": "instance",
         "options": [],
-        "query": "label_values(aspnetcore_components_navigate_total{service_namespace=\"browser\",deployment_environment_name=~\"${environment:regex}\",service_name=~\"${service:regex}\"}, service_instance_id)",
+        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",__name__=~\"aspnetcore_components_navigate_total|http_client_request_duration_seconds_count|browser_page_navigation_duration_seconds_count\"}, service_instance_id)",
         "refresh": 1,
         "regex": "",
         "sort": 1,
         "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "victoriametrics-metrics-datasource",
+          "uid": "victoriametrics"
+        },
+        "definition": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",__name__=~\"browser_page_navigation_duration_seconds_count|browser_page_http_duration_seconds_count|browser_web_vital_lcp_seconds\"}, page_route)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Page",
+        "multi": true,
+        "name": "page",
+        "options": [],
+        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",__name__=~\"browser_page_navigation_duration_seconds_count|browser_page_http_duration_seconds_count|browser_web_vital_lcp_seconds\"}, page_route)",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query",
+        "description": "Matched Blazor route template. Filters page transitions, page HTTP, route counts and document entry-page panels; component and log panels retain their own scope."
       }
     ]
   },
@@ -249,6 +274,528 @@
       "description": "Live metric series, not retained storage volume. Each runtime GUID and histogram bucket creates series. Dashboard aggregation does not reduce ingestion cardinality."
     },
     {
+      "id": 20,
+      "title": "Page transitions — WASM navigation",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "id": 21,
+      "title": "Page transition to first frame p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[5m]))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Destination route; top 10 p95 values over 5 minutes. Time from committed navigation to a rendering opportunity. A loading indicator can be that first frame; compare page HTTP below for data loading. Missing samples stay empty; no zero is invented."
+    },
+    {
+      "id": 22,
+      "title": "Page HTTP request duration p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_http_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[5m]))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Outgoing HTTP duration by the page on which the request started, including requests that finish after a navigation. Telemetry export is excluded by Core. Top 10 p95 over 5 minutes; this is per-request duration, not total page-ready time."
+    },
+    {
+      "id": 23,
+      "title": "Page routing and render-frame p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_navigation_phase) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=~\"route_match|render_frame\"}[5m]))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_navigation_phase}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "route_match: navigation event to framework route match. render_frame: route match to a rendering opportunity. Both are measured separately; percentiles must not be added. Async data loading may continue after either phase."
+    },
+    {
+      "id": 24,
+      "title": "Observed page transitions and HTTP requests / 10 min",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_navigation_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[10m]))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} transitions",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_http_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[10m]))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} HTTP",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Measurement counts give context for latency percentiles. Only completed navigation frames count. Increase requires exported counter samples; the first observation can be undercounted. Empty means no observations, not an application outage."
+    },
+    {
+      "id": 30,
+      "title": "Document startup and Web Vitals — entry page",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      }
+    },
+    {
+      "id": 31,
+      "title": "WASM startup p95 by entry page",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_wasm_phase) (rate(browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[5m]))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_wasm_phase}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Initial WASM runtime starts grouped by the entry route, not soft navigations. document_to_runtime starts at document navigation; runtime starts at the Blazor initializer; first_frame follows runtime startup. Phases overlap and must not be added."
+    },
+    {
+      "id": 32,
+      "title": "Latest Web Vitals p75 — reporting runtimes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} LCP",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} FCP",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} TTFB",
+          "refId": "C",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} INP",
+          "refId": "D",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "p75 of latest document measurements among runtimes reporting in the last 3 minutes, grouped by document entry route. This is not a page-load distribution or a percentile of individual Blazor route transitions. INP is absent until an interaction is measured."
+    },
+    {
+      "id": 33,
+      "title": "Latest CLS p75 — reporting runtimes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Unitless layout-shift score for the document. p75 of latest values among runtimes reporting within 3 minutes, grouped by entry route. It does not reset on each Blazor navigation; lower is better."
+    },
+    {
+      "id": 34,
+      "title": "Framework bytes per reporting runtime — entry page",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} decoded",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} transferred",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Average initial framework-resource bytes per recently reporting runtime, grouped by entry route. Includes all resource types. Transfer bytes can be zero for cached resources; decoded bytes are not managed heap usage. Neither is a resource download rate."
+    },
+    {
+      "id": 40,
+      "title": "Components and transport",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      }
+    },
+    {
       "id": 3,
       "title": "Navigations by route",
       "type": "timeseries",
@@ -260,7 +807,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 43
       },
       "fieldConfig": {
         "defaults": {
@@ -291,7 +838,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (service_name, aspnetcore_components_route) (rate(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+          "expr": "sum by (service_name, aspnetcore_components_route) (rate(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",aspnetcore_components_route=~\"${page:regex}\"}[5m]))",
           "legendFormat": "{{service_name}} {{aspnetcore_components_route}}",
           "refId": "A",
           "range": true,
@@ -312,7 +859,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 43
       },
       "fieldConfig": {
         "defaults": {
@@ -364,7 +911,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -423,7 +970,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -475,7 +1022,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -527,7 +1074,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -579,7 +1126,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -631,7 +1178,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -690,7 +1237,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 75
       },
       "options": {
         "showTime": true,
@@ -738,7 +1285,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 85
       },
       "options": {
         "cellHeight": "sm",
@@ -787,14 +1334,14 @@
       "type": "text",
       "title": "Reading browser telemetry",
       "gridPos": {
-        "h": 5,
+        "h": 7,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 95
       },
       "options": {
         "mode": "markdown",
-        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nCPU/RSS, full-page startup, JavaScript failures and Web Vitals are not measured by these panels."
+        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nCPU/RSS, full-page startup, JavaScript failures and Web Vitals are not measured by these panels.\n\nPage panels require page measurements from Core 2.1.3 or later. Page is a route template, never a concrete entity ID. Document panels use the entry route; Web Vitals do not reset on each Blazor navigation. Page latency panels separate a rendering opportunity from HTTP data loading. Missing measurements remain empty."
       }
     }
   ]
