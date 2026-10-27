@@ -9200,12 +9200,16 @@ data:
             {
               "expr": "sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}} active`}}",
-              "refId": "A"
+              "refId": "A",
+              "range": true,
+              "instant": false
             },
             {
               "expr": "sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
               "legendFormat": "{{`{{service_name}} connected`}}",
-              "refId": "B"
+              "refId": "B",
+              "range": true,
+              "instant": false
             }
           ],
           "description": "Active circuits include retained disconnected circuits. Circuits are not unique users."
@@ -9255,7 +9259,9 @@ data:
             {
               "expr": "clamp_min(sum by (service_name) (aspnetcore_components_circuit_active{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) - sum by (service_name) (aspnetcore_components_circuit_connected{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}), 0)",
               "legendFormat": "{{`{{service_name}}`}}",
-              "refId": "A"
+              "refId": "A",
+              "range": true,
+              "instant": false
             }
           ],
           "description": "Active minus connected. Compare with server RSS/GC; dividing RSS by circuits does not measure memory per user."
@@ -9305,7 +9311,9 @@ data:
             {
               "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_circuit_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[15m])))",
               "legendFormat": "{{`{{service_name}}`}}",
-              "refId": "A"
+              "refId": "A",
+              "range": true,
+              "instant": false
             }
           ],
           "description": "Completed circuits only; long-lived active circuits are not yet represented."
@@ -9355,12 +9363,16 @@ data:
             {
               "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_handle_event_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}} events`}}",
-              "refId": "A"
+              "refId": "A",
+              "range": true,
+              "instant": false
             },
             {
               "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_render_diff_duration_seconds_bucket{service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
               "legendFormat": "{{`{{service_name}} render`}}",
-              "refId": "B"
+              "refId": "B",
+              "range": true,
+              "instant": false
             }
           ],
           "description": "Use server services for server-side execution and browser services for WASM. Sparse histograms have unstable percentiles."

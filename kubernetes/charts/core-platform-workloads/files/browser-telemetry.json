@@ -178,7 +178,9 @@
         {
           "expr": "count by (service_name) (max by (service_name, service_instance_id) (timestamp(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})) > time() - 180)",
           "legendFormat": "{{service_name}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Runtimes reporting within three minutes, not users or online sessions. Closed, sleeping or throttled tabs can stop reporting. Empty does not mean an outage."
@@ -228,7 +230,9 @@
         {
           "expr": "count by (service_name) ({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"} and (time() - timestamp({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) < 180))",
           "legendFormat": "{{service_name}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Live metric series, not retained storage volume. Each runtime GUID and histogram bucket creates series. Dashboard aggregation does not reduce ingestion cardinality."
@@ -278,7 +282,9 @@
         {
           "expr": "sum by (service_name, aspnetcore_components_route) (rate(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
           "legendFormat": "{{service_name}} {{aspnetcore_components_route}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": ""
@@ -328,7 +334,9 @@
         {
           "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, aspnetcore_components_type) (rate(aspnetcore_components_handle_event_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))))",
           "legendFormat": "{{service_name}} {{aspnetcore_components_type}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Component handler duration, including awaited work. Low event counts make percentiles unstable."
@@ -378,12 +386,16 @@
         {
           "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_render_diff_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
           "legendFormat": "{{service_name}} render",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         },
         {
           "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(aspnetcore_components_update_parameters_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
           "legendFormat": "{{service_name}} parameters",
-          "refId": "B"
+          "refId": "B",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Blazor processing time, not browser paint time, INP or page startup time."
@@ -433,7 +445,9 @@
         {
           "expr": "histogram_quantile(0.95, sum by (le, service_name, server_address) (rate(http_client_request_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
           "legendFormat": "{{service_name}} {{server_address}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": ""
@@ -483,7 +497,9 @@
         {
           "expr": "sum by (service_name) (rate(http_client_request_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
           "legendFormat": "{{service_name}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Outbound client requests, including retries."
@@ -533,7 +549,9 @@
         {
           "expr": "100 * (sum by (service_name) (rate(http_client_request_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",http_response_status_code=~\"4..|5..\"}[5m]) or rate(http_client_request_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",error_type!=\"\"}[5m])) or on(service_name) (0 * sum by (service_name) (rate(http_client_request_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))) / sum by (service_name) (rate(http_client_request_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
           "legendFormat": "{{service_name}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "4xx/5xx or transport errors, counted once per attempt. Zero appears only with observed requests; missing browser telemetry stays empty."
@@ -583,7 +601,9 @@
         {
           "expr": "sum by (service_name, error_type) (rate({__name__=~\"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count\",service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",error_type!=\"\"}[5m])) or on(service_name) (0 * sum by (service_name) (rate({__name__=~\"aspnetcore_components_navigate_total|aspnetcore_components_handle_event_duration_seconds_count\",service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m])))",
           "legendFormat": "{{service_name}} {{error_type}}",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         }
       ],
       "description": "Blazor event-handler and navigation exception observations. Validation messages and all JavaScript errors are not represented."
@@ -633,12 +653,16 @@
         {
           "expr": "sum by (service_name) (increase(aspnetcore_components_handle_event_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[10m]))",
           "legendFormat": "{{service_name}} events",
-          "refId": "A"
+          "refId": "A",
+          "range": true,
+          "instant": false
         },
         {
           "expr": "sum by (service_name) (increase(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[10m]))",
           "legendFormat": "{{service_name}} navigations",
-          "refId": "B"
+          "refId": "B",
+          "range": true,
+          "instant": false
         }
       ],
       "description": ""

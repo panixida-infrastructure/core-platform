@@ -108,6 +108,8 @@ def verify(rendered):
             if panel["type"] in ("logs", "text", "row"):
                 continue
             for target in panel.get("targets", []):
+                if panel["type"] == "timeseries":
+                    assert target.get("range") and not target.get("instant"), panel["title"]
                 expr = expand(target["expr"])
                 if dashboard is browser:
                     assert 'service_namespace="browser"' in expr
