@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 8,
+  "version": 9,
   "tags": [
     "application",
     "browser",
@@ -333,7 +333,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[5m]))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
           "refId": "A",
           "range": true,
@@ -389,7 +389,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_http_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) (rate(browser_page_http_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}[5m]))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
           "refId": "A",
           "range": true,
@@ -445,7 +445,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_navigation_phase) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=~\"route_match|render_frame\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_navigation_phase) (rate(browser_page_navigation_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_navigation_type=\"navigation\",browser_navigation_phase=~\"route_match|render_frame\"}[5m]))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_navigation_phase}}",
           "refId": "A",
           "range": true,
@@ -501,14 +501,14 @@
       },
       "targets": [
         {
-          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_navigation_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\",browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[10m]))",
+          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_navigation_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_navigation_type=\"navigation\",browser_navigation_phase=\"first_frame\"}[10m]))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} transitions",
           "refId": "A",
           "range": true,
           "instant": false
         },
         {
-          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_http_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}[10m]))",
+          "expr": "sum by (service_name, deployment_environment_name, page_route) (increase(browser_page_http_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}[10m]))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} HTTP",
           "refId": "B",
           "range": true,
@@ -577,7 +577,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_wasm_phase) (browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route, browser_wasm_phase) (browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_wasm_startup_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_wasm_phase}}",
           "refId": "A",
           "range": true,
@@ -633,28 +633,28 @@
       },
       "targets": [
         {
-          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_web_vital_lcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} LCP",
           "refId": "A",
           "range": true,
           "instant": false
         },
         {
-          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_web_vital_fcp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} FCP",
           "refId": "B",
           "range": true,
           "instant": false
         },
         {
-          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_web_vital_ttfb_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} TTFB",
           "refId": "C",
           "range": true,
           "instant": false
         },
         {
-          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_web_vital_inp_seconds{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} INP",
           "refId": "D",
           "range": true,
@@ -710,7 +710,7 @@
       },
       "targets": [
         {
-          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180)))",
+          "expr": "quantile by (service_name, deployment_environment_name, page_route) (0.75, (browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_web_vital_cls_ratio{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}}",
           "refId": "A",
           "range": true,
@@ -766,14 +766,14 @@
       },
       "targets": [
         {
-          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
+          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_wasm_resource_decoded_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} decoded",
           "refId": "A",
           "range": true,
           "instant": false
         },
         {
-          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"} and (time() - timestamp(browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~\"${page:regex}\"}) < 180))))",
+          "expr": "avg by (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route, service_instance_id) ((browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_wasm_resource_transfer_size_bytes_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180))))",
           "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} transferred",
           "refId": "B",
           "range": true,
@@ -838,7 +838,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (service_name, aspnetcore_components_route) (rate(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",aspnetcore_components_route=~\"${page:regex}\"}[5m]))",
+          "expr": "sum by (service_name, aspnetcore_components_route) (rate(aspnetcore_components_navigate_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",aspnetcore_components_route=~`${page:regex}`}[5m]))",
           "legendFormat": "{{service_name}} {{aspnetcore_components_route}}",
           "refId": "A",
           "range": true,
