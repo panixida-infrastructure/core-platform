@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 2,
+  "version": 3,
   "tags": [
     "application",
     "browser",
@@ -33,6 +33,17 @@
     ]
   },
   "links": [
+    {
+      "title": "Explore traces",
+      "type": "link",
+      "url": "/explore?left=%7B%22datasource%22:%22victoriatraces%22%7D",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "asDropdown": false,
+      "icon": "external link",
+      "tags": []
+    },
     {
       "title": "Application Telemetry",
       "type": "link",
