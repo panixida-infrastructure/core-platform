@@ -29,7 +29,7 @@ def verify(rendered):
     for dashboard in (browser, app, pipeline):
         ids = [panel["id"] for panel in dashboard["panels"]]
         assert len(ids) == len(set(ids)), dashboard["uid"]
-    assert [v["name"] for v in browser["templating"]["list"]] == ["service", "environment", "instance"]
+    assert [v["name"] for v in browser["templating"]["list"]] == ["service", "environment", "instance", "page"]
     assert "$" + "{environment:regex}" not in browser["templating"]["list"][0]["query"]
     assert {v["name"] for v in pipeline["templating"]["list"]} == {"collector", "receiver", "exporter"}
     assert 'service_namespace!="browser"' in app["templating"]["list"][0]["query"]
@@ -102,9 +102,9 @@ def verify(rendered):
         tests.append(case(inputs, expected))
 
     def expand(expr, overrides=None):
-        variables = {name: ".*" for name in ("service", "environment", "instance", "collector", "receiver", "exporter")}
+        variables = {name: ".*" for name in ("service", "environment", "instance", "page", "collector", "receiver", "exporter")}
         variables.update(overrides or {})
-        return re.sub(r"\$\{(\w+):regex\}", lambda m: variables[m[1]], expr)
+        return re.sub(r"\$\{(\w+):regex\}", lambda m: json.dumps(variables[m[1]])[1:-1], expr)
 
     syntax_rules = []
     for dashboard in (browser, app, pipeline):
@@ -162,6 +162,49 @@ def verify(rendered):
     query_check("HealthyHttpRatio", expand(panels[8]["targets"][0]["expr"]),
                 [series("http_client_request_duration_seconds_count", "0+10x40", runtime | {"http_response_status_code": "200"})], 0)
     query_check("MissingHttpStaysEmpty", expand(panels[8]["targets"][0]["expr"]), [])
+
+    page = runtime | {"page_route": "/computers/{Id:int}"}
+    page_selection = {"service": service["service_name"], "environment": "development", "instance": "a",
+                      "page": r"/computers/\{Id:int\}"}
+    navigation_metric = "browser_page_navigation_duration_seconds"
+    page_expression = expand(panels[21]["targets"][0]["expr"], page_selection)
+    navigation_labels = page | {"browser_navigation_type": "navigation", "browser_navigation_phase": "first_frame"}
+    navigation_input = [series(navigation_metric + "_count", "0+100x40", navigation_labels)]
+    for boundary, values in (("0.1", "0+0x40"), ("1", "0+95x40"), ("+Inf", "0+100x40")):
+        navigation_input.append(series(navigation_metric + "_bucket", values, navigation_labels | {"le": boundary}))
+    unrelated = []
+    for labels in (navigation_labels | {"page_route": "/units"},
+                   navigation_labels | {"service_instance_id": "b"},
+                   navigation_labels | {"deployment_environment_name": "production"},
+                   navigation_labels | {"browser_navigation_type": "initial"}):
+        for boundary in ("10", "+Inf"):
+            unrelated.append(series(navigation_metric + "_bucket", "0+100x40", labels | {"le": boundary}))
+    query_check("PageP95UsesRouteRuntimeEnvironmentAndTransitionType", page_expression, navigation_input + unrelated, 1)
+    query_check("PageP95MissingMeasurementsStayEmpty", page_expression, unrelated)
+    query_check("PageTransitionCount", expand(panels[24]["targets"][0]["expr"], page_selection), navigation_input, 1000)
+
+    vital = "browser_web_vital_lcp_seconds"
+    vital_expression = expand(panels[32]["targets"][0]["expr"])
+    vital_input = [series(vital, "1+0x40", page), series(vital, "5+0x40", page | {"service_instance_id": "b"})]
+    query_check("LatestVitalsUseRuntimeQuantile", vital_expression, vital_input, 4)
+    stale_values = " ".join(["1"] * 7 + ["_"] * 34)
+    query_check("StaleVitalsAreNotReportingRuntimes", vital_expression, [series(vital, stale_values, page)])
+    byte_metric = "browser_wasm_resource_decoded_size_bytes_total"
+    byte_input = [series(byte_metric, f"{value}+0x40", page | {"service_instance_id": instance,
+                  "browser_resource_type": resource}) for instance, resource, value in
+                  (("a", "wasm", 100), ("a", "javascript", 50), ("b", "wasm", 200), ("b", "javascript", 150))]
+    query_check("FrameworkBytesSumTypesBeforeAveragingRuntimes", expand(panels[34]["targets"][0]["expr"]), byte_input, 250)
+
+    app_panels = {p["id"]: p for p in app["panels"]}
+    active = "yarp_proxy_active_requests"
+    query_check("YarpActiveRequestsRespectRuntimeAndExcludeBrowsers", expand(app_panels[131]["targets"][0]["expr"], selected),
+                [series(active, "2+0x40", server), series(active, "50+0x40", server | {"service_instance_id": "b"}),
+                 series(active, "100+0x40", runtime)], 2)
+    query_check("AbsentYarpMetricsStayEmpty", expand(app_panels[131]["targets"][0]["expr"]), [])
+    query_check("YarpErrorsKeepReasons", "count(" + expand(app_panels[132]["targets"][0]["expr"]) + ")",
+                [series("yarp_proxy_errors_total", "0+1x40", server | {"error_type": "Request"}),
+                 series("yarp_proxy_errors_total", "0+1x40", server | {"error_type": "RequestCanceled"}),
+                 series("yarp_proxy_errors_total", "0+1x40", runtime | {"error_type": "BrowserError"})], 2)
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1]
     with tempfile.TemporaryDirectory(prefix="application-telemetry-") as directory:
         work = Path(directory)

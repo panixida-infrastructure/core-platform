@@ -9459,6 +9459,131 @@ data:
             }
           ],
           "description": "Левая ось: p95 длительности обработки событий и построения render diff на сервере, в секундах. Примерно 95% измерений укладываются в это время. Обработчики включают бизнес-логику и ожидание async-вызовов. Это не время загрузки страницы и не отрисовка браузерного кадра. Правая ось: число операций за 5 минут; при отсутствии операций линии p95 нет."
+        },
+        {
+          "id": 130,
+          "title": "YARP proxy forwarding",
+          "type": "row",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 239
+          }
+        },
+        {
+          "id": 131,
+          "title": "Active YARP forwarding requests",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 240
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, deployment_environment_name) (yarp_proxy_active_requests{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"})",
+              "legendFormat": "{{`{{service_name}} {{deployment_environment_name}}`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "In-flight forwarded requests in the BFF/proxy. Only services using YARP produce this metric; zero is valid after observed requests finish. Services without YARP remain empty."
+        },
+        {
+          "id": 132,
+          "title": "YARP forwarding errors/sec by reason",
+          "type": "timeseries",
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 240
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "fillOpacity": 5,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, deployment_environment_name, error_type) (rate(yarp_proxy_errors_total{service_namespace!=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[5m]))",
+              "legendFormat": "{{`{{service_name}} {{deployment_environment_name}} {{error_type}}`}}",
+              "refId": "A",
+              "range": true,
+              "instant": false
+            }
+          ],
+          "description": "ForwarderError reasons such as Request and RequestCanceled, not HTTP 4xx/5xx returned by the destination. No error series is created until an error is observed. A rate requires multiple samples; absence is not replaced with a fabricated error count."
         }
       ],
       "refresh": "30s",
@@ -9550,10 +9675,9 @@ data:
       "timezone": "browser",
       "title": "Application Telemetry",
       "uid": "application-telemetry",
-      "version": 30,
+      "version": 31,
       "weekStart": ""
     }
-
 ---
 apiVersion: apps/v1
 kind: Deployment
