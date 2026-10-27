@@ -226,6 +226,11 @@ data:
           - key: platform.name
             value: core-platform
             action: upsert
+          - key: deployment.environment.name
+            from_attribute: deployment.environment
+            action: insert
+          - key: deployment.environment
+            action: delete
       resource/frontend:
         attributes:
           - key: service.name
@@ -235,7 +240,9 @@ data:
             action: upsert
           - key: deployment.environment
             action: delete
-          - key: deployment.environment
+          - key: deployment.environment.name
+            action: delete
+          - key: deployment.environment.name
             from_context: metadata.x-frontend-environment
             action: upsert
           - key: service.namespace
@@ -303,7 +310,7 @@ data:
         compression: gzip
         logs_endpoint: http://victorialogs.observability.svc.cluster.local:9428/insert/opentelemetry/v1/logs
         headers:
-          VL-Stream-Fields: service.name,deployment.environment,platform.name
+          VL-Stream-Fields: service.name,deployment.environment.name,platform.name
         auth:
           authenticator: basicauth/victoria
       otlphttp/victoriatraces:
@@ -625,7 +632,9 @@ data:
           - 'set(log.attributes["log.record.uid"], UUID()) where log.attributes["log.record.uid"] == nil or log.attributes["log.record.uid"] == ""'
           - 'replace_pattern(log.body, "bot[0-9]{8,}:[A-Za-z0-9_-]{20,}", "bot[REDACTED]") where IsString(log.body)'
           - 'set(resource.attributes["service.name"], resource.attributes["k8s.container.name"]) where resource.attributes["service.name"] == nil and resource.attributes["k8s.container.name"] != nil'
-          - 'set(resource.attributes["deployment.environment"], resource.attributes["k8s.namespace.name"]) where resource.attributes["deployment.environment"] == nil and resource.attributes["k8s.namespace.name"] != nil'
+          - 'set(resource.attributes["deployment.environment.name"], resource.attributes["deployment.environment"]) where resource.attributes["deployment.environment.name"] == nil and resource.attributes["deployment.environment"] != nil'
+          - 'delete_key(resource.attributes, "deployment.environment")'
+          - 'set(resource.attributes["deployment.environment.name"], resource.attributes["k8s.namespace.name"]) where resource.attributes["deployment.environment.name"] == nil and resource.attributes["k8s.namespace.name"] != nil'
           - 'set(resource.attributes["platform.name"], "core-platform")'
       batch:
         timeout: 5s
@@ -636,7 +645,7 @@ data:
         compression: gzip
         logs_endpoint: http://victorialogs.observability.svc.cluster.local:9428/insert/opentelemetry/v1/logs
         headers:
-          VL-Stream-Fields: service.name,deployment.environment,platform.name
+          VL-Stream-Fields: service.name,deployment.environment.name,platform.name
         auth:
           authenticator: basicauth/victoria
 

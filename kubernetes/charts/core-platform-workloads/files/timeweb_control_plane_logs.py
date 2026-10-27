@@ -180,7 +180,7 @@ class Client:
         resources = []
         for component, logs in groups.items():
             attrs = {"service.name": component, "platform.name": "core-platform",
-                     "deployment.environment": "production", "k8s.cluster.name": "core-platform",
+                     "deployment.environment.name": "production", "k8s.cluster.name": "core-platform",
                      "host.name": "master-" + node["node_ip"], "cloud.provider": "timeweb",
                      "timeweb.node.id": node["id"], "node.role": "control-plane"}
             resources.append({"resource": {"attributes": [attribute(k, v) for k, v in attrs.items()]},
