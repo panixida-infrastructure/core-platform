@@ -213,6 +213,9 @@ identities were overwritten from the BFF metadata.
 
 `Application Telemetry` includes server circuits and Blazor processing times;
 `Browser Telemetry` shows WASM navigation, handlers, rendering, HTTP, and linked logs/traces.
+Application views exclude browser resources; Browser Telemetry orders filters as Service,
+Environment, Runtime instance. Blazor panels show observed operation counts alongside p95:
+idle counters can be zero while duration remains undefined until operations occur.
 Filter by environment and runtime instance. Reporting runtimes are not unique users;
 missing reports from closed or sleeping tabs are normal. Runtime GUIDs increase metric
 series cardinality; the browser dashboard shows recently reporting series.

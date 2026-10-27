@@ -29,9 +29,15 @@ def verify(rendered):
     for dashboard in (browser, app, pipeline):
         ids = [panel["id"] for panel in dashboard["panels"]]
         assert len(ids) == len(set(ids)), dashboard["uid"]
-    assert {v["name"] for v in browser["templating"]["list"]} == {"service", "environment", "instance"}
+    assert [v["name"] for v in browser["templating"]["list"]] == ["service", "environment", "instance"]
+    assert "$" + "{environment:regex}" not in browser["templating"]["list"][0]["query"]
     assert {v["name"] for v in pipeline["templating"]["list"]} == {"collector", "receiver", "exporter"}
-    assert "http_client_request_duration_seconds_count" in app["templating"]["list"][0]["query"]
+    assert 'service_namespace!="browser"' in app["templating"]["list"][0]["query"]
+    assert "http_client_request_duration_seconds_count" not in app["templating"]["list"][0]["query"]
+    for panel in app["panels"]:
+        for target in panel.get("targets", []):
+            if "service_name=~" in target.get("expr", ""):
+                assert 'service_namespace!="browser"' in target["expr"], panel["title"]
     service = {"service_name": "test-admin-client-development", "deployment_environment_name": "development"}
     runtime = service | {"service_namespace": "browser", "service_instance_id": "a"}
     central = {"app_kubernetes_io_name": "otel-collector"}
@@ -132,6 +138,18 @@ def verify(rendered):
     query_check("DisconnectedCircuits", disconnected, [series("aspnetcore_components_circuit_active", "3+0x40", server),
                 series("aspnetcore_components_circuit_connected", "1+0x40", server),
                 series("aspnetcore_components_circuit_active", "50+0x40", server | {"service_instance_id": "b"})], 2)
+    lifetime = {t["refId"]: expand(t["expr"], selected) for t in panels[123]["targets"]}
+    assert "B" in lifetime, "Idle circuit panel needs an observed completion count"
+    idle = [series("aspnetcore_components_circuit_active", "0+0x40", server)]
+    query_check("IdleCircuitsShowZeroCompletions", lifetime["B"], idle, 0)
+    query_check("UnknownCircuitsStayEmpty", lifetime["B"], [])
+    query_check("CircuitCompletionCount", lifetime["B"], idle + [
+                series("aspnetcore_components_circuit_duration_seconds_count", "0+1x40", server)], 10)
+    query_check("BrowserCannotPopulateServerCircuits", expand(panels[121]["targets"][0]["expr"]), [
+                series("aspnetcore_components_circuit_active", "2+0x40", runtime)])
+    for target in panels[124]["targets"]:
+        if target["refId"] in ("C", "D"):
+            query_check("IdleServerOperations" + target["refId"], expand(target["expr"], selected), idle, 0)
     for pid in (5, 7):
         query_check(f"BrowserDoesNotFakeServerZero{pid}", expand(panels[pid]["targets"][0]["expr"]), [good])
     panels = {p["id"]: p for p in browser["panels"]}
