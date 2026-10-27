@@ -189,6 +189,21 @@ def verify(rendered):
     query_check("LatestVitalsUseRuntimeQuantile", vital_expression, vital_input, 4)
     stale_values = " ".join(["1"] * 7 + ["_"] * 34)
     query_check("StaleVitalsAreNotReportingRuntimes", vital_expression, [series(vital, stale_values, page)])
+    startup_expression = expand(panels[31]["targets"][0]["expr"], page_selection)
+    startup_metric = "browser_wasm_startup_duration_seconds_bucket"
+    startup_labels = page | {"browser_wasm_phase": "runtime"}
+    startup_input = [series(startup_metric, values, startup_labels | {"le": boundary})
+                     for boundary, values in (("0.1", "0+0x40"), ("1", "95+0x40"), ("+Inf", "100+0x40"))]
+    unrelated_startups = [series(startup_metric, "100+0x40", labels | {"le": boundary})
+                          for labels in (startup_labels | {"page_route": "/units"},
+                                         startup_labels | {"service_instance_id": "b"},
+                                         startup_labels | {"deployment_environment_name": "production"})
+                          for boundary in ("10", "+Inf")]
+    query_check("StartupP95UsesOneShotRuntimeMeasurements", startup_expression, startup_input + unrelated_startups, 1)
+    query_check("UnrelatedStartupsStayEmpty", startup_expression, unrelated_startups)
+    stale_startup = [series(startup_metric, " ".join(["100"] * 7 + ["_"] * 34), startup_labels | {"le": boundary})
+                     for boundary in ("1", "+Inf")]
+    query_check("StaleStartupsAreNotReportingRuntimes", startup_expression, stale_startup)
     byte_metric = "browser_wasm_resource_decoded_size_bytes_total"
     byte_input = [series(byte_metric, f"{value}+0x40", page | {"service_instance_id": instance,
                   "browser_resource_type": resource}) for instance, resource, value in
