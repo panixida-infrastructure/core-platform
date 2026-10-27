@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 6,
+  "version": 7,
   "tags": [
     "application",
     "browser",
@@ -1341,7 +1341,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nCPU/RSS, full-page startup, JavaScript failures and Web Vitals are not measured by these panels.\n\nPage panels require page measurements from Core 2.1.3 or later. Page is a route template, never a concrete entity ID. Document panels use the entry route; Web Vitals do not reset on each Blazor navigation. Page latency panels separate a rendering opportunity from HTTP data loading. Missing measurements remain empty."
+        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nCPU/RSS and general JavaScript error capture are not included. WASM startup and document Web Vitals are shown in their own section.\n\nPage panels require page measurements from Core 2.1.3 or later. Page is a route template, never a concrete entity ID. Document panels use the entry route; Web Vitals do not reset on each Blazor navigation. Page latency panels separate a rendering opportunity from HTTP data loading. Missing measurements remain empty."
       }
     }
   ]
