@@ -242,6 +242,7 @@ def records(path):
 def verify_collector(rendered):
     collector = configmap(rendered, "otel-logs", "config.yml")
     operators = collector.split("    operators:\n", 1)[1].split("\nprocessors:", 1)[0]
+    processor = re.search(r"^  transform/kubernetes:\n(?:    .*\n|\n)+", collector, re.M)[0]
     image = re.search(r"image: [\"']?(otel/opentelemetry-collector-contrib:[^\s\"']+)", rendered)[1]
     cases = fixtures()
     name = "log-level-test-" + uuid.uuid4().hex[:12]
@@ -272,9 +273,10 @@ def verify_collector(rendered):
                   "    include: [/var/log/pods/*/*/*.log]\n"
                   "    start_at: beginning\n    include_file_path: true\n"
                   "    poll_interval: 100ms\n    operators:\n" + operators + "\n"
+                  "processors:\n" + processor + "\n"
                   "exporters:\n  file:\n    path: /output/logs.json\n    flush_interval: 100ms\n"
                   "service:\n  pipelines:\n    logs:\n"
-                  "      receivers: [filelog/test]\n      exporters: [file]\n")
+                  "      receivers: [filelog/test]\n      processors: [transform/kubernetes]\n      exporters: [file]\n")
         (root / "config.yml").write_text(config, encoding="utf-8")
         with (root / "collector.log").open("w", encoding="utf-8") as collector_log:
             process = subprocess.Popen([
@@ -308,7 +310,13 @@ def verify_collector(rendered):
                         attributes = {attribute["key"]: attribute["value"].get("stringValue")
                                       for attribute in log.get("attributes", [])}
                         assert attributes["alert_owner"] == "core-platform", log
-                print(f"{image}: {len(cases)} filelog records, severity and unchanged body: OK", flush=True)
+                for line in (output / "logs.json").read_text(encoding="utf-8").splitlines():
+                    for resource in json.loads(line).get("resourceLogs", []):
+                        attributes = {a["key"]: a["value"].get("stringValue")
+                                      for a in resource["resource"].get("attributes", [])}
+                        assert attributes["deployment.environment.name"] == attributes["k8s.namespace.name"], attributes
+                        assert "deployment.environment" not in attributes, attributes
+                print(f"{image}: {len(cases)} filelog records, severity, body and environment: OK", flush=True)
             finally:
                 subprocess.run(["docker", "stop", "--time", "2", name],
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)

@@ -189,10 +189,14 @@ OpenTelemetry 1.19.1 exporter requires at least 750000 bytes, so a 64 KiB limit 
 not compatible with its request-size setting. Before batching or exporting,
 `resource/frontend` removes client-supplied service/environment identities and
 sets them from the BFF's `X-Frontend-Service` and `X-Frontend-Environment` headers.
-It sets `service.namespace=browser`. The BFF must assign these headers itself and
+It sets `service.namespace=browser` and `deployment.environment.name` from the BFF.
+The BFF must assign these headers itself and
 must not pass through copies supplied by the browser. Browser metrics, logs and
 traces then use the existing VictoriaMetrics, VictoriaLogs and VictoriaTraces
 exporters.
+
+Collectors normalize legacy `deployment.environment` to `deployment.environment.name`,
+preserving an existing canonical value and removing the legacy key before export.
 
 Deploy this receiver before enabling the admin's browser exports. A local
 validation with Docker and a rendered chart is available:

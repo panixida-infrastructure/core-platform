@@ -58,6 +58,20 @@ class FakeClient:
 
 
 class CollectorTests(unittest.TestCase):
+    def test_export_uses_canonical_deployment_environment(self):
+        client = collector.Client.__new__(collector.Client)
+        client.public = Mock()
+        client.request = Mock(return_value={})
+        with patch.dict(collector.os.environ, {"OTLP_LOGS_ENDPOINT": "http://collector/v1/logs"}):
+            client.export(NODE, [collector.normalize(line(), NODE, NOW)])
+        payload = client.request.call_args.args[3]
+        resources = payload["resourceLogs"]
+        self.assertEqual(len(resources), 1)
+        attributes = {a["key"]: a["value"]["stringValue"]
+                      for a in resources[0]["resource"]["attributes"]}
+        self.assertEqual(attributes["deployment.environment.name"], "production")
+        self.assertNotIn("deployment.environment", attributes)
+
     def test_known_diagnostic_client_reset_is_warning_with_source_error_preserved(self):
         raw = reset_line()
         with patch.object(collector, "DIAGNOSTIC_CLIENT_IPS", {"176.53.162.227"}):
