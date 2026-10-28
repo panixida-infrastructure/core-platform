@@ -159,6 +159,18 @@ def verify(rendered):
     query_check("ReportingRuntimes", runtimes, [series(navigation, "0+1x40", runtime),
                 series(navigation, "0+1x40", runtime | {"service_instance_id": "b"})], 2)
     query_check("ClosedBrowserDoesNotReport", runtimes, [])
+    metric_series = expand(panels[2]["targets"][0]["expr"], {
+        "service": service["service_name"], "environment": "development", "instance": "a"})
+    reported = [series("browser_test_first", "1+0x40", runtime),
+                series("browser_test_second", "0+0x40", runtime)]
+    query_check("BrowserSeriesKeepDifferentMetricNamesAndZeroSamples", metric_series, reported, 2)
+    query_check("BrowserSeriesRespectSelectedFilters", metric_series, reported + [
+        series("browser_test_first", "1+0x40", runtime | replacement)
+        for replacement in ({"service_namespace": "server"}, {"service_name": "another-service"},
+                            {"deployment_environment_name": "production"}, {"service_instance_id": "b"})], 2)
+    query_check("BrowserSeriesExcludeStaleSamples", metric_series,
+                [series("browser_test_first", " ".join(["1"] * 7 + ["_"] * 34), runtime)])
+    query_check("BrowserSeriesMissingTelemetryStaysEmpty", metric_series, [])
     query_check("HealthyHttpRatio", expand(panels[8]["targets"][0]["expr"]),
                 [series("http_client_request_duration_seconds_count", "0+10x40", runtime | {"http_response_status_code": "200"})], 0)
     query_check("MissingHttpStaysEmpty", expand(panels[8]["targets"][0]["expr"]), [])
