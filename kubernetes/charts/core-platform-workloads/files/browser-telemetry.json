@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 10,
+  "version": 11,
   "tags": [
     "application",
     "browser",
@@ -159,7 +159,7 @@
         "multi": true,
         "name": "page",
         "options": [],
-        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",__name__=~\"browser_page_navigation_duration_seconds_count|browser_page_http_duration_seconds_count|browser_web_vital_lcp_seconds\"}, page_route)",
+        "query": "label_values({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",__name__=~\"browser_page_navigation_duration_seconds_count|browser_page_http_duration_seconds_count|browser_web_vital_lcp_seconds|browser_page_load_duration_seconds_count|browser_javascript_errors_total\"}, page_route)",
         "refresh": 2,
         "regex": "",
         "sort": 1,
@@ -518,6 +518,164 @@
       "description": "Measurement counts give context for latency percentiles. Only completed navigation frames count. Increase requires exported counter samples; the first observation can be undercounted. Empty means no observations, not an application outage."
     },
     {
+      "id": 25,
+      "title": "Page ready p95 and failed load ratio",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Failed loads (%)"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, service_name, deployment_environment_name, page_route) ((rate(browser_page_load_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"success\"}[5m]) and (time() - timestamp(browser_page_load_duration_seconds_bucket{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"success\"}) < 180)))))",
+          "legendFormat": "p95 {{service_name}} {{deployment_environment_name}} {{page_route}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "100 * (sum by (service_name, deployment_environment_name, page_route) ((rate(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"error\"}[5m]) and (time() - timestamp(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"error\"}) < 180))) or on (service_name, deployment_environment_name, page_route) ((0 * sum by (service_name, deployment_environment_name, page_route) ((rate(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=~\"success|error\"}[5m]) and (time() - timestamp(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=~\"success|error\"}) < 180)))) unless on (service_name, deployment_environment_name, page_route) count by (service_name, deployment_environment_name, page_route) ((browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"error\"} and (time() - timestamp(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=\"error\"}) < 180))))) / on (service_name, deployment_environment_name, page_route) (sum by (service_name, deployment_environment_name, page_route) ((rate(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=~\"success|error\"}[5m]) and (time() - timestamp(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`,browser_page_load_outcome=~\"success|error\"}) < 180))) > 0)",
+          "legendFormat": "failed % {{service_name}} {{deployment_environment_name}} {{page_route}}",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Successful page-ready p95 (seconds, left axis): navigation through observed data loading to a rendering opportunity, reported by PageLoadObserver. Includes initial loads and SPA transitions. Top 10 p95 routes over 5 minutes. Failed load ratio (percent, dashed, right axis): error / (success + error); cancelled loads are excluded. Missing observations and zero completed-load rate stay empty. Only samples exported in the last 3 minutes contribute."
+    },
+    {
+      "id": 26,
+      "title": "JavaScript errors/sec by page",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service_name, deployment_environment_name, page_route, browser_error_kind) ((rate(browser_javascript_errors_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}[5m]) and (time() - timestamp(browser_javascript_errors_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180))) or on (service_name, deployment_environment_name, page_route) ((0 * count by (service_name, deployment_environment_name, page_route) ((browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_page_load_duration_seconds_count{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180)))) unless on (service_name, deployment_environment_name, page_route) count by (service_name, deployment_environment_name, page_route) ((browser_javascript_errors_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`} and (time() - timestamp(browser_javascript_errors_total{service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\",page_route=~`${page:regex}`}) < 180))))",
+          "legendFormat": "{{service_name}} {{deployment_environment_name}} {{page_route}} {{browser_error_kind}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "description": "Uncaught JavaScript errors and unhandled promise rejections, grouped by route template and error kind. Core limits reports per runtime; this is the rate of reported errors. Zero requires page-load telemetry exported within 3 minutes and no fresh JavaScript error series for that page. A first error sample is not replaced with zero while its rate is unknown. Missing or sleeping runtimes stay empty. Error details are in browser logs and traces."
+    },
+    {
       "id": 30,
       "title": "Document startup and Web Vitals — entry page",
       "type": "row",
@@ -527,7 +685,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 33
       }
     },
     {
@@ -542,7 +700,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "fieldConfig": {
         "defaults": {
@@ -598,7 +756,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 34
       },
       "fieldConfig": {
         "defaults": {
@@ -675,7 +833,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 42
       },
       "fieldConfig": {
         "defaults": {
@@ -731,7 +889,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 42
       },
       "fieldConfig": {
         "defaults": {
@@ -791,7 +949,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "panels": []
     },
@@ -807,7 +965,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -870,7 +1028,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -940,7 +1098,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1003,7 +1161,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1059,7 +1217,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -1115,7 +1273,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -1169,7 +1327,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 75
       }
     },
     {
@@ -1184,7 +1342,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 68
+        "y": 76
       },
       "fieldConfig": {
         "defaults": {
@@ -1236,7 +1394,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 68
+        "y": 76
       },
       "fieldConfig": {
         "defaults": {
@@ -1288,7 +1446,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "fieldConfig": {
         "defaults": {
@@ -1347,7 +1505,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 76
+        "y": 84
       },
       "fieldConfig": {
         "defaults": {
@@ -1399,7 +1557,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 84
+        "y": 92
       },
       "fieldConfig": {
         "defaults": {
@@ -1451,7 +1609,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 84
+        "y": 92
       },
       "fieldConfig": {
         "defaults": {
@@ -1503,7 +1661,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 92
+        "y": 100
       },
       "fieldConfig": {
         "defaults": {
@@ -1555,7 +1713,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 92
+        "y": 100
       },
       "fieldConfig": {
         "defaults": {
@@ -1614,7 +1772,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 100
+        "y": 108
       },
       "options": {
         "showTime": true,
@@ -1662,7 +1820,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 110
+        "y": 118
       },
       "options": {
         "cellHeight": "sm",
@@ -1714,11 +1872,11 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 120
+        "y": 128
       },
       "options": {
         "mode": "markdown",
-        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nManaged .NET runtime metrics require Core 2.1.6 or later and apply to the whole runtime, independent of Page. CPU/RSS, GC pauses and JIT timings are unavailable in WASM. JavaScript errors appear in browser logs and traces (Core 2.1.5+). WASM startup and document Web Vitals are shown in their own section.\n\nPage panels require page measurements from Core 2.1.3 or later. Page is a route template, never a concrete entity ID. Document panels use the entry route; Web Vitals do not reset on each Blazor navigation. Page latency panels separate a rendering opportunity from HTTP data loading. Missing measurements remain empty."
+        "content": "Each WASM runtime has its own GUID, shared by metrics, logs and traces. It is not a user identifier. Follow a log trace link to inspect WASM → BFF/YARP → API → database.\n\nNo reports from a closed or sleeping tab are normal. Browser telemetry is diagnostic input from clients; BFF authentication assigns service/environment but does not make payload contents authoritative.\n\nManaged .NET runtime metrics require Core 2.1.6 or later and apply to the whole runtime, independent of Page. CPU/RSS, GC pauses and JIT timings are unavailable in WASM. JavaScript errors are grouped by page and kind, with details in browser logs and traces (Core 2.1.5+). WASM startup and document Web Vitals are shown in their own section.\n\nPage panels require page measurements from Core 2.1.3 or later. Page is a route template, never a concrete entity ID. Document panels use the entry route; Web Vitals do not reset on each Blazor navigation. Page latency panels separate a first rendering opportunity, individual HTTP requests, and PageLoadObserver-reported page readiness. Failed load ratio excludes cancelled navigation. Missing measurements remain empty."
       }
     }
   ]
