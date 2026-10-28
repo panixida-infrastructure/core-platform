@@ -3,7 +3,7 @@
   "title": "Browser Telemetry",
   "editable": false,
   "schemaVersion": 41,
-  "version": 11,
+  "version": 12,
   "tags": [
     "application",
     "browser",
@@ -264,14 +264,14 @@
       },
       "targets": [
         {
-          "expr": "count by (service_name) ({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"} and (time() - timestamp({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}) < 180))",
+          "expr": "count by (service_name) (present_over_time({service_namespace=\"browser\",service_name=~\"${service:regex}\",deployment_environment_name=~\"${environment:regex}\",service_instance_id=~\"${instance:regex}\"}[3m]) keep_metric_names)",
           "legendFormat": "{{service_name}}",
           "refId": "A",
           "range": true,
           "instant": false
         }
       ],
-      "description": "Live metric series, not retained storage volume. Each runtime GUID and histogram bucket creates series. Dashboard aggregation does not reduce ingestion cardinality."
+    "description": "Metric series with at least one exported sample in the preceding 3 minutes at each point. Metric names remain distinct during counting. This is reporting cardinality, not retained storage volume; runtime GUIDs and histogram buckets create separate series. Dashboard aggregation does not reduce ingestion cardinality."
     },
     {
       "id": 20,
