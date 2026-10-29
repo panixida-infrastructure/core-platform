@@ -69,6 +69,7 @@ Active OpenBao secret paths:
 secret/core-platform/github
 secret/core-platform/github-provisioner
 secret/core-platform/applications
+secret/core-platform/envoy-gateway
 secret/core-platform/identity
 secret/core-platform/observability
 secret/core-platform/openbao
@@ -98,6 +99,15 @@ user, verifies its old credentials no longer work, and removes the four legacy
 Valkey keys from the current `secret/core-platform/applications` version. Earlier
 KV versions and the create-only bootstrap state retain historical credentials.
 Applications are integrated with Valkey separately.
+
+The shared Envoy RateLimit identity `envoy_gateway_user` uses an independent
+OpenTofu-generated password. `OpenTofu Apply` writes the same four `VALKEY_*`
+fields to `secret/core-platform/envoy-gateway`, creating the path with CAS=0 when
+absent and verifying the saved values. The GitHub Actions policy in
+`scripts/openbao/configure.sh` grants create/read/update only for this additional
+path and must be reconciled before first publication. Gateway credentials are
+not copied into Tactical Heroes secrets. Temporary Kubernetes clients verify
+the required commands; wiring Envoy RateLimit to this secret is a separate step.
 
 The SonarQube path stores the persistent session key and the GitHub App credentials used for repository import:
 

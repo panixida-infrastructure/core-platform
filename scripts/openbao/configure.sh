@@ -43,6 +43,10 @@ path "secret/data/core-platform/observability" {
   capabilities = ["create", "read", "update"]
 }
 
+path "secret/data/core-platform/envoy-gateway" {
+  capabilities = ["create", "read", "update"]
+}
+
 path "secret/data/core-platform/telegram-alert-gateway" {
   capabilities = ["create", "read", "update"]
 }

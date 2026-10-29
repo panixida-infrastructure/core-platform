@@ -88,6 +88,45 @@ printf '%s\n' "$result" | grep -q '^NOAUTH '
 echo 'PASS: application authentication works; default bootstrap and unauthenticated access rejected'
 '''
 
+GATEWAY_SMOKE_SCRIPT = r'''
+set -eu
+cli() { valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" "$@"; }
+key="__core_platform_smoke:gateway:${HOSTNAME}"
+cleanup() { cli DEL "$key" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+test "$(cli PING)" = PONG
+test "$(cli -3 PING)" = PONG
+test "$(cli ACL WHOAMI)" = "$VALKEY_USERNAME"
+printf 'INCRBY %s 3\nEXPIRE %s 60\nGET %s\n' "$key" "$key" "$key" | cli >/tmp/ratelimit.log
+test "$(cat /tmp/ratelimit.log)" = "$(printf '3\n1\n3')"
+test "$(cli TTL "$key")" -gt 0
+refund="local current = redis.call('GET', KEYS[1])
+if current == false then return 0 end
+local value = math.floor(math.max(0, tonumber(current) - tonumber(ARGV[1])))
+redis.call('SET', KEYS[1], tostring(value))
+redis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]))
+return value"
+test "$(cli EVAL "$refund" 1 "$key" 2 60)" = 1
+test "$(cli GET "$key")" = 1
+test "$(cli TTL "$key")" -gt 0
+test "$(cli EVAL "$refund" 1 "$key" 10 60)" = 0
+test "$(cli DEL "$key")" = 1
+test "$(cli EVAL "$refund" 1 "$key" 1 60)" = 0
+test "$(cli EXISTS "$key")" = 0
+echo 'PASS: gateway identity, RESP2/RESP3, INCRBY/EXPIRE/GET, TTL and Lua refunds'
+denied() {
+  if reply="$(cli "$@" 2>&1)"; then
+    echo "FAIL: unexpectedly permitted $1"; exit 1
+  fi
+  printf '%s\n' "$reply" | grep -Eq '^(NOPERM |ERR unknown command)'
+  echo "DENIED: $1"
+}
+denied PUBLISH "${key}:pubsub" gateway-probe
+denied MULTI
+denied CONFIG GET maxmemory
+denied ACL USERS
+'''
+
 
 def request_json(url, headers=None, payload=None, method=None):
     data = None if payload is None else json.dumps(payload).encode()
@@ -140,7 +179,12 @@ def openbao_headers():
 def update_secret(path, headers, desired, remove=()):
     # Preserve unrelated service credentials and avoid overwriting concurrent updates.
     for attempt in range(5):
-        current = request_json(path, headers)["data"]
+        try:
+            current = request_json(path, headers)["data"]
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
+            current = {"data": {}, "metadata": {"version": 0}}
         existing = current["data"]
         if all(existing.get(key) == value for key, value in desired.items()) and not any(
                 key in existing for key in remove):
@@ -170,14 +214,23 @@ def publish_credentials(config, passwords, bao_url, headers):
         print(f"Verified OpenBao applications/tactical-heroes-api/{environment}: {username}")
 
 
+def publish_gateway_credentials(config, password, bao_url, headers):
+    desired = {"VALKEY_HOST": config["host"], "VALKEY_PORT": str(config["port"]),
+               "VALKEY_USERNAME": config["gateway"]["username"], "VALKEY_PASSWORD": password}
+    update_secret(f"{bao_url}/v1/secret/data/core-platform/envoy-gateway", headers, desired)
+    print(f"Verified OpenBao core-platform/envoy-gateway: {config['gateway']['username']}")
+
+
 def verify_users(users, config):
     by_login = {user["login"]: user for user in users}
-    for username in config["users"].values():
+    expected = {username: config["privileges"] for username in config["users"].values()}
+    expected[config["gateway"]["username"]] = config["gateway"]["privileges"]
+    for username, privileges in expected.items():
         user = by_login.get(username)
         if user is None or user.get("status") != "created":
             raise RuntimeError(f"Valkey user is not ready: {username}")
         instances = user.get("instances", [])
-        if not instances or any(set(instance["privileges"]) != set(config["privileges"])
+        if not instances or any(set(instance["privileges"]) != set(privileges)
                                 for instance in instances):
             raise RuntimeError(f"Unexpected provider privileges: {username}")
 
@@ -291,14 +344,18 @@ def main():
     config = json.loads(os.environ["VALKEY_CONFIG"])
     passwords = json.loads(os.environ["VALKEY_USER_PASSWORDS"])
     default_password = os.environ["VALKEY_DEFAULT_PASSWORD"]
+    gateway_password = os.environ["VALKEY_GATEWAY_PASSWORD"]
     expected_users = {"development": "tactical_heroes_user_dev", "production": "tactical_heroes_user_prod"}
     if config["users"] != expected_users or set(passwords) != set(expected_users):
         raise ValueError("Unexpected Valkey application identities")
-    if any(len(password) != 30 for password in [default_password, *passwords.values()]):
+    if config["gateway"]["username"] != "envoy_gateway_user":
+        raise ValueError("Unexpected Valkey gateway identity")
+    all_passwords = [default_password, gateway_password, *passwords.values()]
+    if any(len(password) != 30 for password in all_passwords):
         raise ValueError("Unexpected Valkey password length")
-    if len(set(passwords.values())) != len(passwords) or default_password in passwords.values():
+    if len(set(all_passwords)) != len(all_passwords):
         raise ValueError("Valkey users must have independent passwords")
-    for password in [default_password, *passwords.values()]:
+    for password in all_passwords:
         print(f"::add-mask::{password}", flush=True)
     headers = {"Authorization": "Bearer " + os.environ["TIMEWEB_TOKEN"]}
     base = "https://api.timeweb.cloud/api/v1"
@@ -309,6 +366,9 @@ def main():
     verify_users(request_json(f"{base}/databases/{config['id']}/admins", headers)["admins"], config)
     bao_url, bao_headers = openbao_headers()
     publish_credentials(config, passwords, bao_url, bao_headers)
+    publish_gateway_credentials(config, gateway_password, bao_url, bao_headers)
+    probe_workers({**config, "username": config["gateway"]["username"]}, gateway_password,
+                  script=GATEWAY_SMOKE_SCRIPT)
     for environment, username in config["users"].items():
         probe_workers({**config, "username": username}, passwords[environment], script=CORE_SMOKE_SCRIPT)
     retire_default_user(base, headers, config)
