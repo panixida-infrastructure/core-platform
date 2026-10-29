@@ -26,7 +26,8 @@ cleanup() {
 }
 trap cleanup EXIT
 test "$(cli PING)" = PONG
-test "$(cli CONFIG GET maxmemory-policy | tail -n 1)" = noeviction
+cli INFO memory | tr -d '\r' >/tmp/memory.info
+grep -qx 'maxmemory_policy:noeviction' /tmp/memory.info
 cli INFO server | grep -E '^valkey_version:9\.1\.'
 test "$(cli SET "$key" 41 EX 60 NX)" = OK
 test "$(cli GET "$key")" = 41
@@ -45,7 +46,7 @@ for attempt in $(seq 1 10); do
   sleep 1
 done
 grep -qx valkey-smoke-message /tmp/pubsub.log
-cli INFO memory | grep -E '^(used_memory_human|maxmemory_human|maxmemory_policy):'
+grep -E '^(used_memory_human|maxmemory_human|maxmemory_policy):' /tmp/memory.info
 echo 'PASS: authenticated PING, noeviction, SET/GET, TTL, Lua, Pub/Sub'
 '''
 
@@ -165,11 +166,14 @@ def probe_workers(config, password):
                                  {"name": "VALKEY_USERNAME", "value": config["username"]},
                                  {"name": "VALKEYCLI_AUTH", "valueFrom": {"secretKeyRef": {
                                      "name": name, "key": "password"}}}]}]}})
-            result = kubectl("-n", namespace, "wait", "--for=jsonpath={.status.phase}=Succeeded",
+            result = kubectl("-n", namespace, "wait",
+                             "--for=jsonpath={.status.containerStatuses[0].state.terminated.reason}",
                              f"pod/{pod_name}", "--timeout=110s", check=False)
+            phase = json.loads(kubectl("-n", namespace, "get", "pod", pod_name,
+                                      "-o", "json").stdout)["status"]["phase"]
             logs = kubectl("-n", namespace, "logs", pod_name, check=False).stdout
             print(f"Worker {worker}:\n{logs.replace(password, '[REDACTED]')}", flush=True)
-            if result.returncode:
+            if result.returncode or phase != "Succeeded":
                 raise RuntimeError(f"Valkey check failed on worker {worker}")
     finally:
         cleanup_failed = False

@@ -81,6 +81,9 @@ Managed Valkey 9.1 is declared in `opentofu/envs/production/valkey.tf`: one node
 deletion recovery are disabled. `noeviction` protects coordination/session keys
 from cache eviction; callers must handle memory-limit errors and use bounded TTLs.
 The instance is shared initially and does not provide replication or failover.
+Timeweb restricts administrative Valkey commands, including `CONFIG GET`. Change
+parameters through OpenTofu/provider API; the runtime check reads eviction policy
+from `INFO memory`.
 
 `OpenTofu Apply` checks the provider settings, stores `VALKEY_HOST`, `VALKEY_PORT`,
 `VALKEY_USERNAME`, and `VALKEY_PASSWORD` in OpenBao `secret/core-platform/applications`,
