@@ -65,35 +65,110 @@ class ValkeyConfigurationTests(unittest.TestCase):
 
 class ValkeyCredentialPublicationTests(unittest.TestCase):
     def test_cas_retry_preserves_concurrent_unrelated_credentials(self):
-        config = {"host": "192.168.10.20", "port": 6379, "username": "default"}
+        desired = {"VALKEY_HOST": "192.168.10.20", "VALKEY_PASSWORD": "test-password"}
         conflict = urllib.error.HTTPError("https://example.invalid", 400, "CAS conflict", {}, None)
-        responses = [{"value": "test-jwt"}, {"auth": {"client_token": "test-token"}},
-                     {"data": {"metadata": {"version": 4}, "data": {"OTHER_PASSWORD": "old"}}},
+        responses = [{"data": {"metadata": {"version": 4}, "data": {"OTHER_PASSWORD": "old"}}},
                      conflict,
-                     {"data": {"metadata": {"version": 5}, "data": {"OTHER_PASSWORD": "updated"}}}, {}]
-        with patch.dict(valkey.os.environ, {"ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid?x=1",
-                                           "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "test-request-token"}), \
-                patch.object(valkey, "request_json", side_effect=responses) as request, \
-                patch.object(valkey.time, "sleep"), patch("builtins.print"):
-            valkey.publish_credentials(config, "test-password")
-        payload = request.call_args_list[-1].args[2]
+                     {"data": {"metadata": {"version": 5}, "data": {"OTHER_PASSWORD": "updated"}}}, {},
+                     {"data": {"data": {"OTHER_PASSWORD": "updated", **desired}}}]
+        with patch.object(valkey, "request_json", side_effect=responses) as request, \
+                patch.object(valkey.time, "sleep"):
+            valkey.update_secret("https://example.invalid", {}, desired)
+        payload = request.call_args_list[-2].args[2]
         self.assertEqual(payload["options"]["cas"], 5)
         self.assertEqual(payload["data"]["OTHER_PASSWORD"], "updated")
         self.assertEqual(payload["data"]["VALKEY_PASSWORD"], "test-password")
-        self.assertEqual(payload["data"]["VALKEY_HOST"], config["host"])
+        self.assertEqual(payload["data"]["VALKEY_HOST"], desired["VALKEY_HOST"])
 
     def test_unchanged_credentials_do_not_create_another_secret_version(self):
-        config = {"host": "192.168.10.20", "port": 6379, "username": "default"}
-        current = {"VALKEY_HOST": config["host"], "VALKEY_PORT": "6379",
-                   "VALKEY_USERNAME": "default", "VALKEY_PASSWORD": "test-password"}
-        responses = [{"value": "test-jwt"}, {"auth": {"client_token": "test-token"}},
-                     {"data": {"metadata": {"version": 6}, "data": current}}]
-        with patch.dict(valkey.os.environ, {"ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid?x=1",
-                                           "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "test-request-token"}), \
-                patch.object(valkey, "request_json", side_effect=responses) as request, \
+        current = {"VALKEY_HOST": "192.168.10.20", "VALKEY_PASSWORD": "test-password"}
+        response = {"data": {"metadata": {"version": 6}, "data": current}}
+        with patch.object(valkey, "request_json", return_value=response) as request:
+            valkey.update_secret("https://example.invalid", {}, current)
+        self.assertEqual(request.call_count, 1)
+
+    def test_each_environment_receives_only_its_own_credentials(self):
+        config = {"host": "192.168.10.20", "port": 6379, "users": {
+            "development": "tactical_heroes_user_dev", "production": "tactical_heroes_user_prod"}}
+        passwords = {"development": "dev-password", "production": "prod-password"}
+        with patch.object(valkey, "update_secret") as update, patch("builtins.print"):
+            valkey.publish_credentials(config, passwords, "https://example.invalid", {})
+        self.assertEqual(update.call_count, 2)
+        for call, environment in zip(update.call_args_list, config["users"]):
+            self.assertTrue(call.args[0].endswith(f"/applications/tactical-heroes-api/{environment}"))
+            self.assertEqual(call.args[2]["VALKEY_USERNAME"], config["users"][environment])
+            self.assertEqual(call.args[2]["VALKEY_PASSWORD"], passwords[environment])
+
+    def test_bootstrap_cleanup_preserves_other_service_secrets(self):
+        responses = [{"data": {"metadata": {"version": 6}, "data": {
+            "VALKEY_PASSWORD": "old-password", "OTHER_PASSWORD": "keep"}}}, {},
+            {"data": {"data": {"OTHER_PASSWORD": "keep"}}}]
+        with patch.object(valkey, "request_json", side_effect=responses) as request:
+            valkey.update_secret("https://example.invalid", {}, {}, remove=("VALKEY_PASSWORD",))
+        self.assertEqual(request.call_args_list[1].args[2]["data"], {"OTHER_PASSWORD": "keep"})
+
+    def test_failed_readback_is_not_reported_as_success(self):
+        responses = [{"data": {"metadata": {"version": 6}, "data": {}}}, {},
+                     {"data": {"data": {}}}]
+        with patch.object(valkey, "request_json", side_effect=responses), \
+                self.assertRaisesRegex(RuntimeError, "verification failed"):
+            valkey.update_secret("https://example.invalid", {}, {"VALKEY_PASSWORD": "new-password"})
+
+
+class ValkeyUserRetirementTests(unittest.TestCase):
+    def setUp(self):
+        self.config = {"id": "123", "retire_default_user": True,
+                       "privileges": ["CONNECTION", "READ", "WRITE", "PUBSUB", "SCRIPTING", "TRANSACTION"],
+                       "users": {"development": "tactical_heroes_user_dev",
+                                 "production": "tactical_heroes_user_prod"}}
+        self.users = [{"id": index, "login": login, "status": "created",
+                       "instances": [{"privileges": self.config["privileges"]}]}
+                      for index, login in enumerate(self.config["users"].values(), 1)]
+
+    def test_missing_application_user_prevents_default_deletion(self):
+        response = {"admins": [{"id": 99, "login": "default"}, self.users[0]]}
+        with patch.object(valkey, "request_json", return_value=response) as request, \
+                self.assertRaisesRegex(RuntimeError, "not ready"):
+            valkey.retire_default_user("https://example.invalid", {}, self.config)
+        self.assertEqual(request.call_count, 1)
+
+    def test_excessive_privileges_are_rejected(self):
+        users = copy.deepcopy(self.users)
+        users[0]["instances"][0]["privileges"].append("DANGEROUS")
+        with self.assertRaisesRegex(RuntimeError, "privileges"):
+            valkey.verify_users(users, self.config)
+
+    def test_deletes_only_default_and_waits_for_provider_completion(self):
+        before = {"admins": [{"id": 99, "login": "default"}, *self.users]}
+        responses = [before, {}, before, {"admins": self.users}]
+        with patch.object(valkey, "request_json", side_effect=responses) as request, \
+                patch.object(valkey.time, "sleep"), patch("builtins.print"):
+            valkey.retire_default_user("https://example.invalid", {}, self.config)
+        self.assertEqual(request.call_args_list[1].args[0],
+                         "https://example.invalid/databases/123/admins/99")
+        self.assertEqual(request.call_args_list[1].kwargs, {"method": "DELETE"})
+
+    def test_already_retired_user_is_not_deleted_again(self):
+        with patch.object(valkey, "request_json", return_value={"admins": self.users}) as request, \
                 patch("builtins.print"):
-            valkey.publish_credentials(config, "test-password")
-        self.assertEqual(request.call_count, 3)
+            valkey.retire_default_user("https://example.invalid", {}, self.config)
+        self.assertFalse(any(call.kwargs.get("method") == "DELETE" for call in request.call_args_list))
+
+    def test_failed_application_probe_prevents_retirement(self):
+        env = {"VALKEY_CONFIG": json.dumps(self.config),
+               "VALKEY_USER_PASSWORDS": json.dumps({"development": "d" * 30, "production": "p" * 30}),
+               "VALKEY_DEFAULT_PASSWORD": "b" * 30, "TIMEWEB_TOKEN": "test-token"}
+        with patch.dict(valkey.os.environ, env), \
+                patch.object(valkey, "request_json", side_effect=[{"db": {}},
+                    {"auto_backups_settings": {}}, {"admins": self.users}]), \
+                patch.object(valkey, "verify_database"), \
+                patch.object(valkey, "openbao_headers", return_value=("https://example.invalid", {})), \
+                patch.object(valkey, "publish_credentials"), \
+                patch.object(valkey, "probe_workers", side_effect=RuntimeError("probe failed")), \
+                patch.object(valkey, "retire_default_user") as retire, patch("builtins.print"), \
+                self.assertRaisesRegex(RuntimeError, "probe failed"):
+            valkey.main()
+        retire.assert_not_called()
 
 
 class ValkeyProbeWaitTests(unittest.TestCase):
