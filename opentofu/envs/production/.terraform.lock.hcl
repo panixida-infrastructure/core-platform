@@ -1,17 +1,54 @@
 # This file is maintained automatically by "tofu init".
 # Manual edits may be lost in future updates.
 
-provider "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud" {
-  version     = "1.8.2"
-  constraints = "~> 1.8"
+provider "registry.opentofu.org/hashicorp/random" {
+  version     = "3.9.1"
+  constraints = "~> 3.7"
   hashes = [
-    "h1:8Ygtv2PKYJxQN+rKjBkhSb6rCezhwsisKm3vbOLT4Ng=",
-    "h1:Q2I7YvwG949s/pfCskPrRqDRQ+xkXHr40y1gM03eWP8=",
-    "zh:256a55a657642da86babda60cb3d5a039818a60dbf1354d24bf0595548988fc5",
-    "zh:278b5b8e0a3069fe6183b56b5f42a1a9b9426ac3125ae67ac47d750d64155279",
-    "zh:3ba47ace275a8a0bc28381db598282d6e2d860762e045624ea3b146d14e9b05e",
-    "zh:5aeef0740eb75a996f1e1e0abf83f5363cad18312ca15b481b217b83b9932457",
-    "zh:6f2f2183e26845a6d5ad2b8196b8c182dbd5892a5240ef17013aad7bd2550d5c",
-    "zh:a379d9b024f67c3ec5562add9e63fcb8a784c42aa06500f7949258831e967cf1",
+    "h1:38E2VQmQDhws/3AL3D/EzBGuCseepyZRIswAOx8CqoQ=",
+    "h1:7+qv9kpOpBC9EUPCubnPxh603tu3l9EIMMBkpbt1H1Y=",
+    "h1:CEQeHfnUDB3uqAkKoEWfWgbj+kpoQHgcuPbAjPzbh+U=",
+    "h1:HPYO9tf8KUSHqSdz1uOL97MLeaVHPaWPY1JW6tKU19E=",
+    "h1:KYXiC06Pr3WJcIUbDq9MgdAbInO5zcRyHFqV1x5UcJg=",
+    "h1:MygjbYH8CrPv8RUe75tZAFmrFNIzQLT45fiyYx7u2tI=",
+    "h1:RMSARNOw4qZx+VmHYnVMGljsFVfCV1P+nJjKrN2XIOI=",
+    "h1:U/71jbSbfsfVLxWpSlhyVHh/DnQXQhjoJCGkyongkBA=",
+    "h1:WwLLvRE1q95CTGxyTjKpctXJ0ooVs9d22JAQS9fC3uo=",
+    "h1:ZtRBSqoyfQAhngjUjM0NRPtj6NdSJ/JBENFwT8D276s=",
+    "h1:cfxedZLduhHD1UtqQDjAQZNAEhr/bWDAZ4nU9rSdySg=",
+    "h1:i45mo4de0QKOreStMqUQ7qyZL3ucFq42l178Fm5/hMU=",
+    "h1:v3SAJKN4D3dOM95xKwgKGIWELe5nUBbyXdb5HNz7icw=",
+    "h1:v3vTk/STekrzNc6NG3jL9/05zhvF1QVCgyRRbvSHPcI=",
+    "h1:zHgFWtRBgOycqhw8HdLSvMVNWGJtIjOAPYOcAdE7cL0=",
+    "zh:09aaf19b0d22726d2378e0e89fbbefc183494d7bd585759d6c4e69ba50951a2f",
+    "zh:31575ca9bc0db20337096d178ea73bce3ebca343ed071c67f78cf39f800c9ec6",
+    "zh:624fb6ed552abc34a5aaac41e76a373da65ac08e524b09b672f29c60e6ac896a",
+    "zh:6a4760d55132b9750ac1a04f6fc32e247034daa999f71452dba9cbca225a529a",
+    "zh:768a6047cfb8958e7b0b120c580aa3de6624a7fbb2c56ad6df85cd559ed26ec7",
+    "zh:8983c788ba660bcb587e64ff9c3e4323515caf78facbe0abe6432e7aff8df893",
+    "zh:8d570eb026a4f00b58a1d36be0ce3c13adf4d973efcd4162b05cb295bbc14257",
+    "zh:a2259540854d5f699c36b89244fb202ebb2c219b64669a51072687d04fb47152",
+    "zh:aaa51d905b0e80a28e02f9bee2cf6c91ffade7389d77ab9198aa12809ed04955",
+    "zh:afb60995e98573facddfb47baedf7e288408680eb00b5d3df570611758947c72",
+    "zh:b9a46d852ce53fa037f47537a7de53f37b759ccf211600b7ba44c66ba4b616b7",
+    "zh:bafcfeeefcd0dfefeff120b655b45edb0497c4717534ffe5201b3cb556d1ffe6",
+    "zh:c3ac24d397eae054aca2290e20943e0c767592cc661c890850c25ac01829308d",
+    "zh:eafba4127ebadcc5ed0e427935c66fb5e2da7cfdaae39a66d52f4a50d51faf1e",
+    "zh:f39d4bce213ed9bba3474bad468136af08ff6c4c33adaafcc10c1f78067adfe3",
+  ]
+}
+
+provider "tf.timeweb.cloud/timeweb-cloud/timeweb-cloud" {
+  version     = "1.8.4"
+  constraints = "~> 1.8.4"
+  hashes = [
+    "h1:NJ9Euoy/IVock930YcEZE5HmY/FMYnXS07SxaeZ51YI=",
+    "h1:o0W0J5q7gZzm9qCSEsox0wssXB5HKHQWZArrfmKtfdk=",
+    "zh:1290780cf66606c4db14941c1b5887d87cf8e91dee1046e2f2ff8072e9d60127",
+    "zh:82bb06b2669ac8fd21dbe374fbf03774cce6c7ec476118f1f4bfd5cef6ee8753",
+    "zh:84db59456581894eaf5c78944843295998479925bcd7cb1046dc697881d4eec7",
+    "zh:8fdda895ad6ffcdbedd423b4c6dde7b5a2d391823abadaa85107f444afeea268",
+    "zh:abb7106a9ec19b70b1314df28f91a6427e252e82cdb449cdb8f06767029c23e4",
+    "zh:c3b038d2c742f8d46e62178b548ad97a201bf7578243d37f935b00a6b404ce77",
   ]
 }

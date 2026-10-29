@@ -78,6 +78,20 @@ secret/core-platform/telegram-alert-gateway
 secret/core-platform/timeweb
 ```
 
+Managed Valkey bootstrap credentials are written to `secret/core-platform/applications`
+by `OpenTofu Apply`, preserving the other keys with a KV v2 compare-and-set update:
+
+```text
+VALKEY_HOST
+VALKEY_PORT
+VALKEY_USERNAME
+VALKEY_PASSWORD
+```
+
+The password originates from the sensitive OpenTofu state. Connectivity probes use
+a temporary Kubernetes Secret that is removed after the check. Application-specific
+users and deployments are configured separately when a service adopts Valkey.
+
 The SonarQube path stores the persistent session key and the GitHub App credentials used for repository import:
 
 ```text

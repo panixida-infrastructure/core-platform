@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: opentofu-production
@@ -99,3 +100,21 @@ jobs:
             | select(.address == "twc_k8s_cluster.core_platform")
             | .values.preset_id')"
           bash ../../scripts/reconcile-k8s-master-preset.sh "$cluster_id" "$master_preset_id"
+
+      - name: Install kubectl for the Valkey connectivity check
+        run: |
+          set -euo pipefail
+          curl -fsSLo /tmp/kubectl "https://dl.k8s.io/release/v1.36.5/bin/linux/amd64/kubectl"
+          sudo install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+
+      - name: Verify managed Valkey and publish its credentials to OpenBao
+        run: |
+          set -euo pipefail
+          umask 077
+          export KUBECONFIG="$(mktemp)"
+          trap 'rm -f "$KUBECONFIG"' EXIT
+          tofu output -raw core_platform_kubeconfig > "$KUBECONFIG"
+          export VALKEY_CONFIG="$(tofu output -json managed_valkey)"
+          export VALKEY_PASSWORD="$(tofu output -raw managed_valkey_password)"
+          echo "::add-mask::${VALKEY_PASSWORD}"
+          python3 -B ../../../scripts/timeweb/sync-managed-valkey.py
