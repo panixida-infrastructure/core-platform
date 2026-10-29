@@ -16,7 +16,8 @@ class ValkeyConfigurationTests(unittest.TestCase):
     def setUp(self):
         self.config = {"id": "123", "network_id": "private-network", "host": "192.168.10.20"}
         self.db = {"id": 123, "type": "valkey9_1", "preset_id": 5067, "cpu": 1,
-                   "ram": 2048, "disk": 10240, "availability_zone": "msk-1", "status": "started",
+                   "ram": 2048, "disk": {"size": 10485760, "used": 0},
+                   "availability_zone": "msk-1", "status": "started",
                    "is_enabled_public_network": False, "is_enabled_public_ipv6": False,
                    "is_autobackups_enabled": False, "is_backup_schedule_enabled": False,
                    "config_parameters": {"maxmemory-policy": "noeviction"},
@@ -45,7 +46,8 @@ class ValkeyConfigurationTests(unittest.TestCase):
                 valkey.verify_database(self.db, {"is_enabled": False}, {**self.config, key: value})
 
     def test_unsupported_version_or_larger_tariff_is_rejected(self):
-        for key, value in (("type", "valkey8_1"), ("preset_id", 5075), ("ram", 4096)):
+        for key, value in (("type", "valkey8_1"), ("preset_id", 5075), ("ram", 4096),
+                           ("disk", {"size": 20971520, "used": 0})):
             with self.subTest(key=key), self.assertRaises(ValueError):
                 valkey.verify_database({**self.db, key: value}, {"is_enabled": False}, self.config)
 

@@ -60,13 +60,15 @@ def request_json(url, headers=None, payload=None):
 
 def verify_database(db, backups, config):
     expected = {"type": "valkey9_1", "preset_id": 5067, "cpu": 1,
-                "ram": 2048, "disk": 10240, "availability_zone": "msk-1",
+                "ram": 2048, "availability_zone": "msk-1",
                 "status": "started", "is_enabled_public_network": False,
                 "is_enabled_public_ipv6": False, "is_autobackups_enabled": False,
                 "is_backup_schedule_enabled": False}
     for key, value in expected.items():
         if db.get(key) != value:
             raise ValueError(f"Unexpected Valkey setting: {key}")
+    if db.get("disk", {}).get("size") != 10 * 1024 * 1024:
+        raise ValueError("Unexpected Valkey disk size (API reports KiB)")
     if str(db["id"]) != str(config["id"]):
         raise ValueError("Unexpected Valkey cluster ID")
     if db["config_parameters"].get("maxmemory-policy") != "noeviction":
