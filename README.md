@@ -107,6 +107,19 @@ not key/channel ACL patterns. Applications must use environment-specific prefixe
 Pub/Sub and administrative-denial checks run after bootstrap retirement and still
 fail the workflow if provider ACL restrictions remain unresolved.
 
+`envoy_gateway_user` is a separate identity for the shared Envoy RateLimit service,
+with CONNECTION, READ, WRITE, and SCRIPTING privileges. The pinned
+[RateLimit implementation](https://github.com/envoyproxy/ratelimit/blob/0482748e/src/redis/fixed_cache_impl.go)
+uses GET, INCRBY/EXPIRE pipelines, and Lua for counter refunds; it does not need
+PUBSUB or TRANSACTION. Its independent password and the same four VALKEY fields
+are published to `secret/core-platform/envoy-gateway`. Reconcile the GitHub Actions
+policy from `scripts/openbao/configure.sh` before the first publication to this path.
+Worker probes verify RESP2/RESP3 authentication, counter operations, TTL and Lua
+refunds, and rejection of PUBLISH, MULTI, CONFIG and ACL enumeration before the
+application Pub/Sub checks. Timeweb's WRITE grant still includes destructive
+commands; separate users do not enforce key-prefix isolation. Gateway rate limiting
+and its permanent Kubernetes secret integration are configured separately.
+
 Run `python3 -B -m unittest discover -s tests -p test_managed_valkey.py` and
 `tofu -chdir=opentofu/envs/production validate` to check the Valkey automation.
 To deploy, merge the configuration and run `OpenTofu Apply` with

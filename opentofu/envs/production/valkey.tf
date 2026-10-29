@@ -9,12 +9,18 @@ locals {
     production  = "tactical_heroes_user_prod"
   }
   valkey_application_privileges = ["CONNECTION", "READ", "WRITE", "PUBSUB", "SCRIPTING", "TRANSACTION"]
+  valkey_gateway_privileges     = ["CONNECTION", "READ", "WRITE", "SCRIPTING"]
 }
 
 resource "random_password" "valkey_application" {
   for_each = local.valkey_users
   length   = 30
   special  = false
+}
+
+resource "random_password" "valkey_gateway" {
+  length  = 30
+  special = false
 }
 
 resource "twc_database_cluster" "valkey_database_msk" {
@@ -55,6 +61,14 @@ resource "twc_database_user" "valkey_application" {
   privileges = local.valkey_application_privileges
 }
 
+resource "twc_database_user" "valkey_gateway" {
+  cluster_id = twc_database_cluster.valkey_database_msk.id
+  login      = "envoy_gateway_user"
+  password   = random_password.valkey_gateway.result
+  for_all    = true
+  privileges = local.valkey_gateway_privileges
+}
+
 resource "twc_database_backup_schedule" "valkey_database" {
   cluster_id        = twc_database_cluster.valkey_database_msk.id
   enabled           = false
@@ -82,6 +96,10 @@ output "managed_valkey" {
       for environment, user in twc_database_user.valkey_application :
       environment => user.login
     }
+    gateway = {
+      username   = twc_database_user.valkey_gateway.login
+      privileges = local.valkey_gateway_privileges
+    }
   }
 }
 
@@ -95,5 +113,10 @@ output "managed_valkey_user_passwords" {
     for environment, password in random_password.valkey_application :
     environment => password.result
   }
+  sensitive = true
+}
+
+output "managed_valkey_gateway_password" {
+  value     = random_password.valkey_gateway.result
   sensitive = true
 }
