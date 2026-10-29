@@ -3,6 +3,20 @@ resource "random_password" "valkey_admin" {
   special = false
 }
 
+locals {
+  valkey_users = {
+    development = "tactical_heroes_user_dev"
+    production  = "tactical_heroes_user_prod"
+  }
+  valkey_application_privileges = ["CONNECTION", "READ", "WRITE", "PUBSUB", "SCRIPTING", "TRANSACTION"]
+}
+
+resource "random_password" "valkey_application" {
+  for_each = local.valkey_users
+  length   = 30
+  special  = false
+}
+
 resource "twc_database_cluster" "valkey_database_msk" {
   name                    = "valkey"
   type                    = "valkey9_1"
@@ -18,6 +32,7 @@ resource "twc_database_cluster" "valkey_database_msk" {
   }
 
   admin {
+    # Create-only bootstrap; sync-managed-valkey.py retires it after user checks.
     login    = "default"
     password = random_password.valkey_admin.result
   }
@@ -29,6 +44,15 @@ resource "twc_database_cluster" "valkey_database_msk" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "twc_database_user" "valkey_application" {
+  for_each   = local.valkey_users
+  cluster_id = twc_database_cluster.valkey_database_msk.id
+  login      = each.value
+  password   = random_password.valkey_application[each.key].result
+  for_all    = true
+  privileges = local.valkey_application_privileges
 }
 
 resource "twc_database_backup_schedule" "valkey_database" {
@@ -51,12 +75,25 @@ output "managed_valkey" {
       for network in twc_database_cluster.valkey_database_msk.networks :
       [for address in network.ips : address.ip] if network.type == "local"
     ]))
-    port     = twc_database_cluster.valkey_database_msk.port
-    username = "default"
+    port                = twc_database_cluster.valkey_database_msk.port
+    retire_default_user = true
+    privileges          = local.valkey_application_privileges
+    users = {
+      for environment, user in twc_database_user.valkey_application :
+      environment => user.login
+    }
   }
 }
 
 output "managed_valkey_password" {
   value     = random_password.valkey_admin.result
+  sensitive = true
+}
+
+output "managed_valkey_user_passwords" {
+  value = {
+    for environment, password in random_password.valkey_application :
+    environment => password.result
+  }
   sensitive = true
 }

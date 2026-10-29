@@ -14,25 +14,36 @@ import uuid
 
 
 IMAGE = "valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b"
-SMOKE_SCRIPT = r'''
+CORE_SMOKE_SCRIPT = r'''
 set -eu
 cli() { valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" "$@"; }
 key="__core_platform_smoke:${HOSTNAME}"
+hash_key="${key}:hash"
 channel="${key}:pubsub"
 subscriber=""
 cleanup() {
   if [ -n "$subscriber" ]; then kill "$subscriber" 2>/dev/null || true; fi
-  cli DEL "$key" >/dev/null 2>&1 || true
+  cli DEL "$key" "$hash_key" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 test "$(cli PING)" = PONG
-cli INFO memory | tr -d '\r' >/tmp/memory.info
-grep -qx 'maxmemory_policy:noeviction' /tmp/memory.info
-cli INFO server | grep -E '^valkey_version:9\.1\.'
+test "$(cli ECHO connection-check)" = connection-check
+test "$(cli ACL WHOAMI)" = "$VALKEY_USERNAME"
 test "$(cli SET "$key" 41 EX 60 NX)" = OK
 test "$(cli GET "$key")" = 41
 test "$(cli EVAL "return redis.call('INCR', KEYS[1])" 1 "$key")" = 42
 test "$(cli TTL "$key")" -gt 0
+test "$(cli HSET "$hash_key" data cache-value)" = 1
+test "$(cli EXPIRE "$hash_key" 60)" = 1
+test "$(cli HGET "$hash_key" data)" = cache-value
+printf 'MULTI\nINCR %s\nEXPIRE %s 60\nEXEC\n' "$key" "$key" | cli >/tmp/transaction.log
+test "$(cat /tmp/transaction.log)" = "$(printf 'OK\nQUEUED\nQUEUED\n43\n1')"
+test "$(cli GET "$key")" = 43
+test "$(cli TTL "$key")" -gt 0
+echo 'PASS: authenticated PING/ECHO, identity, strings, hashes, TTL, Lua, transaction'
+'''
+
+SMOKE_SCRIPT = CORE_SMOKE_SCRIPT + r'''
 timeout 20 valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" SUBSCRIBE "$channel" >/tmp/pubsub.log &
 subscriber=$!
 for attempt in $(seq 1 10); do
@@ -46,15 +57,42 @@ for attempt in $(seq 1 10); do
   sleep 1
 done
 grep -qx valkey-smoke-message /tmp/pubsub.log
-grep -E '^(used_memory_human|maxmemory_human|maxmemory_policy):' /tmp/memory.info
-echo 'PASS: authenticated PING, noeviction, SET/GET, TTL, Lua, Pub/Sub'
+# Invalid FLUSH modes cannot erase data even if a privilege regression permits them.
+denied() {
+  if reply="$(cli "$@" 2>&1)"; then
+    echo "FAIL: unexpectedly permitted $1"
+    exit 1
+  fi
+  printf '%s\n' "$reply" | grep -Eq '^(NOPERM |ERR unknown command)'
+  echo "DENIED: $1"
+}
+denied FLUSHALL __invalid_acl_probe_mode__
+denied FLUSHDB __invalid_acl_probe_mode__
+denied CONFIG GET maxmemory
+denied ACL USERS
+echo 'PASS: authenticated PING/ECHO, identity, strings, hashes, TTL, Lua, transaction, Pub/Sub, administrative denials'
+'''
+
+DEFAULT_DISABLED_SCRIPT = r'''
+set -eu
+cli() { valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" "$@"; }
+test "$(cli PING)" = PONG
+test "$(cli ACL WHOAMI)" = "$VALKEY_USERNAME"
+result="$(VALKEYCLI_AUTH="$VALKEY_DEFAULT_PASSWORD" cli --user default PING 2>&1 || true)"
+if printf '%s\n' "$result" | grep -qx PONG; then
+  echo 'FAIL: default bootstrap credentials still work'; exit 1
+fi
+printf '%s\n' "$result" | grep -Eq '(WRONGPASS|NOAUTH)'
+result="$(env -u VALKEYCLI_AUTH valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" PING 2>&1 || true)"
+printf '%s\n' "$result" | grep -q '^NOAUTH '
+echo 'PASS: application authentication works; default bootstrap and unauthenticated access rejected'
 '''
 
 
-def request_json(url, headers=None, payload=None):
+def request_json(url, headers=None, payload=None, method=None):
     data = None if payload is None else json.dumps(payload).encode()
     request = urllib.request.Request(
-        url, data=data, headers={"Content-Type": "application/json", **(headers or {})})
+        url, data=data, headers={"Content-Type": "application/json", **(headers or {})}, method=method)
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response) if response.status != 204 else {}
 
@@ -86,7 +124,7 @@ def verify_database(db, backups, config):
         raise ValueError("Valkey is not on the expected private network")
 
 
-def publish_credentials(config, password):
+def openbao_headers():
     audience = "https://github.com/panixida-infrastructure/core-platform"
     oidc_url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"]
     jwt = request_json(
@@ -96,24 +134,73 @@ def publish_credentials(config, password):
     token = request_json(bao_url + "/v1/auth/jwt/login", payload={
         "role": "core-platform-github-actions", "jwt": jwt})["auth"]["client_token"]
     print(f"::add-mask::{token}", flush=True)
-    headers = {"X-Vault-Token": token}
-    path = bao_url + "/v1/secret/data/core-platform/applications"
-    desired = {"VALKEY_HOST": config["host"], "VALKEY_PORT": str(config["port"]),
-               "VALKEY_USERNAME": config["username"], "VALKEY_PASSWORD": password}
+    return bao_url, {"X-Vault-Token": token}
+
+
+def update_secret(path, headers, desired, remove=()):
     # Preserve unrelated service credentials and avoid overwriting concurrent updates.
     for attempt in range(5):
         current = request_json(path, headers)["data"]
         existing = current["data"]
-        if all(existing.get(key) == value for key, value in desired.items()):
+        if all(existing.get(key) == value for key, value in desired.items()) and not any(
+                key in existing for key in remove):
             return
+        updated = {key: value for key, value in existing.items() if key not in remove}
+        updated.update(desired)
         try:
             request_json(path, headers, {"options": {"cas": current["metadata"]["version"]},
-                                         "data": {**existing, **desired}})
+                                         "data": updated})
+            saved = request_json(path, headers)["data"]["data"]
+            if any(saved.get(key) != value for key, value in desired.items()) or any(
+                    key in saved for key in remove):
+                raise RuntimeError("OpenBao credential verification failed")
             return
         except urllib.error.HTTPError as error:
             if error.code != 400 or attempt == 4:
                 raise
             time.sleep(1)
+
+
+def publish_credentials(config, passwords, bao_url, headers):
+    for environment, username in config["users"].items():
+        path = f"{bao_url}/v1/secret/data/applications/tactical-heroes-api/{environment}"
+        desired = {"VALKEY_HOST": config["host"], "VALKEY_PORT": str(config["port"]),
+                   "VALKEY_USERNAME": username, "VALKEY_PASSWORD": passwords[environment]}
+        update_secret(path, headers, desired)
+        print(f"Verified OpenBao applications/tactical-heroes-api/{environment}: {username}")
+
+
+def verify_users(users, config):
+    by_login = {user["login"]: user for user in users}
+    for username in config["users"].values():
+        user = by_login.get(username)
+        if user is None or user.get("status") != "created":
+            raise RuntimeError(f"Valkey user is not ready: {username}")
+        instances = user.get("instances", [])
+        if not instances or any(set(instance["privileges"]) != set(config["privileges"])
+                                for instance in instances):
+            raise RuntimeError(f"Unexpected provider privileges: {username}")
+
+
+def retire_default_user(base, headers, config):
+    if config.get("retire_default_user") is not True:
+        raise ValueError("Default Valkey user retirement must be enabled")
+    path = f"{base}/databases/{config['id']}/admins"
+    users = request_json(path, headers)["admins"]
+    verify_users(users, config)
+    default = next((user for user in users if user["login"] == "default"), None)
+    if default is not None:
+        request_json(f"{path}/{default['id']}", headers, method="DELETE")
+    deadline = time.monotonic() + 90
+    while True:
+        remaining = request_json(path, headers)["admins"]
+        if not any(user["login"] == "default" for user in remaining):
+            verify_users(remaining, config)
+            print("Default user removed from Timeweb")
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError("Default Valkey user was not retired by Timeweb")
+        time.sleep(3)
 
 
 def kubectl(*args, manifest=None, check=True):
@@ -137,7 +224,7 @@ def wait_for_probe(namespace, pod_name):
         time.sleep(2)
 
 
-def probe_workers(config, password):
+def probe_workers(config, password, *, script=SMOKE_SCRIPT, default_password=""):
     nodes = json.loads(kubectl("get", "nodes", "-o", "json").stdout)["items"]
     workers = [node["metadata"]["name"] for node in nodes
                if not node["spec"].get("unschedulable", False)
@@ -153,7 +240,7 @@ def probe_workers(config, password):
         kubectl("create", "-f", "-", manifest={
             "apiVersion": "v1", "kind": "Secret", "type": "Opaque",
             "metadata": {"name": name, "namespace": namespace},
-            "stringData": {"password": password}})
+            "stringData": {"password": password, "default_password": default_password}})
         for index, worker in enumerate(workers):
             pod_name = f"{name}-{index}"
             pods.append(pod_name)
@@ -165,7 +252,7 @@ def probe_workers(config, password):
                          "securityContext": {"runAsNonRoot": True, "runAsUser": 1000,
                                              "seccompProfile": {"type": "RuntimeDefault"}},
                          "containers": [{"name": "check", "image": IMAGE,
-                             "command": ["sh", "-c", SMOKE_SCRIPT],
+                             "command": ["sh", "-c", script],
                              "securityContext": {"allowPrivilegeEscalation": False,
                                                  "capabilities": {"drop": ["ALL"]}},
                              "resources": {"requests": {"cpu": "10m", "memory": "16Mi"},
@@ -174,12 +261,17 @@ def probe_workers(config, password):
                                  {"name": "VALKEY_HOST", "value": config["host"]},
                                  {"name": "VALKEY_PORT", "value": str(config["port"])},
                                  {"name": "VALKEY_USERNAME", "value": config["username"]},
+                                 {"name": "VALKEY_DEFAULT_PASSWORD", "valueFrom": {"secretKeyRef": {
+                                     "name": name, "key": "default_password"}}},
                                  {"name": "VALKEYCLI_AUTH", "valueFrom": {"secretKeyRef": {
                                      "name": name, "key": "password"}}}]}]}})
             status = wait_for_probe(namespace, pod_name)
             phase = status.get("phase", "Unknown")
             logs = kubectl("-n", namespace, "logs", pod_name, check=False).stdout
-            print(f"Worker {worker}: {phase}\n{logs.replace(password, '[REDACTED]')}", flush=True)
+            logs = logs.replace(password, "[REDACTED]")
+            if default_password:
+                logs = logs.replace(default_password, "[REDACTED]")
+            print(f"User {config['username']}, worker {worker}: {phase}\n{logs}", flush=True)
             if phase != "Succeeded":
                 exits = [c.get("state", {}).get("terminated", {}).get("exitCode")
                          for c in status.get("containerStatuses", [])]
@@ -197,18 +289,38 @@ def probe_workers(config, password):
 
 def main():
     config = json.loads(os.environ["VALKEY_CONFIG"])
-    password = os.environ["VALKEY_PASSWORD"]
-    if len(password) != 30:
+    passwords = json.loads(os.environ["VALKEY_USER_PASSWORDS"])
+    default_password = os.environ["VALKEY_DEFAULT_PASSWORD"]
+    expected_users = {"development": "tactical_heroes_user_dev", "production": "tactical_heroes_user_prod"}
+    if config["users"] != expected_users or set(passwords) != set(expected_users):
+        raise ValueError("Unexpected Valkey application identities")
+    if any(len(password) != 30 for password in [default_password, *passwords.values()]):
         raise ValueError("Unexpected Valkey password length")
+    if len(set(passwords.values())) != len(passwords) or default_password in passwords.values():
+        raise ValueError("Valkey users must have independent passwords")
+    for password in [default_password, *passwords.values()]:
+        print(f"::add-mask::{password}", flush=True)
     headers = {"Authorization": "Bearer " + os.environ["TIMEWEB_TOKEN"]}
     base = "https://api.timeweb.cloud/api/v1"
     db = request_json(f"{base}/databases/{config['id']}", headers)["db"]
     backups = request_json(f"{base}/dbs/{config['id']}/auto-backups", headers)["auto_backups_settings"]
     verify_database(db, backups, config)
     print(f"Verified Valkey {config['id']}: 9.1, preset 5067, private-only, no backups, noeviction")
-    publish_credentials(config, password)
-    print("Valkey credentials are stored in OpenBao core-platform/applications")
-    probe_workers(config, password)
+    verify_users(request_json(f"{base}/databases/{config['id']}/admins", headers)["admins"], config)
+    bao_url, bao_headers = openbao_headers()
+    publish_credentials(config, passwords, bao_url, bao_headers)
+    for environment, username in config["users"].items():
+        probe_workers({**config, "username": username}, passwords[environment], script=CORE_SMOKE_SCRIPT)
+    retire_default_user(base, headers, config)
+    for environment, username in config["users"].items():
+        probe_workers({**config, "username": username}, passwords[environment],
+                      script=DEFAULT_DISABLED_SCRIPT, default_password=default_password)
+    update_secret(f"{bao_url}/v1/secret/data/core-platform/applications", bao_headers, {},
+                  remove=("VALKEY_HOST", "VALKEY_PORT", "VALKEY_USERNAME", "VALKEY_PASSWORD"))
+    print("Retired bootstrap credentials removed from the current shared OpenBao secret")
+    # Provider ACL limitations are checked separately from the authorized bootstrap retirement.
+    for environment, username in config["users"].items():
+        probe_workers({**config, "username": username}, passwords[environment])
 
 
 if __name__ == "__main__":
