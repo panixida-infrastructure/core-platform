@@ -127,6 +127,16 @@ def kubectl(*args, manifest=None, check=True):
     return result
 
 
+def wait_for_probe(namespace, pod_name):
+    deadline = time.monotonic() + 110
+    while True:
+        pod = json.loads(kubectl("-n", namespace, "get", "pod", pod_name, "-o", "json").stdout)
+        status = pod["status"]
+        if status.get("phase") in ("Succeeded", "Failed") or time.monotonic() >= deadline:
+            return status
+        time.sleep(2)
+
+
 def probe_workers(config, password):
     nodes = json.loads(kubectl("get", "nodes", "-o", "json").stdout)["items"]
     workers = [node["metadata"]["name"] for node in nodes
@@ -166,15 +176,14 @@ def probe_workers(config, password):
                                  {"name": "VALKEY_USERNAME", "value": config["username"]},
                                  {"name": "VALKEYCLI_AUTH", "valueFrom": {"secretKeyRef": {
                                      "name": name, "key": "password"}}}]}]}})
-            result = kubectl("-n", namespace, "wait",
-                             "--for=jsonpath={.status.containerStatuses[0].state.terminated.reason}",
-                             f"pod/{pod_name}", "--timeout=110s", check=False)
-            phase = json.loads(kubectl("-n", namespace, "get", "pod", pod_name,
-                                      "-o", "json").stdout)["status"]["phase"]
+            status = wait_for_probe(namespace, pod_name)
+            phase = status.get("phase", "Unknown")
             logs = kubectl("-n", namespace, "logs", pod_name, check=False).stdout
-            print(f"Worker {worker}:\n{logs.replace(password, '[REDACTED]')}", flush=True)
-            if result.returncode or phase != "Succeeded":
-                raise RuntimeError(f"Valkey check failed on worker {worker}")
+            print(f"Worker {worker}: {phase}\n{logs.replace(password, '[REDACTED]')}", flush=True)
+            if phase != "Succeeded":
+                exits = [c.get("state", {}).get("terminated", {}).get("exitCode")
+                         for c in status.get("containerStatuses", [])]
+                raise RuntimeError(f"Valkey check failed on worker {worker}: {phase}, exit codes {exits}")
     finally:
         cleanup_failed = False
         for pod_name in pods:

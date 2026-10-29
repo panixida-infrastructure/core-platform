@@ -1,6 +1,8 @@
 import copy
 import importlib.util
+import json
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import urllib.error
@@ -92,3 +94,25 @@ class ValkeyCredentialPublicationTests(unittest.TestCase):
                 patch("builtins.print"):
             valkey.publish_credentials(config, "test-password")
         self.assertEqual(request.call_count, 3)
+
+
+class ValkeyProbeWaitTests(unittest.TestCase):
+    def test_waits_for_pod_success_after_container_termination(self):
+        states = [{"phase": "Pending"},
+                  {"phase": "Running", "containerStatuses": [{"state": {
+                      "terminated": {"exitCode": 0, "reason": "Completed"}}}]},
+                  {"phase": "Succeeded"}]
+        responses = [SimpleNamespace(stdout=json.dumps({"status": status})) for status in states]
+        with patch.object(valkey, "kubectl", side_effect=responses), \
+                patch.object(valkey.time, "sleep") as sleep:
+            result = valkey.wait_for_probe("default", "test-probe")
+        self.assertEqual(result["phase"], "Succeeded")
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_failed_pod_reports_immediately(self):
+        response = SimpleNamespace(stdout=json.dumps({"status": {"phase": "Failed"}}))
+        with patch.object(valkey, "kubectl", return_value=response), \
+                patch.object(valkey.time, "sleep") as sleep:
+            result = valkey.wait_for_probe("default", "test-probe")
+        self.assertEqual(result["phase"], "Failed")
+        sleep.assert_not_called()
