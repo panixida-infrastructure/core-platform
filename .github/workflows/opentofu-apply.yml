@@ -117,7 +117,5 @@ jobs:
           export VALKEY_CONFIG="$(tofu output -json managed_valkey)"
           export VALKEY_DEFAULT_PASSWORD="$(tofu output -raw managed_valkey_password)"
           export VALKEY_USER_PASSWORDS="$(tofu output -json managed_valkey_user_passwords)"
-          export VALKEY_ACL_PROBE_PASSWORD="$(tofu output -raw valkey_acl_probe_password)"
-          echo "::add-mask::${VALKEY_ACL_PROBE_PASSWORD}"
           echo "::add-mask::${VALKEY_DEFAULT_PASSWORD}"
           python3 -B ../../../scripts/timeweb/sync-managed-valkey.py
