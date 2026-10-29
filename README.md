@@ -96,7 +96,7 @@ identity, strings, hashes, TTL, Lua, transactions, Pub/Sub, and denials for
 FLUSHALL, FLUSHDB, CONFIG, and ACL enumeration. FLUSH checks use invalid modes
 so they cannot erase data even if permissions regress.
 
-Only after both application users pass does the workflow remove the bootstrap
+After both application users pass the basic cache/state checks, the workflow removes the bootstrap
 `default` account through Timeweb, verify rejection of its old password and
 unauthenticated access, and remove its current shared OpenBao credentials.
 The create-only cluster admin block remains to avoid replacing the service.
@@ -104,6 +104,8 @@ Temporary pods and Secrets are always cleaned up. Application deployments are
 not changed; application integration is a separate step. Separate users do not
 isolate dev/prod keys or Pub/Sub channels: the provider exposes category grants,
 not key/channel ACL patterns. Applications must use environment-specific prefixes.
+Pub/Sub and administrative-denial checks run after bootstrap retirement and still
+fail the workflow if provider ACL restrictions remain unresolved.
 
 Run `python3 -B -m unittest discover -s tests -p test_managed_valkey.py` and
 `tofu -chdir=opentofu/envs/production validate` to check the Valkey automation.

@@ -170,6 +170,27 @@ class ValkeyUserRetirementTests(unittest.TestCase):
             valkey.main()
         retire.assert_not_called()
 
+    def test_retirement_is_independent_of_later_pubsub_check_but_cleanup_requires_revocation(self):
+        env = {"VALKEY_CONFIG": json.dumps(self.config),
+               "VALKEY_USER_PASSWORDS": json.dumps({"development": "d" * 30, "production": "p" * 30}),
+               "VALKEY_DEFAULT_PASSWORD": "b" * 30, "TIMEWEB_TOKEN": "test-token"}
+        cases = [([None, None, RuntimeError("default still works")], False),
+                 ([None, None, None, None, RuntimeError("Pub/Sub blocked")], True)]
+        for results, cleanup_expected in cases:
+            with self.subTest(cleanup_expected=cleanup_expected), patch.dict(valkey.os.environ, env), \
+                    patch.object(valkey, "request_json", side_effect=[{"db": {}},
+                        {"auto_backups_settings": {}}, {"admins": self.users}]), \
+                    patch.object(valkey, "verify_database"), \
+                    patch.object(valkey, "openbao_headers", return_value=("https://example.invalid", {})), \
+                    patch.object(valkey, "publish_credentials"), \
+                    patch.object(valkey, "probe_workers", side_effect=results), \
+                    patch.object(valkey, "retire_default_user") as retire, \
+                    patch.object(valkey, "update_secret") as cleanup, patch("builtins.print"), \
+                    self.assertRaises(RuntimeError):
+                valkey.main()
+            retire.assert_called_once()
+            self.assertEqual(cleanup.called, cleanup_expected)
+
 
 class ValkeyProbeWaitTests(unittest.TestCase):
     def test_waits_for_pod_success_after_container_termination(self):

@@ -14,7 +14,7 @@ import uuid
 
 
 IMAGE = "valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b"
-SMOKE_SCRIPT = r'''
+CORE_SMOKE_SCRIPT = r'''
 set -eu
 cli() { valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" "$@"; }
 key="__core_platform_smoke:${HOSTNAME}"
@@ -40,6 +40,10 @@ printf 'MULTI\nINCR %s\nEXPIRE %s 60\nEXEC\n' "$key" "$key" | cli >/tmp/transact
 test "$(cat /tmp/transaction.log)" = "$(printf 'OK\nQUEUED\nQUEUED\n43\n1')"
 test "$(cli GET "$key")" = 43
 test "$(cli TTL "$key")" -gt 0
+echo 'PASS: authenticated PING/ECHO, identity, strings, hashes, TTL, Lua, transaction'
+'''
+
+SMOKE_SCRIPT = CORE_SMOKE_SCRIPT + r'''
 timeout 20 valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" SUBSCRIBE "$channel" >/tmp/pubsub.log &
 subscriber=$!
 for attempt in $(seq 1 10); do
@@ -306,7 +310,7 @@ def main():
     bao_url, bao_headers = openbao_headers()
     publish_credentials(config, passwords, bao_url, bao_headers)
     for environment, username in config["users"].items():
-        probe_workers({**config, "username": username}, passwords[environment])
+        probe_workers({**config, "username": username}, passwords[environment], script=CORE_SMOKE_SCRIPT)
     retire_default_user(base, headers, config)
     for environment, username in config["users"].items():
         probe_workers({**config, "username": username}, passwords[environment],
@@ -314,6 +318,9 @@ def main():
     update_secret(f"{bao_url}/v1/secret/data/core-platform/applications", bao_headers, {},
                   remove=("VALKEY_HOST", "VALKEY_PORT", "VALKEY_USERNAME", "VALKEY_PASSWORD"))
     print("Retired bootstrap credentials removed from the current shared OpenBao secret")
+    # Provider ACL limitations are checked separately from the authorized bootstrap retirement.
+    for environment, username in config["users"].items():
+        probe_workers({**config, "username": username}, passwords[environment])
 
 
 if __name__ == "__main__":
