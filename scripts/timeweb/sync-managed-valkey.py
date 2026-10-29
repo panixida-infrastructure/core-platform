@@ -303,6 +303,21 @@ def main():
     verify_database(db, backups, config)
     print(f"Verified Valkey {config['id']}: 9.1, preset 5067, private-only, no backups, noeviction")
     verify_users(request_json(f"{base}/databases/{config['id']}/admins", headers)["admins"], config)
+    if "VALKEY_ACL_PROBE_PASSWORD" in os.environ:
+        probe_workers({**config, "username": "core_platform_acl_probe"},
+                      os.environ["VALKEY_ACL_PROBE_PASSWORD"], script=r'''
+set -eu
+cli() { valkey-cli -e --raw -h "$VALKEY_HOST" -p "$VALKEY_PORT" --user "$VALKEY_USERNAME" "$@"; }
+cli PING
+echo 'ACL management dry-run:'
+cli ACL DRYRUN "$VALKEY_USERNAME" ACL SETUSER tactical_heroes_user_dev '&*' || true
+echo 'ACL persistence dry-run:'
+cli ACL DRYRUN "$VALKEY_USERNAME" ACL SAVE || true
+echo 'ACL file setting:'
+cli CONFIG GET aclfile || true
+echo 'Application ACL (no password hashes):'
+cli ACL GETUSER tactical_heroes_user_dev | awk '/^commands$|^keys$|^channels$/{field=$0;getline;print field ": " $0}' || true
+''')
     bao_url, bao_headers = openbao_headers()
     publish_credentials(config, passwords, bao_url, bao_headers)
     for environment, username in config["users"].items():
