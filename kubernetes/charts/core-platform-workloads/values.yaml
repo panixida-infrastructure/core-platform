@@ -137,6 +137,9 @@ observability:
       remoteKey: core-platform/observability
   nodeExporter:
     enabled: true
+  valkey:
+    enabled: true
+    clusterId: 4225991
   releases:
     enabled: true
     remoteKey: core-platform/observability-timeweb-logs

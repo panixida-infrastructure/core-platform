@@ -1,0 +1,1717 @@
+{
+  "uid": "valkey-managed",
+  "title": "Managed Valkey (shared)",
+  "description": "Shared Timeweb Valkey: availability, capacity, errors and persistence.",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": [
+    "valkey",
+    "timeweb",
+    "shared"
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Valkey availability",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "description": "1 = exporter reached Valkey; 0 = database probe failed; absent = unknown, inspect collection.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_up{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Valkey",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Database metrics HTTP availability",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "description": "HTTP success does not imply a successful database scrape.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Exporter HTTP",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_exporter_last_scrape_error{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Scrape error (0 = healthy)",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Host metrics HTTP availability",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Independent of the database metrics endpoint.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{service_name=\"timeweb-dbaas-valkey-node\"}",
+          "legendFormat": "Host exporter HTTP",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Database sample age",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 8,
+        "h": 8
+      },
+      "description": "A missing sample is unknown, never zero. Scrapes run every 30 seconds; more than 180 seconds is stale.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - timestamp(redis_up{service_name=\"timeweb-dbaas-valkey\"})",
+          "legendFormat": "Latest sample age",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Memory counted against maxmemory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 8,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Subtracts buffers excluded from eviction accounting. Alerts: >80% for 10m, >90% for 5m. Uses the actual maxmemory, not tariff RAM.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * clamp_min(redis_memory_used_bytes{service_name=\"timeweb-dbaas-valkey\"} - redis_mem_not_counted_for_eviction_bytes{service_name=\"timeweb-dbaas-valkey\"}, 0) / (redis_memory_max_bytes{service_name=\"timeweb-dbaas-valkey\"} > 0)",
+          "legendFormat": "Accounted memory / maxmemory",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Memory footprint and limit",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 8,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_memory_used_bytes{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Used",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_memory_used_rss_bytes{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "RSS",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "redis_memory_max_bytes{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "maxmemory",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "D",
+          "expr": "redis_mem_not_counted_for_eviction_bytes{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Excluded buffers",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Server uptime",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_uptime_in_seconds{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Uptime",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Observed restarts in 30 minutes",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 16,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Based on observed uptime decreases; restarts during missing telemetry can be missed.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "resets(redis_uptime_in_seconds{service_name=\"timeweb-dbaas-valkey\"}[30m])",
+          "legendFormat": "Uptime resets",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "OOM and write failures",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 16,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Error counters may not exist before the first error. Zero fallback is allowed only with a fresh healthy database probe. Command failures are not separated by application.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(redis_errors_total{service_name=\"timeweb-dbaas-valkey\",err=\"OOM\"}[5m])) or (0 * (max(redis_up{service_name=\"timeweb-dbaas-valkey\"} and (time() - timestamp(redis_up{service_name=\"timeweb-dbaas-valkey\"}) < 180)) == 1))",
+          "legendFormat": "OOM",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (cmd) (rate({__name__=~\"redis_commands_(failed|rejected)_calls_total\",service_name=\"timeweb-dbaas-valkey\",cmd=~\"set.*|mset.*|hset.*|incr.*|decr.*|del|unlink|expire.*|pexpire.*|eval.*|fcall.*|lpush.*|rpush.*|sadd|zadd\"}[5m])) or (0 * (max(redis_up{service_name=\"timeweb-dbaas-valkey\"} and (time() - timestamp(redis_up{service_name=\"timeweb-dbaas-valkey\"}) < 180)) == 1))",
+          "legendFormat": "{{cmd}}",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Client connections",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_connected_clients{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Connected",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_max_clients{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "maxclients",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "New and rejected connections",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_connections_received_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "New",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(redis_rejected_connections_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "Rejected",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Command throughput",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Shared instance totals across all users and logical databases.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_commands_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "{{cmd}}",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Mean command execution time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Server execution time only, excluding network/queue time. Alert evaluates commands with >=100 calls/5m and mean >50ms for 10m; this is not p95 or p99.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_commands_duration_seconds_total{service_name=\"timeweb-dbaas-valkey\"}[5m]) / (rate(redis_commands_total{service_name=\"timeweb-dbaas-valkey\"}[5m]) > 0)",
+          "legendFormat": "{{cmd}}",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Cache hit ratio",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "description": "No reads means an undefined ratio, not 0% hits. Includes cache and coordination operations.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * rate(redis_keyspace_hits_total{service_name=\"timeweb-dbaas-valkey\"}[5m]) / (rate(redis_keyspace_hits_total{service_name=\"timeweb-dbaas-valkey\"}[5m]) + rate(redis_keyspace_misses_total{service_name=\"timeweb-dbaas-valkey\"}[5m]))",
+          "legendFormat": "Hit ratio",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Keys and keys with TTL",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 32,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Only counts per numbered logical database; key names and values are never collected. Database numbers do not identify environments.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_db_keys{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "{{db}} keys",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_db_keys_expiring{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "{{db}} with TTL",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Expired and evicted keys",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Expiry is expected; any eviction violates the intended noeviction behavior.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_expired_keys_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "Expired",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(redis_evicted_keys_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "Evicted",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Database network traffic",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 40,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(redis_net_input_bytes_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "Received",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(redis_net_output_bytes_total{service_name=\"timeweb-dbaas-valkey\"}[5m])",
+          "legendFormat": "Sent",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Pub/Sub",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 40,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Counts only; channel names and message contents are not collected.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_pubsub_clients{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Clients",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_pubsub_channels{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Channels",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "redis_pubsub_patterns{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Patterns",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "AOF status",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Status 1 = success, 0 = error; AOF enabled is checked separately.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_aof_enabled{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Enabled",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_aof_last_write_status{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Last write OK",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "redis_aof_last_bgrewrite_status{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Last rewrite OK",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "RDB status and unsaved changes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 48,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Snapshot age alone does not indicate failure on an idle instance.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_rdb_last_bgsave_status{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Last save OK",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_rdb_changes_since_last_save{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Changes since save",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "redis_rdb_bgsave_in_progress{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Save in progress",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "AOF size",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 48,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Local persistence shares the host failure domain and is not a backup.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_aof_current_size_bytes{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "AOF size",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "CPU usage",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (rate(redis_cpu_sys_seconds_total{service_name=\"timeweb-dbaas-valkey\"}[5m]) + rate(redis_cpu_user_seconds_total{service_name=\"timeweb-dbaas-valkey\"}[5m]))",
+          "legendFormat": "Valkey (% of one CPU)",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{service_name=\"timeweb-dbaas-valkey-node\",mode=\"idle\"}[5m])))",
+          "legendFormat": "Host CPU",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Host memory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 56,
+        "w": 8,
+        "h": 8
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemTotal_bytes{service_name=\"timeweb-dbaas-valkey-node\"}",
+          "legendFormat": "Total",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "node_memory_MemAvailable_bytes{service_name=\"timeweb-dbaas-valkey-node\"}",
+          "legendFormat": "Available",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Filesystem free space",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 56,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Real host filesystems only. Alerts: <20% for 15m and <10% for 5m; allow additional headroom for AOF rewrite/RDB snapshots.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * node_filesystem_avail_bytes{service_name=\"timeweb-dbaas-valkey-node\",fstype!~\"tmpfs|overlay|squashfs|ramfs|nsfs\"} / (node_filesystem_size_bytes{service_name=\"timeweb-dbaas-valkey-node\",fstype!~\"tmpfs|overlay|squashfs|ramfs|nsfs\"} > 0)",
+          "legendFormat": "{{mountpoint}} ({{device}})",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "title": "Exporter scrape and connect duration",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Exporter-to-Valkey connection time is not application request latency.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_exporter_last_scrape_duration_seconds{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Scrape",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "redis_exporter_last_scrape_connect_time_seconds{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Connect",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "title": "Blocked clients",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Blocking operations can be intentional; investigate alongside latency and application behavior.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_blocked_clients{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Blocked",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "title": "Last RDB save age",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 64,
+        "w": 8,
+        "h": 8
+      },
+      "description": "No alert on age alone: save 900 1 only requires a snapshot after a change.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - redis_rdb_last_save_timestamp_seconds{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Last successful save age",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "title": "Version and eviction policy",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-metrics-datasource",
+        "uid": "victoriametrics"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 72,
+        "w": 8,
+        "h": 8
+      },
+      "description": "The exporter also reports redis_version for protocol compatibility; valkey_version is the server version.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "noValue": "No data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "redis_instance_info{service_name=\"timeweb-dbaas-valkey\"}",
+          "legendFormat": "Valkey {{valkey_version}} / {{maxmemory_policy}}",
+          "range": false,
+          "instant": true,
+          "datasource": {
+            "type": "victoriametrics-metrics-datasource",
+            "uid": "victoriametrics"
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "title": "Scope and limitations",
+      "type": "text",
+      "gridPos": {
+        "x": 8,
+        "y": 72,
+        "w": 16,
+        "h": 8
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "One shared managed instance for cache, synchronization and gateway rate limiting. All graphs show instance totals, **not separate dev/prod usage**.\n\nTimeweb supplies authenticated HTTPS database and host exporters; Valkey itself stays private. The monitoring credential only accesses metrics and is separate from database accounts.\n\nNo key values, key names, channel names or slowlog command arguments are collected. Network/application latency and per-user OOM/write failures are unavailable from these aggregate counters. Missing samples stay **No data**; an idle hit ratio is undefined. AOF/RDB persistence is not HA or a backup."
+      }
+    }
+  ]
+}

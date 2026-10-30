@@ -140,11 +140,20 @@ The managed PostgreSQL DBaaS exporter credentials also live in `secret/core-plat
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_ID
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_USERNAME
 OBSERVABILITY_TIMEWEB_DBAAS_EXPORTER_PASSWORD
+OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_ID
+OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_USERNAME
+OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_PASSWORD
 OBSERVABILITY_TELEGRAM_BOT_TOKEN
 OBSERVABILITY_WIREGUARD_CONF
 ```
 
 External Secrets Operator synchronizes the complete `core-platform/observability` path into `observability/observability-secrets` through a namespace-scoped read-only OpenBao role. This keeps the Telegram token, WireGuard configuration, and telemetry credentials out of GitHub workflows and removes the need for external Kubernetes API access during normal refreshes.
+
+`OpenTofu Apply` reconciles the Valkey exporter credentials from the Timeweb API through
+`scripts/timeweb/sync-managed-valkey.py`, preserving other keys with CAS and read-back
+verification. These are separate HTTP metrics credentials, not a Valkey database user;
+`default` remains deleted. After exporter credential rotation, refresh the ExternalSecret
+and restart the Collector so its environment receives the new values.
 
 Managed PostgreSQL connection settings are stored in OpenBao with the service secrets:
 

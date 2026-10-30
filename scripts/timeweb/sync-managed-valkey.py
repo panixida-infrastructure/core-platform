@@ -218,6 +218,26 @@ def publish_gateway_credentials(config, password, bao_url, headers):
     print(f"Verified OpenBao core-platform/envoy-gateway: {config['gateway']['username']}")
 
 
+def publish_exporter_credentials(config, provider_headers, bao_url, bao_headers):
+    exporters = request_json(
+        f"https://api.timeweb.cloud/api/v1/dbs/{config['id']}/exporters",
+        provider_headers)["exporters"]
+    # This deployment is single-node; never silently select a different replica.
+    if len(exporters) != 1:
+        raise ValueError("Expected one managed Valkey exporter")
+    exporter = exporters[0]
+    if any(not isinstance(exporter.get(key), str) or not exporter[key].strip()
+           for key in ("id", "login", "password")):
+        raise ValueError("Incomplete managed Valkey exporter credentials")
+    uuid.UUID(exporter["id"])
+    update_secret(f"{bao_url}/v1/secret/data/core-platform/observability", bao_headers, {
+        "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_ID": exporter["id"],
+        "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_USERNAME": exporter["login"],
+        "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_PASSWORD": exporter["password"],
+    })
+    print("Published managed Valkey exporter credentials to OpenBao", flush=True)
+
+
 def verify_users(users, config):
     by_login = {user["login"]: user for user in users}
     expected = {username: config["privileges"] for username in config["users"].values()}
@@ -362,6 +382,7 @@ def main():
     print(f"Verified Valkey {config['id']}: 9.1, preset 5067, private-only, no backups, noeviction")
     verify_users(request_json(f"{base}/databases/{config['id']}/admins", headers)["admins"], config)
     bao_url, bao_headers = openbao_headers()
+    publish_exporter_credentials(config, headers, bao_url, bao_headers)
     publish_credentials(config, passwords, bao_url, bao_headers)
     publish_gateway_credentials(config, gateway_password, bao_url, bao_headers)
     probe_workers({**config, "username": config["gateway"]["username"]}, gateway_password,

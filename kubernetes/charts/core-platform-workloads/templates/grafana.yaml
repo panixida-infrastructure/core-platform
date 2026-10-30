@@ -138,6 +138,10 @@ metadata:
 data:
   browser-telemetry.json: |
     {{- .Files.Get "files/browser-telemetry.json" | nindent 4 }}
+  {{- if .Values.observability.valkey.enabled }}
+  valkey-managed.json: |
+    {{- .Files.Get "files/valkey-managed.json" | nindent 4 }}
+  {{- end }}
   kubernetes-control-plane.json: |
     {{- .Files.Get "files/kubernetes-control-plane.json" | nindent 4 }}
   core-platform-overview.json: |

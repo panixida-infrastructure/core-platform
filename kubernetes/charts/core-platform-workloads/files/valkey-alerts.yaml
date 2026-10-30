@@ -1,0 +1,156 @@
+- name: managed-valkey
+  rules:
+    - alert: ManagedValkeyDown
+      expr: max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 0
+      for: 2m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey is unreachable from the provider exporter.
+        description: Check the Timeweb instance status and private-network access; compare exporter HTTP availability before restarting anything.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 1) | quote }}
+    - alert: ManagedValkeyMetricsUnavailable
+      expr: max(max(up{service_name="timeweb-dbaas-valkey"}) == 0 or absent_over_time(redis_up{service_name="timeweb-dbaas-valkey"}[3m]) or ((max(redis_exporter_last_scrape_error{service_name="timeweb-dbaas-valkey"}) > 0 or absent_over_time(redis_memory_used_bytes{service_name="timeweb-dbaas-valkey"}[3m]) or absent_over_time(redis_memory_max_bytes{service_name="timeweb-dbaas-valkey"}[3m]) or absent_over_time(redis_mem_not_counted_for_eviction_bytes{service_name="timeweb-dbaas-valkey"}[3m])) and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)))
+      for: 2m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey metrics are missing or incomplete.
+        description: Check Collector logs, Timeweb exporter HTTPS/authentication and ExternalSecret freshness. Missing metrics are not zero load.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 2) | quote }}
+    - alert: ManagedValkeyHostMetricsUnavailable
+      expr: max(max(up{service_name="timeweb-dbaas-valkey-node"}) == 0 or absent_over_time(node_time_seconds{service_name="timeweb-dbaas-valkey-node"}[3m]))
+      for: 5m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey host metrics are unavailable.
+        description: Check the Timeweb node-exporter endpoint and Collector scrape; database metrics can remain available independently.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 3) | quote }}
+    - alert: ManagedValkeyMemoryHigh
+      expr: 100 * max(clamp_min(redis_memory_used_bytes{service_name="timeweb-dbaas-valkey"} - redis_mem_not_counted_for_eviction_bytes{service_name="timeweb-dbaas-valkey"}, 0) / (redis_memory_max_bytes{service_name="timeweb-dbaas-valkey"} > 0)) > 80 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 10m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey has used more than 80% of maxmemory.
+        description: Check TTLs and growing key counts. Memory excludes buffers not counted for eviction; plan capacity before noeviction starts rejecting writes.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 5) | quote }}
+    - alert: ManagedValkeyMemoryCritical
+      expr: 100 * max(clamp_min(redis_memory_used_bytes{service_name="timeweb-dbaas-valkey"} - redis_mem_not_counted_for_eviction_bytes{service_name="timeweb-dbaas-valkey"}, 0) / (redis_memory_max_bytes{service_name="timeweb-dbaas-valkey"} > 0)) > 90 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 5m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey has used more than 90% of maxmemory.
+        description: Increase capacity or remove only verified disposable cache entries. Preserve sessions and coordination keys; never flush the shared instance.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 5) | quote }}
+    - alert: ManagedValkeyOutOfMemory
+      expr: sum(increase_prometheus(redis_errors_total{service_name="timeweb-dbaas-valkey",err="OOM"}[5m])) > 0 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 1m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey rejected operations with OOM.
+        description: Inspect maxmemory usage and application write failures. noeviction keeps existing keys but rejects memory-growing operations.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 9) | quote }}
+    - alert: ManagedValkeyWriteFailures
+      expr: sum(increase_prometheus({__name__=~"redis_commands_(failed|rejected)_calls_total",service_name="timeweb-dbaas-valkey",cmd=~"set.*|mset.*|hset.*|incr.*|decr.*|del|unlink|expire.*|pexpire.*|eval.*|fcall.*|lpush.*|rpush.*|sadd|zadd"}[5m])) > 0 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 2m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey write commands are failing or being rejected.
+        description: Check OOM, application errors, Lua scripts and ACLs. Command counters identify the operation, not individual applications or keys.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 9) | quote }}
+    - alert: ManagedValkeyRejectedConnections
+      expr: sum(increase_prometheus(redis_rejected_connections_total{service_name="timeweb-dbaas-valkey"}[5m])) > 0 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 2m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey is rejecting connections.
+        description: Compare connected clients with maxclients; inspect application connection reuse and reconnect storms.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 11) | quote }}
+    - alert: ManagedValkeyCommandLatency
+      expr: max((rate(redis_commands_duration_seconds_total{service_name="timeweb-dbaas-valkey"}[5m]) / rate(redis_commands_total{service_name="timeweb-dbaas-valkey"}[5m])) and (increase_prometheus(redis_commands_total{service_name="timeweb-dbaas-valkey"}[5m]) >= 100)) > 0.05 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 10m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey mean command execution time exceeds 50 ms.
+        description: Only commands with at least 100 calls in 5 minutes are evaluated. Inspect per-command latency, CPU and persistence; this excludes network latency.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 13) | quote }}
+    - alert: ManagedValkeyAofFailure
+      expr: (min(redis_aof_last_write_status{service_name="timeweb-dbaas-valkey"}) == 0 or min(redis_aof_last_bgrewrite_status{service_name="timeweb-dbaas-valkey"}) == 0) and on() (max(redis_aof_enabled{service_name="timeweb-dbaas-valkey"}) == 1) and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 2m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey AOF persistence reports an error.
+        description: Check free disk, provider storage and AOF status. Local persistence does not replace backups or replication; do not restart before checking recoverability.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 19) | quote }}
+    - alert: ManagedValkeyRdbFailure
+      expr: min(redis_rdb_last_bgsave_status{service_name="timeweb-dbaas-valkey"}) == 0 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 5m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey RDB snapshot creation failed.
+        description: Check disk space, host memory and Timeweb logs. Snapshot age alone is not an error when no writes occurred.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 20) | quote }}
+    - alert: ManagedValkeyDiskLow
+      expr: 100 * node_filesystem_avail_bytes{service_name="timeweb-dbaas-valkey-node",fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"} / (node_filesystem_size_bytes{service_name="timeweb-dbaas-valkey-node",fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"} > 0) < 20
+      for: 15m
+      labels:
+        severity: warning
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey host filesystem has less than 20% free space.
+        description: Inspect the affected device and mountpoint, AOF size and rewrite headroom; expand storage through IaC if needed.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 24) | quote }}
+    - alert: ManagedValkeyDiskCritical
+      expr: 100 * node_filesystem_avail_bytes{service_name="timeweb-dbaas-valkey-node",fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"} / (node_filesystem_size_bytes{service_name="timeweb-dbaas-valkey-node",fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"} > 0) < 10
+      for: 5m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey host filesystem has less than 10% free space.
+        description: Check AOF/RDB errors and expand storage. Do not delete database persistence files manually.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 24) | quote }}
+    - alert: ManagedValkeyUnexpectedEvictions
+      expr: sum(increase_prometheus(redis_evicted_keys_total{service_name="timeweb-dbaas-valkey"}[5m])) > 0 and on() (max(redis_up{service_name="timeweb-dbaas-valkey"} and (time() - timestamp(redis_up{service_name="timeweb-dbaas-valkey"}) < 180)) == 1)
+      for: 1m
+      labels:
+        severity: critical
+        alert_owner: core-platform
+        environment: shared
+      annotations:
+        summary: Valkey evicted keys despite the expected noeviction policy.
+        description: Check Timeweb eviction policy and application coordination state; verify noeviction in IaC and the provider API.
+        dashboard_url: {{ include "core-platform-workloads.metricDashboardUrl" (dict "root" . "dashboard" "valkey-managed" "panel" 16) | quote }}
