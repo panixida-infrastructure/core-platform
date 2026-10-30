@@ -208,6 +208,7 @@ observability:
         tactical-heroes: 955
         dotnet-template: 956
         postgresql: 958
+        valkey: 48496
         core-platform: 960
         observability: 962
         unclassified: 964

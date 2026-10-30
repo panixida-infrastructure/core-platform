@@ -5,8 +5,7 @@
       for: 2m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey is unreachable from the provider exporter.
         description: Check the Timeweb instance status and private-network access; compare exporter HTTP availability before restarting anything.
@@ -16,8 +15,7 @@
       for: 2m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey metrics are missing or incomplete.
         description: Check Collector logs, Timeweb exporter HTTPS/authentication and ExternalSecret freshness. Missing metrics are not zero load.
@@ -27,8 +25,7 @@
       for: 5m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey host metrics are unavailable.
         description: Check the Timeweb node-exporter endpoint and Collector scrape; database metrics can remain available independently.
@@ -38,8 +35,7 @@
       for: 10m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey has used more than 80% of maxmemory.
         description: Check TTLs and growing key counts. Memory excludes buffers not counted for eviction; plan capacity before noeviction starts rejecting writes.
@@ -49,8 +45,7 @@
       for: 5m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey has used more than 90% of maxmemory.
         description: Increase capacity or remove only verified disposable cache entries. Preserve sessions and coordination keys; never flush the shared instance.
@@ -60,8 +55,7 @@
       for: 1m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey rejected operations with OOM.
         description: Inspect maxmemory usage and application write failures. noeviction keeps existing keys but rejects memory-growing operations.
@@ -71,8 +65,7 @@
       for: 2m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey write commands are failing or being rejected.
         description: Check OOM, application errors, Lua scripts and ACLs. Command counters identify the operation, not individual applications or keys.
@@ -82,8 +75,7 @@
       for: 2m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey is rejecting connections.
         description: Compare connected clients with maxclients; inspect application connection reuse and reconnect storms.
@@ -93,8 +85,7 @@
       for: 10m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey mean command execution time exceeds 50 ms.
         description: Only commands with at least 100 calls in 5 minutes are evaluated. Inspect per-command latency, CPU and persistence; this excludes network latency.
@@ -104,8 +95,7 @@
       for: 2m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey AOF persistence reports an error.
         description: Check free disk, provider storage and AOF status. Local persistence does not replace backups or replication; do not restart before checking recoverability.
@@ -115,8 +105,7 @@
       for: 5m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey RDB snapshot creation failed.
         description: Check disk space, host memory and Timeweb logs. Snapshot age alone is not an error when no writes occurred.
@@ -126,8 +115,7 @@
       for: 15m
       labels:
         severity: warning
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey host filesystem has less than 20% free space.
         description: Inspect the affected device and mountpoint, AOF size and rewrite headroom; expand storage through IaC if needed.
@@ -137,8 +125,7 @@
       for: 5m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey host filesystem has less than 10% free space.
         description: Check AOF/RDB errors and expand storage. Do not delete database persistence files manually.
@@ -148,8 +135,7 @@
       for: 1m
       labels:
         severity: critical
-        alert_owner: core-platform
-        environment: shared
+        alert_owner: valkey
       annotations:
         summary: Valkey evicted keys despite the expected noeviction policy.
         description: Check Timeweb eviction policy and application coordination state; verify noeviction in IaC and the provider API.

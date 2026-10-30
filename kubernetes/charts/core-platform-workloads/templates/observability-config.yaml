@@ -1525,6 +1525,9 @@ data:
         - receiver: gateway-postgresql
           matchers:
             - alert_owner="postgresql"
+        - receiver: gateway-valkey
+          matchers:
+            - alert_owner="valkey"
         - receiver: gateway-core-platform
           matchers:
             - alert_owner="core-platform"
@@ -1585,6 +1588,15 @@ data:
                 type: Bearer
                 credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
       - name: gateway-core-platform
+        webhook_configs:
+          - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager-gateway-secrets/webhook-token
+      - name: gateway-valkey
         webhook_configs:
           - url: http://telegram-alert-gateway.{{ .Values.observability.namespace }}.svc.cluster.local/api/v1/webhooks/alertmanager
             send_resolved: true

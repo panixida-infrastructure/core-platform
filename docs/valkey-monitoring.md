@@ -62,10 +62,12 @@ Limitations:
 
 ## Alerts and first response
 
-All rules use `alert_owner=core-platform`, `environment=shared`, a dashboard panel
-link and a short diagnostic description. vmalert sends them through the existing
-Alertmanager → Telegram gateway route to the core-platform topic. No new Telegram
-topic or direct bot integration is needed.
+All rules use `alert_owner=valkey`, a dashboard panel link and a short diagnostic
+description. They omit `environment` because the instance serves multiple
+applications and environments. vmalert sends them through Alertmanager receiver
+`gateway-valkey` → Telegram gateway to the Valkey topic (thread `48496`). The topic
+and routing rule are also configured in the `telegram-alert-gateway` repository;
+deploy that configuration before switching the alert owner.
 
 | Condition | Severity / hold | First response |
 | --- | --- | --- |
@@ -107,7 +109,7 @@ and alert panel link is checked. CI runs these checks with the other platform te
 After GitOps sync, confirm both jobs in VictoriaMetrics, fresh `redis_up=1`,
 `redis_exporter_last_scrape_error=0`, expected maxmemory, host metrics and Grafana
 provisioning. Verify notifications with a temporary synthetic vmalert rule carrying
-`alert_owner=tests`, a unique test identifier and automatic recovery, then confirm
-both firing and resolved deliveries in the gateway logs. Do not induce OOM, stop
-Valkey or execute destructive database commands to test alerts. Remove all temporary
-test resources afterward.
+`alert_owner=valkey`, a `[TEST]` annotation, a unique test identifier and automatic
+recovery, then confirm both firing and resolved deliveries in the gateway logs.
+Do not induce OOM, stop Valkey or execute destructive database commands to test
+alerts. Remove all temporary test resources afterward.
