@@ -1,6 +1,6 @@
 {
   "uid": "valkey-managed",
-  "title": "Managed Valkey (shared)",
+  "title": "Managed Valkey",
   "description": "Shared Timeweb Valkey: availability, capacity, errors and persistence.",
   "schemaVersion": 41,
   "version": 1,

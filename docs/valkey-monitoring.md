@@ -2,7 +2,7 @@
 
 The shared Timeweb Valkey 9.1 instance serves caching, synchronization and gateway
 rate limiting. Its metrics describe the whole instance, not individual dev/prod
-applications. Dashboard: [Managed Valkey (shared)](https://grafana.panixida.ru/d/valkey-managed/valkey-managed).
+applications. Dashboard: [Managed Valkey](https://grafana.panixida.ru/d/valkey-managed/valkey-managed).
 
 ## Source and credentials
 

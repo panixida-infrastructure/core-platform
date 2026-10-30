@@ -126,7 +126,7 @@ Run `python3 -B -m unittest discover -s tests -p test_managed_valkey.py` and
 `tofu -chdir=opentofu/envs/production validate` to check the Valkey automation.
 
 The Timeweb service and host exporters feed the existing Collector → VictoriaMetrics
-pipeline. Grafana provisions **Managed Valkey (shared)** with instance-wide metrics;
+pipeline. Grafana provisions **Managed Valkey** with instance-wide metrics;
 vmalert routes capacity, availability, persistence and collection alerts to the
 `core-platform` Telegram topic. See [the Valkey monitoring runbook](docs/valkey-monitoring.md)
 for credentials, thresholds, source limitations and verification.
