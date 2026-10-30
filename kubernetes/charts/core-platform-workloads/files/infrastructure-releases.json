@@ -413,6 +413,16 @@
       "note": "Provider-supported major version; migration planning is required. Patch versions are managed separately."
     },
     {
+      "name": "Valkey (Timeweb)",
+      "installed": {
+        "kind": "timeweb-valkey"
+      },
+      "source": {
+        "kind": "timeweb-valkey"
+      },
+      "note": "Timeweb catalog version; a new instance and migration may be required. Patch versions are managed separately."
+    },
+    {
       "name": "Headlamp chart",
       "installed": {
         "namespace": "headlamp",

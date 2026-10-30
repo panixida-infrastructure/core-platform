@@ -102,6 +102,28 @@ class VersionTests(unittest.TestCase):
         with patch.object(client, "get", side_effect=lambda url: {"tag_name":"nightly", "draft":False, "prerelease":True} if url.endswith('/latest') else []), self.assertRaises(ValueError):
             client.latest(CATALOG["components"][0])
 
+    def test_timeweb_valkey_selects_only_available_stable_versions(self):
+        component = next(c for c in CATALOG["components"] if c["name"] == "Valkey (Timeweb)")
+        client = releases.Client()
+        data = {"types": [
+            {"name": "valkey", "version": value, "is_deprecated": deprecated}
+            for value, deprecated in [("7", False), ("8.1", False), ("9.9", False),
+                                      ("9.10", False), ("10", True), ("11.0-rc.1", False)]] + [
+            {"name": "postgresql", "version": "99", "is_deprecated": False},
+            {"name": "redis", "version": "100", "is_deprecated": False}]}
+        with patch.object(client, "timeweb", return_value=data) as api:
+            self.assertEqual(client.latest(component), {
+                "version": "9.10", "url": "https://timeweb.cloud/docs/dbaas/valkey"})
+        api.assert_called_once_with("database-types")
+
+    def test_timeweb_valkey_without_available_versions_fails_closed(self):
+        component = next(c for c in CATALOG["components"] if c["name"] == "Valkey (Timeweb)")
+        client = releases.Client()
+        for types in ([], [{"name": "valkey", "version": "9.1", "is_deprecated": True}],
+                      [{"name": "postgresql", "version": "18", "is_deprecated": False}]):
+            with self.subTest(types=types), patch.object(client, "timeweb", return_value={"types": types}), self.assertRaises(ValueError):
+                client.latest(component)
+
     def test_credentials_cannot_be_forwarded_to_other_hosts(self):
         client = releases.Client()
         for auth in ("timeweb", "kubernetes"):
@@ -172,6 +194,55 @@ class MonitorTests(unittest.TestCase):
         self.config["components"] = [next(c for c in CATALOG["components"] if c["name"] == "Grafana")]
         self.client = FakeClient()
         self.monitor = releases.Monitor(self.config, self.path)
+
+    def test_timeweb_databases_use_separate_clusters_and_emit_only_new_versions(self):
+        self.config.update(databaseClusterId=123, valkeyClusterId=456)
+        self.config["components"] = [c for c in CATALOG["components"]
+                                     if c["name"] in ("PostgreSQL (Timeweb)", "Valkey (Timeweb)")]
+        responses = {
+            "dbs/123": {"db": {"type": "postgresql18"}},
+            "dbs/456": {"db": {"type": "valkey9_1"}},
+            "database-types": {"types": [
+                {"name": "postgresql", "type": "postgresql18", "version": "18", "is_deprecated": False},
+                {"name": "valkey", "type": "valkey9_1", "version": "9.1", "is_deprecated": False}]},
+        }
+        client = releases.Client()
+        with patch.object(client, "inventory", return_value=[]), patch.object(client, "timeweb", side_effect=responses.__getitem__) as api:
+            self.monitor.poll(client, START)
+            self.assertEqual([(r["current_version"], r["latest_version"], r["status"]) for r in self.monitor.rows],
+                             [("18", "18", "current"), ("9.1", "9.1", "current")])
+            self.assertEqual(self.monitor.events, [])
+            self.assertIn(unittest.mock.call("dbs/456"), api.call_args_list)
+            responses["database-types"]["types"][1]["is_deprecated"] = True
+            responses["database-types"]["types"].append({
+                "name": "valkey", "type": "valkey9_2", "version": "9.2", "is_deprecated": False})
+            self.monitor.poll(client, START + releases.DAY)
+            self.assertEqual(len(self.monitor.events), 1)
+            event = self.monitor.events[0]
+            self.assertEqual((event["component"], event["current_version"], event["latest_version"]),
+                             ("Valkey (Timeweb)", "9.1", "9.2"))
+            restarted = releases.Monitor(self.config, self.path)
+            restarted.poll(client, START + releases.DAY + releases.EVENT_WINDOW + 1)
+            self.assertEqual(restarted.events, [])
+            self.assertEqual(restarted.rows[1]["status"], "update_available")
+
+    def test_timeweb_valkey_unknown_or_wrong_engine_type_is_not_current(self):
+        self.config["valkeyClusterId"] = 456
+        self.config["components"] = [c for c in CATALOG["components"] if c["name"] == "Valkey (Timeweb)"]
+        client = releases.Client()
+        for engine, database_type, value in (("valkey", "unknown", "9.1"),
+                                            ("postgresql", "postgresql18", "18"),
+                                            ("valkey", "valkey9_1", "unrecognized")):
+            responses = {
+                "dbs/456": {"db": {"type": database_type}},
+                "database-types": {"types": [
+                    {"name": engine, "type": "postgresql18" if engine == "postgresql" else "valkey9_1",
+                     "version": value, "is_deprecated": False}]},
+            }
+            with self.subTest(engine=engine, database_type=database_type), patch.object(client, "inventory", return_value=[]), patch.object(client, "timeweb", side_effect=responses.__getitem__), patch("builtins.print"):
+                self.monitor.poll(client, START)
+            self.assertEqual(self.monitor.rows[0]["status"], "inventory_failed")
+            self.assertEqual(self.monitor.events, [])
 
     def test_daily_check_and_restart_do_not_repeat_event(self):
         self.monitor.poll(self.client, START)

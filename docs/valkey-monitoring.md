@@ -90,6 +90,22 @@ bytes (about 1.28 GiB) on the 2 GiB tariff. Database capacity/error rules requir
 successful probe sample younger than 180 seconds. CPU/blocked-client graphs have
 no fixed alerts until workload behavior warrants a threshold.
 
+## Available versions
+
+The infrastructure release monitor includes `Valkey (Timeweb)`. It reads the
+configured type from `GET /api/v1/dbs/{valkeyClusterId}` and resolves that type
+through `GET /api/v1/database-types`. The latest candidate is the highest stable,
+non-deprecated Valkey version in the same Timeweb catalog. Installed versions
+remain identifiable when marked deprecated; missing or unrecognized types are
+reported as failed checks.
+
+The comparison uses provider versions such as `9.1`, rather than the exporter's
+Redis compatibility version or upstream patch releases. The daily check and
+durable notification deduplication follow the existing infrastructure monitor.
+New-version notices go to Core Platform (topic `960`), as for managed PostgreSQL.
+Confirm the migration path before upgrading; catalog availability does not imply
+that an existing instance can be upgraded in place.
+
 ## Verification
 
 ```sh
