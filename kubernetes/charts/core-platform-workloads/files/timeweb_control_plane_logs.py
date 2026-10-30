@@ -1,5 +1,6 @@
 """Forward managed control-plane logs to the existing OpenTelemetry collector."""
 
+import copy
 import datetime as dt
 import hashlib
 import http.server
@@ -23,6 +24,7 @@ SCOPES = ("k0scontroller.service", "cloud-provider-timeweb-cloud.service",
           "tw-kube-healer.service", "twcp.service")
 OVERLAP_SECONDS = 120
 REQUEST_TIMEOUT_SECONDS = 20
+CHECKPOINT_SIZE_LIMIT = 768 * 1024
 DIAGNOSTIC_CLIENT_IPS = frozenset(filter(None, os.environ.get("DIAGNOSTIC_CLIENT_IPS", "").split(",")))
 CLIENT_STREAM_RESET = re.compile(
     r'^E\d{4}\s[^\]]+\supgradeaware\.go:\d+\] '
@@ -60,14 +62,17 @@ def normalize(line, node, observed, scope="k0scontroller.service"):
         pass
     # The Timeweb UTC rendering of bare klog lines omits the year.
     if timestamp is None:
-        match = re.match(r'^[IWEF](\d{2})(\d{2}) (\d{2}:\d{2}:\d{2})(?: GMT (\d{6})|\.(\d{6}))', message)
+        match = re.match(
+            r'^[IWEF](\d{2})(\d{2}) (\d{2}:\d{2}:\d{2})'
+            r'(?: GMT(?P<zone>[+-]\d{2}:?\d{2})? (?P<gmt_micros>\d{6})|\.(?P<micros>\d{6}))', message)
         if match:
             reference = dt.datetime.fromtimestamp(observed, dt.timezone.utc)
             candidates = []
             for year in (reference.year - 1, reference.year, reference.year + 1):
                 try:
                     value = dt.datetime.fromisoformat(
-                        f"{year}-{match[1]}-{match[2]}T{match[3]}.{match[4] or match[5]}+00:00")
+                        f"{year}-{match[1]}-{match[2]}T{match[3]}."
+                        f"{match['gmt_micros'] or match['micros']}{match['zone'] or '+00:00'}")
                     candidates.append(value.timestamp())
                 except ValueError:
                     pass
@@ -96,7 +101,13 @@ def normalize(line, node, observed, scope="k0scontroller.service"):
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise RuntimeError("Unexpected HTTP redirect")
+        raise CollectionFailure("unexpected_redirect")
+
+
+class CollectionFailure(RuntimeError):
+    def __init__(self, reason):
+        super().__init__("Control-plane log collection failed")
+        self.fields = {"error_type": type(self).__name__, "failure_reason": reason}
 
 
 class RequestFailure(RuntimeError):
@@ -111,6 +122,8 @@ class RequestFailure(RuntimeError):
             self.fields["timeweb_log_scope"] = scope
         if isinstance(error, urllib.error.URLError):
             self.fields["reason_type"] = type(error.reason).__name__
+        if isinstance(error, CollectionFailure):
+            self.fields["failure_reason"] = error.fields["failure_reason"]
 
 
 class Client:
@@ -136,7 +149,7 @@ class Client:
                 with opener.open(req, timeout=REQUEST_TIMEOUT_SECONDS) as response:
                     raw = response.read(8 * 1024 * 1024 + 1)
                     if len(raw) > 8 * 1024 * 1024:
-                        raise RuntimeError("Response exceeds size limit")
+                        raise CollectionFailure("response_size_limit")
                     return json.loads(raw) if raw else {}
             except Exception as error:
                 failure = RequestFailure(error, operation, attempt,
@@ -193,79 +206,89 @@ class Client:
                                 operation="otel/export-logs")
         partial = response.get("partialSuccess", {})
         if int(partial.get("rejectedLogRecords", 0)):
-            raise RuntimeError("OpenTelemetry collector rejected log records")
+            raise CollectionFailure("otlp_rejected_records")
 
 
 def collect_node(client, node, state, now, scope="k0scontroller.service", page_limit=20, metrics=None):
-    """Overlap polls to tolerate timestamp ties and delayed logs; export before checkpoint."""
+    """Export/checkpoint each page; advance the watermark only after the whole scan."""
     key = str(node["id"]) + ":" + scope
     previous = state.get(key, {})
-    cutoff = previous.get("watermark", now - 180) - OVERLAP_SECONDS
+    scan = copy.deepcopy(previous.get("scan", {
+        "observed": now, "cutoff": previous.get("watermark", now - 180) - OVERLAP_SECONDS,
+        "watermark": previous.get("watermark", now - 300), "seen": {}, "counts": {}, "cursor": None}))
     known = previous.get("seen", {})
-    seen = {}
-    watermark = previous.get("watermark", cutoff)
-    cursor = None
-    pending = []
-    pending_bytes = 0
-    complete = False
+    exported = 0
     for _ in range(page_limit):
+        # Keep the last acknowledged state immutable until this page is confirmed.
+        scan = copy.deepcopy(scan)
         query = {"node_ids": node["id"], "limit": 500, "period": "10080m",
                  "scope": scope, "timezone": "UTC"}
-        if cursor:
-            query["cursor"] = cursor
-        page = client.timeweb("/logs", query)
-        lines = page.get("k8s_logs", [])
-        if not lines:
-            complete = True
-            break
+        if scan["cursor"]:
+            query["cursor"] = scan["cursor"]
+        try:
+            page = client.timeweb("/logs", query)
+        except RequestFailure as error:
+            if scan["cursor"] and error.fields["http_status"] == 400:
+                # Expired cursors restart from the original cutoff, never from the head.
+                checkpoint = {"watermark": scan["cutoff"] + OVERLAP_SECONDS, "seen": known}
+                updated = dict(state, **{key: checkpoint})
+                client.save_state(updated)
+                state.update(updated)
+                raise CollectionFailure("cursor_rejected_scan_restarted") from error
+            raise
+        if (not isinstance(page, dict) or not isinstance(page.get("k8s_logs"), list)
+                or not isinstance(page.get("meta"), dict) or "next_cursor" not in page["meta"]):
+            raise CollectionFailure("invalid_log_response")
+        lines = page["k8s_logs"]
+        pending = []
         page_is_older = True
         for line in lines:
             fingerprint = hashlib.sha256(line.encode()).hexdigest()
-            record = normalize(line, node, now, scope)
+            record = normalize(line, node, scan["observed"], scope)
             timestamp = record[1]
             if timestamp is None:
-                timestamp = known.get(fingerprint, {}).get("time", now)
-            if timestamp < cutoff:
+                # A new provider format must not silently turn old history into new logs.
+                raise CollectionFailure("timestamp_missing")
+            if timestamp < scan["cutoff"]:
                 continue
             page_is_older = False
-            watermark = max(watermark, timestamp)
-            entry = seen.setdefault(fingerprint, {"time": timestamp, "count": 0})
-            entry["count"] += 1
-            if entry["count"] <= known.get(fingerprint, {}).get("count", 0):
-                continue
-            pending_bytes += len(line.encode())
-            if pending_bytes > 8 * 1024 * 1024:
-                raise RuntimeError("Log backlog exceeds memory bound; checkpoint was retained")
+            scan["watermark"] = max(scan["watermark"], timestamp)
+            if timestamp >= scan["watermark"] - OVERLAP_SECONDS:
+                entry = scan["seen"].setdefault(fingerprint, {"time": timestamp, "count": 0})
+                entry["count"] += 1
+            if fingerprint in known:
+                scan["counts"][fingerprint] = scan["counts"].get(fingerprint, 0) + 1
+                if scan["counts"][fingerprint] <= known[fingerprint]["count"]:
+                    continue
             pending.append(record)
-        if page_is_older:
-            complete = True
-            break
         next_cursor = page.get("meta", {}).get("next_cursor")
-        if not next_cursor:
-            complete = True
-            break
-        if next_cursor == cursor:
-            raise RuntimeError("Provider returned a non-advancing cursor")
-        cursor = next_cursor
-    if not complete:
-        raise RuntimeError("Log backlog exceeds page bound; checkpoint was retained")
-    if not seen:
-        return 0
-    records = list(reversed(pending))
-    for offset in range(0, len(records), 500):
-        batch = records[offset:offset + 500]
-        client.export(node, batch)
+        complete = page_is_older or not next_cursor
+        if not complete and next_cursor == scan["cursor"]:
+            raise CollectionFailure("non_advancing_cursor")
+        scan["cursor"] = next_cursor
+        scan["seen"] = {k: v for k, v in scan["seen"].items()
+                        if v["time"] >= scan["watermark"] - OVERLAP_SECONDS}
+        checkpoint = {"watermark": scan["watermark"], "seen": scan["seen"]} if complete else {
+            **previous, "scan": scan}
+        updated = dict(state, **{key: checkpoint})
+        # Leave room for ConfigMap metadata and JSON string escaping under its 1 MiB limit.
+        if len(json.dumps(updated).encode()) > CHECKPOINT_SIZE_LIMIT:
+            raise CollectionFailure("checkpoint_size_limit")
+        if pending:
+            client.export(node, list(reversed(pending)))
+        if checkpoint != state.get(key):
+            # An ambiguous failure can replay this page, but can never skip unconfirmed logs.
+            client.save_state(updated)
+            state.update(updated)
+        exported += len(pending)
         if metrics is not None:
+            metrics.records += len(pending)
             metrics.diagnostic_stream_resets += sum(
                 any(attr["key"] == CLIENT_STREAM_RESET_ATTRIBUTE for attr in record[2]["attributes"])
-                for record in batch)
-    checkpoint = {"watermark": watermark, "seen": {
-        key: value for key, value in seen.items() if value["time"] >= watermark - OVERLAP_SECONDS}}
-    if checkpoint != previous:
-        updated = dict(state, **{key: checkpoint})
-        client.save_state(updated)
-        state.update(updated)
-    return len(records)
+                for record in pending)
+        if complete:
+            return exported
+    return exported
 
 
 class Metrics:
@@ -273,6 +296,37 @@ class Metrics:
     errors = 0
     records = 0
     diagnostic_stream_resets = 0
+    pending_scans = 0
+
+
+def report_failure(error, metrics, **context):
+    metrics.errors += 1
+    # Exception text, request headers and provider response bodies can contain secrets.
+    fields = error.fields if isinstance(error, (RequestFailure, CollectionFailure)) else {
+        "error_type": type(error).__name__, "http_status": getattr(error, "code", None)}
+    print(json.dumps({"level": "error", "message": "Control-plane log collection failed",
+                      **fields, **context}), flush=True)
+
+
+def collect_cycle(client, metrics):
+    state = client.load_state()
+    nodes = client.timeweb("/master-nodes").get("nodes", [])
+    masters = [node for node in nodes if node.get("type") == "master"]
+    if not masters:
+        raise CollectionFailure("no_master_nodes")
+    failed = False
+    pending = 0
+    for node in masters:
+        for scope in SCOPES:
+            try:
+                collect_node(client, node, state, time.time(), scope, metrics=metrics)
+            except Exception as error:
+                failed = True
+                report_failure(error, metrics, timeweb_node_id=node["id"], timeweb_log_scope=scope)
+            pending += "scan" in state.get(str(node["id"]) + ":" + scope, {})
+    metrics.pending_scans = pending
+    if not failed and not pending:
+        metrics.last_success = time.time()
 
 
 def main():
@@ -291,6 +345,7 @@ def main():
             body = (f"timeweb_control_plane_logs_last_success_timestamp_seconds {metrics.last_success}\n"
                     f"timeweb_control_plane_logs_errors_total {metrics.errors}\n"
                     f"timeweb_control_plane_logs_exported_records_total {metrics.records}\n"
+                    f"timeweb_control_plane_logs_pending_scans {metrics.pending_scans}\n"
                     "# TYPE timeweb_control_plane_logs_diagnostic_stream_resets_total counter\n"
                     f"timeweb_control_plane_logs_diagnostic_stream_resets_total {metrics.diagnostic_stream_resets}\n").encode()
             self.send_response(200)
@@ -307,22 +362,9 @@ def main():
     interval = max(30, int(os.environ.get("POLL_INTERVAL_SECONDS", "60")))
     while not stop.is_set():
         try:
-            state = client.load_state()
-            nodes = client.timeweb("/master-nodes").get("nodes", [])
-            masters = [node for node in nodes if node.get("type") == "master"]
-            if not masters:
-                raise RuntimeError("Provider returned no master nodes")
-            for node in masters:
-                for scope in SCOPES:
-                    metrics.records += collect_node(client, node, state, time.time(), scope, metrics=metrics)
-            metrics.last_success = time.time()
+            collect_cycle(client, metrics)
         except Exception as error:
-            metrics.errors += 1
-            # Never print request headers, credential values, or provider response bodies.
-            fields = error.fields if isinstance(error, RequestFailure) else {
-                "error_type": type(error).__name__, "http_status": getattr(error, "code", None)}
-            print(json.dumps({"level": "error", "message": "Control-plane log collection failed",
-                              **fields}), flush=True)
+            report_failure(error, metrics)
         stop.wait(interval)
     server.shutdown()
 

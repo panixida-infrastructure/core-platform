@@ -38,8 +38,10 @@ class FakeClient:
         self.saved = []
         self.fail_export = fail_export
         self.fail_save = fail_save
+        self.queries = []
 
     def timeweb(self, path, query):
+        self.queries.append(copy.deepcopy(query))
         assert query["timezone"] == "UTC"
         assert query["scope"] in collector.SCOPES
         index = int(query.get("cursor", "0"))
@@ -138,6 +140,18 @@ class CollectorTests(unittest.TestCase):
         self.assertAlmostEqual(timestamp, NOW + 0.123456)
         self.assertEqual(record["severityNumber"], 17)
 
+    def test_provider_gmt_offsets_and_native_klog_timestamp(self):
+        for clock, suffix in (("18:00:00", " GMT+0000 123456"),
+                              ("18:00:00", " GMT+00:00 123456"),
+                              ("22:00:00", " GMT+0400 123456"),
+                              ("13:00:00", " GMT-0500 123456"),
+                              ("18:00:00", ".123456")):
+            with self.subTest(suffix=suffix):
+                _, timestamp, record = collector.normalize(
+                    f"I0907 {clock}{suffix} 123 source.go:1] test", NODE, NOW)
+                self.assertAlmostEqual(timestamp, NOW + 0.123456)
+                self.assertIn("timeUnixNano", record)
+
     def test_klog_year_rollover(self):
         january = dt.datetime(2027, 1, 1, tzinfo=dt.timezone.utc).timestamp()
         _, timestamp, _ = collector.normalize("I1231 23:59:59 GMT 000000 1 test", NODE, january)
@@ -158,8 +172,9 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(collector.collect_node(second, NODE, state, NOW + 60), 3)
         self.assertCountEqual([r[2]["body"]["stringValue"] for r in second.exported], ["new", "a", "late"])
         unchanged = FakeClient(second.pages)
+        confirmed = copy.deepcopy(state)
         self.assertEqual(collector.collect_node(unchanged, NODE, state, NOW + 120), 0)
-        self.assertEqual(unchanged.saved, [])
+        self.assertEqual(state, confirmed)
 
     def test_export_failure_retains_checkpoint(self):
         state = {}
@@ -182,12 +197,193 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(collector.collect_node(FakeClient([[]]), NODE, state, NOW + 700000), 0)
         self.assertEqual(collector.collect_node(FakeClient([[line(700000)]]), NODE, state, NOW + 700000), 1)
 
-    def test_page_bound_does_not_advance_or_export_partial_backlog(self):
+    def test_page_bound_checkpoints_cursor_and_resumes_after_restart(self):
         state = {}
-        client = FakeClient([[line()], [line(-1)]])
-        with self.assertRaises(RuntimeError):
-            collector.collect_node(client, NODE, state, NOW, page_limit=1)
+        pages = [[line(0, "head")], [line(-1, "tail")]]
+        first = FakeClient(pages)
+        self.assertEqual(collector.collect_node(first, NODE, state, NOW, page_limit=1), 1)
+        key = "1:k0scontroller.service"
+        self.assertNotIn("watermark", state[key])
+        self.assertEqual(state[key]["scan"]["cursor"], "1")
+        restarted = json.loads(json.dumps(first.saved[-1]))
+        second = FakeClient(pages)
+        self.assertEqual(collector.collect_node(second, NODE, restarted, NOW + 86400, page_limit=1), 1)
+        self.assertEqual(second.queries[0]["cursor"], "1")
+        self.assertEqual([r[2]["body"]["stringValue"] for r in second.exported], ["tail"])
+        self.assertNotIn("scan", restarted[key])
+        self.assertEqual(restarted[key]["watermark"], NOW)
+
+    def test_large_backlog_is_bounded_and_keeps_all_records(self):
+        pages = [[line(-p * 500 - i, f"record-{p}-{i}") for i in range(500)] for p in range(24)]
+        state = {"1:k0scontroller.service": {"watermark": NOW - 12000, "seen": {}}}
+        client = FakeClient(pages)
+        metrics = collector.Metrics()
+        for _ in range(8):
+            collector.collect_node(client, NODE, state, NOW, page_limit=3, metrics=metrics)
+            self.assertLess(len(json.dumps(state)), 25000)
+            if "scan" in state["1:k0scontroller.service"]:
+                self.assertEqual(state["1:k0scontroller.service"]["watermark"], NOW - 12000)
+            state = json.loads(json.dumps(client.saved[-1]))
+        self.assertEqual(len(client.exported), 12000)
+        self.assertEqual(len({r[2]["body"]["stringValue"] for r in client.exported}), 12000)
+        self.assertEqual(metrics.records, 12000)
+        self.assertEqual(state["1:k0scontroller.service"]["watermark"], NOW)
+        self.assertNotIn("scan", state["1:k0scontroller.service"])
+
+    def test_later_page_export_failure_keeps_last_acknowledged_cursor(self):
+        client = FakeClient([[line(0, "confirmed")], [line(-1, "retry")]])
+        original_export = client.export
+        def export(node, records):
+            if client.exported:
+                raise OSError("private transport failure")
+            original_export(node, records)
+        client.export = export
+        state = {}
+        with self.assertRaises(OSError):
+            collector.collect_node(client, NODE, state, NOW)
+        self.assertEqual(state, client.saved[-1])
+        self.assertEqual(state["1:k0scontroller.service"]["scan"]["cursor"], "1")
+        retry = FakeClient(client.pages)
+        collector.collect_node(retry, NODE, state, NOW + 60)
+        self.assertEqual([r[2]["body"]["stringValue"] for r in retry.exported], ["retry"])
+
+    def test_later_page_checkpoint_failure_replays_only_unconfirmed_page(self):
+        client = FakeClient([[line(0, "confirmed")], [line(-1, "ambiguous")]])
+        original_save = client.save_state
+        def save(state):
+            if client.saved:
+                raise OSError("checkpoint failed")
+            original_save(state)
+        client.save_state = save
+        state = {}
+        with self.assertRaises(OSError):
+            collector.collect_node(client, NODE, state, NOW)
+        self.assertEqual(state, client.saved[-1])
+        retry = FakeClient(client.pages)
+        collector.collect_node(retry, NODE, state, NOW + 60)
+        self.assertEqual([r[2]["body"]["stringValue"] for r in retry.exported], ["ambiguous"])
+
+    def test_records_arriving_during_backfill_are_collected_on_next_scan(self):
+        state = {}
+        pages = [[line(0, "head")], [line(-1, "tail")]]
+        collector.collect_node(FakeClient(pages), NODE, state, NOW, page_limit=1)
+        collector.collect_node(FakeClient(pages), NODE, state, NOW + 60, page_limit=1)
+        current = FakeClient([[line(60, "new"), line(0, "head"), line(-1, "tail")]])
+        self.assertEqual(collector.collect_node(current, NODE, state, NOW + 120), 1)
+        self.assertEqual(current.exported[0][2]["body"]["stringValue"], "new")
+
+    def test_overlap_multiplicity_survives_page_boundaries_and_restarts(self):
+        state = {}
+        collector.collect_node(FakeClient([[line()]]), NODE, state, NOW)
+        pages = [[line()], [line()]]
+        first, second = FakeClient(pages), FakeClient(pages)
+        self.assertEqual(collector.collect_node(first, NODE, state, NOW + 60, page_limit=1), 0)
+        state = json.loads(json.dumps(first.saved[-1]))
+        self.assertEqual(collector.collect_node(second, NODE, state, NOW + 120, page_limit=1), 1)
+        self.assertEqual(collector.collect_node(FakeClient(pages), NODE, state, NOW + 180), 0)
+
+    def test_unknown_timestamp_retains_progress_instead_of_replaying_history_as_new(self):
+        state = {}
+        client = FakeClient([[line()], ["unrecognized provider timestamp private-content"]])
+        with self.assertRaises(collector.CollectionFailure) as failure:
+            collector.collect_node(client, NODE, state, NOW)
+        self.assertEqual(failure.exception.fields["failure_reason"], "timestamp_missing")
+        self.assertEqual(state, client.saved[-1])
+        self.assertEqual(state["1:k0scontroller.service"]["scan"]["cursor"], "1")
+        self.assertEqual(len(client.exported), 1)
+
+    def test_checkpoint_size_limit_does_not_export_or_advance(self):
+        state = {}
+        client = FakeClient([[line()]])
+        with patch.object(collector, "CHECKPOINT_SIZE_LIMIT", 1):
+            with self.assertRaises(collector.CollectionFailure) as failure:
+                collector.collect_node(client, NODE, state, NOW)
+        self.assertEqual(failure.exception.fields["failure_reason"], "checkpoint_size_limit")
         self.assertEqual((state, client.exported, client.saved), ({}, [], []))
+
+    def test_non_advancing_cursor_keeps_the_last_acknowledged_page(self):
+        client = FakeClient([[line()], [line(-1)]])
+        original_timeweb = client.timeweb
+        def timeweb(path, query):
+            page = original_timeweb(path, query)
+            if query.get("cursor"):
+                page["meta"]["next_cursor"] = query["cursor"]
+            return page
+        client.timeweb = timeweb
+        state = {}
+        with self.assertRaises(collector.CollectionFailure) as failure:
+            collector.collect_node(client, NODE, state, NOW)
+        self.assertEqual(failure.exception.fields["failure_reason"], "non_advancing_cursor")
+        self.assertEqual(state, client.saved[-1])
+        self.assertEqual(len(client.exported), 1)
+
+    def test_malformed_response_does_not_complete_a_pending_scan(self):
+        client = FakeClient([[line()], [line(-1)]])
+        state = {}
+        collector.collect_node(client, NODE, state, NOW, page_limit=1)
+        confirmed = copy.deepcopy(state)
+        client.timeweb = Mock(return_value={})
+        with self.assertRaises(collector.CollectionFailure) as failure:
+            collector.collect_node(client, NODE, state, NOW + 60)
+        self.assertEqual(failure.exception.fields["failure_reason"], "invalid_log_response")
+        self.assertEqual(state, confirmed)
+
+    def test_rejected_cursor_restarts_from_original_cutoff_without_skipping_backlog(self):
+        client = FakeClient([[line(0, "head")], [line(-1, "tail")]])
+        state = {}
+        collector.collect_node(client, NODE, state, NOW, page_limit=1)
+        client.timeweb = Mock(side_effect=collector.RequestFailure(
+            urllib.error.HTTPError("private-url", 400, "private-response", {}, None),
+            "timeweb/logs", 1, 0.1, "k0scontroller.service"))
+        with self.assertRaises(collector.CollectionFailure) as failure:
+            collector.collect_node(client, NODE, state, NOW + 86400)
+        self.assertEqual(failure.exception.fields["failure_reason"], "cursor_rejected_scan_restarted")
+        self.assertEqual(state["1:k0scontroller.service"]["watermark"], NOW - 180)
+        retry = FakeClient(client.pages)
+        self.assertEqual(collector.collect_node(retry, NODE, state, NOW + 86400), 2)
+        self.assertNotIn("cursor", retry.queries[0])
+        self.assertEqual({r[2]["body"]["stringValue"] for r in retry.exported}, {"head", "tail"})
+
+
+class CycleTests(unittest.TestCase):
+    def test_failed_scope_does_not_block_other_scopes_or_report_success(self):
+        client = Mock()
+        client.load_state.return_value = {}
+        client.timeweb.return_value = {"nodes": [NODE | {"type": "master"}]}
+        metrics = collector.Metrics()
+        with patch.object(collector, "collect_node", side_effect=[
+                None, collector.CollectionFailure("timestamp_missing"), None, None]) as collect:
+            with patch("sys.stdout", new_callable=io.StringIO) as logs:
+                collector.collect_cycle(client, metrics)
+        self.assertEqual([call.args[4] for call in collect.call_args_list], list(collector.SCOPES))
+        self.assertEqual((metrics.errors, metrics.last_success), (1, 0))
+        error = json.loads(logs.getvalue())
+        self.assertEqual(error["timeweb_log_scope"], collector.SCOPES[1])
+        self.assertEqual(error["failure_reason"], "timestamp_missing")
+
+    def test_pending_backfill_is_progress_not_an_error_or_completed_cycle(self):
+        client = Mock()
+        client.load_state.return_value = {"1:twcp.service": {"scan": {"cursor": "next"}}}
+        client.timeweb.return_value = {"nodes": [NODE | {"type": "master"}]}
+        metrics = collector.Metrics()
+        with patch.object(collector, "collect_node"):
+            collector.collect_cycle(client, metrics)
+        self.assertEqual((metrics.pending_scans, metrics.errors, metrics.last_success), (1, 0, 0))
+
+    def test_complete_cycle_updates_success_and_clears_backlog(self):
+        client = Mock()
+        client.load_state.return_value = {}
+        client.timeweb.return_value = {"nodes": [NODE | {"type": "master"}]}
+        metrics = collector.Metrics()
+        metrics.pending_scans = 1
+        with patch.object(collector, "collect_node"), patch.object(collector.time, "time", return_value=NOW):
+            collector.collect_cycle(client, metrics)
+        self.assertEqual((metrics.pending_scans, metrics.errors, metrics.last_success), (0, 0, NOW))
+
+    def test_failure_logs_never_include_exception_text(self):
+        with patch("sys.stdout", new_callable=io.StringIO) as logs:
+            collector.report_failure(RuntimeError("private-token-response"), collector.Metrics())
+        self.assertNotIn("private", logs.getvalue())
 
 
 class RequestTests(unittest.TestCase):

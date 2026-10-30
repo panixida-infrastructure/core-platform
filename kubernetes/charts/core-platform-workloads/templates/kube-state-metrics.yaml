@@ -65,7 +65,7 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           args:
             - --resources=pods
-            - --metric-allowlist=kube_pod_info,kube_pod_deletion_timestamp,kube_pod_status_phase,kube_pod_(init_)?container_status_(restarts_total|waiting_reason|terminated_reason|last_terminated_reason|last_terminated_exitcode|last_terminated_timestamp)
+            - --metric-allowlist=kube_pod_info,kube_pod_completion_time,kube_pod_deletion_timestamp,kube_pod_status_phase,kube_pod_(init_)?container_status_(restarts_total|waiting_reason|terminated_reason|last_terminated_reason|last_terminated_exitcode|last_terminated_timestamp)
           ports:
             - name: metrics
               containerPort: 8080

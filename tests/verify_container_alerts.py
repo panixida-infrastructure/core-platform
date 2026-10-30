@@ -35,7 +35,8 @@ def verify(rendered):
         return f"{who} {suffix[name]}"
 
     def add(changes=None, expected=None, times=("2m", "6m", "12m"), dimensions=None,
-            init=False, deleted=False, succeeded=False, missing=False, up="1+0x25", extra=None):
+            init=False, deleted=False, succeeded=False, missing=False, up="1+0x25", extra=None,
+            job=False, failed=False, completion=None):
         dimensions = dimensions or base
         current_prefix = prefix.replace("container_", "init_container_") if init else prefix
         series = []
@@ -48,7 +49,12 @@ def verify(rendered):
                 metric, _, attributes = key.partition("|")
                 labels = dimensions | dict(x.split("=", 1) for x in attributes.split(",") if x)
                 sample(current_prefix + metric, labels, values)
-            sample("kube_pod_info", {k: v for k, v in dimensions.items() if k != "container"} | {"node": "worker-1"}, "1+0x25")
+            pod_labels = {k: v for k, v in dimensions.items() if k != "container"}
+            sample("kube_pod_info", pod_labels | {"node": "worker-1", "created_by_kind": "Job" if job else "ReplicaSet"}, "1+0x25")
+            if failed:
+                sample("kube_pod_status_phase", pod_labels | {"phase": "Failed"}, "1+0x25")
+            if completion is not None:
+                sample("kube_pod_completion_time", pod_labels, f"{completion}+0x25")
             if init:
                 sample(prefix + "restarts_total", dimensions | {"container": "main"}, "0+0x25")
             if deleted:
@@ -90,6 +96,25 @@ def verify(rendered):
     add({'last_terminated_reason|reason=Completed': "1+0x25", "last_terminated_exitcode": "0+0x25",
          "last_terminated_timestamp": f"{epoch}+0x25", 'terminated_reason|reason=Completed': "1+0x25"})
     add({'terminated_reason|reason=Error': "1+0x25"}, fires(names[2], ("2m", "6m", "12m"), reason="Error"))
+    cleanup = base | {"namespace": "quality", "pod": "sonarqube-pr-cleanup-123", "container": "cleanup"}
+    terminated = {'terminated_reason|reason=Error': "1+0x25"}
+    # Retained failed Jobs resolve after ten minutes, without deleting their history.
+    add(terminated, fires(names[2], ("2m", "6m"), cleanup, reason="Error"),
+        dimensions=cleanup, job=True, failed=True, completion=epoch)
+    add(terminated, dimensions=cleanup, job=True, failed=True, completion=epoch - 86400)
+    # Missing completion data and active Jobs remain visible rather than being silenced.
+    add(terminated, fires(names[2], ("2m", "6m", "12m"), cleanup, reason="Error"),
+        dimensions=cleanup, job=True, failed=True)
+    add(terminated, fires(names[2], ("2m", "6m", "12m"), cleanup, reason="Error"),
+        dimensions=cleanup, job=True, completion=epoch - 86400)
+    # A failed long-running service is still actionable even with an old completion timestamp.
+    add(terminated, fires(names[2], ("2m", "6m", "12m"), reason="Error"),
+        failed=True, completion=epoch - 86400)
+    old_pod = {k: v for k, v in cleanup.items() if k != "container"} | {"uid": "old-pod"}
+    old_labels = ",".join(f"{k}={json.dumps(v)}" for k, v in old_pod.items())
+    add(terminated, fires(names[2], ("2m", "6m", "12m"), cleanup, reason="Error"),
+        dimensions=cleanup, job=True, failed=True,
+        extra=[{"series": f"kube_pod_completion_time{{{old_labels}}}", "values": f"{epoch - 86400}+0x25"}])
     add(recent, fires(names[2], ("2m", "6m"), reason="Error"), init=True)
     add(recent | {"restarts_total": "0 0 1 2 3+0x21", 'waiting_reason|reason=CrashLoopBackOff': "1+0x25"}, deleted=True)
     add(recent | {"restarts_total": "0 0 1 2 3+0x21"}, succeeded=True)
@@ -120,6 +145,7 @@ def verify(rendered):
                 graph_checks.append({"eval_time": "6m", "alertname": name,
                                      "exp_alerts": [{"exp_labels": {}, "exp_annotations": {}}]})
     assert len(graph_checks) == 8
+    assert "--metric-allowlist=kube_pod_info,kube_pod_completion_time," in rendered
     tests.append({"interval": "1m", "input_series": fixture, "alert_rule_test": graph_checks})
     image = re.search(r'image: "(victoriametrics/vmalert:[^"]+)"', rendered)[1].replace("/vmalert:", "/vmalert-tool:")
     with tempfile.TemporaryDirectory(prefix="container-alerts-") as directory:
