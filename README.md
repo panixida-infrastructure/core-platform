@@ -83,7 +83,8 @@ from cache eviction; callers must handle memory-limit errors and use bounded TTL
 The instance is shared initially and does not provide replication or failover.
 Timeweb restricts administrative Valkey commands, including `CONFIG GET`. Change
 parameters through OpenTofu/provider API; the workflow verifies the configuration
-through that API without granting applications administrative access.
+through that API and requires CONFIG and ACL enumeration to remain unavailable
+to application users.
 
 `OpenTofu Apply` checks the provider settings, stores `VALKEY_HOST`, `VALKEY_PORT`,
 `VALKEY_USERNAME`, and `VALKEY_PASSWORD` in the corresponding OpenBao paths
@@ -93,8 +94,9 @@ independent random passwords and CONNECTION, READ, WRITE, PUBSUB, SCRIPTING,
 and TRANSACTION privileges. Credentials remain in restricted state and OpenBao.
 Temporary client pods on every ready Kubernetes worker verify each user's
 identity, strings, hashes, TTL, Lua, transactions, Pub/Sub, and denials for
-FLUSHALL, FLUSHDB, CONFIG, and ACL enumeration. FLUSH checks use invalid modes
-so they cannot erase data even if permissions regress.
+CONFIG and ACL enumeration. Timeweb category grants overlap: WRITE permits
+FLUSHALL, FLUSHDB, and SWAPDB even without DANGEROUS. This provider behavior is
+accepted; these commands are not invoked or required to be denied by the probes.
 
 After both application users pass the basic cache/state checks, the workflow removes the bootstrap
 `default` account through Timeweb, verify rejection of its old password and
@@ -104,8 +106,8 @@ Temporary pods and Secrets are always cleaned up. Application deployments are
 not changed; application integration is a separate step. Separate users do not
 isolate dev/prod keys or Pub/Sub channels: the provider exposes category grants,
 not key/channel ACL patterns. Applications must use environment-specific prefixes.
-Pub/Sub and administrative-denial checks run after bootstrap retirement and still
-fail the workflow if provider ACL restrictions remain unresolved.
+Pub/Sub message delivery and CONFIG/ACL denial checks run after bootstrap
+retirement and remain required for successful verification.
 
 `envoy_gateway_user` is a separate identity for the shared Envoy RateLimit service,
 with CONNECTION, READ, WRITE, and SCRIPTING privileges. The pinned
@@ -116,9 +118,9 @@ are published to `secret/core-platform/envoy-gateway`. Reconcile the GitHub Acti
 policy from `scripts/openbao/configure.sh` before the first publication to this path.
 Worker probes verify RESP2/RESP3 authentication, counter operations, TTL and Lua
 refunds, and rejection of PUBLISH, MULTI, CONFIG and ACL enumeration before the
-application Pub/Sub checks. Timeweb's WRITE grant still includes destructive
-commands; separate users do not enforce key-prefix isolation. Gateway rate limiting
-and its permanent Kubernetes secret integration are configured separately.
+application Pub/Sub checks. The same accepted WRITE-category behavior applies to
+this user; separate users do not enforce key-prefix isolation. Gateway rate
+limiting and its permanent Kubernetes secret integration are configured separately.
 
 Run `python3 -B -m unittest discover -s tests -p test_managed_valkey.py` and
 `tofu -chdir=opentofu/envs/production validate` to check the Valkey automation.
