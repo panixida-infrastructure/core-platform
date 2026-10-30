@@ -208,10 +208,37 @@ The **Container restarts and failures** section of [Kubernetes Workloads](https:
 
 - `KubernetesContainerRestartsHigh`: at least 3 observed restarts in 15 minutes, sustained for 2 minutes. A new Pod UID or a previously accumulated counter does not count as new restarts.
 - `KubernetesContainerCrashLoopBackOff`: recurring CrashLoopBackOff over a five-minute observation window, sustained for 10 minutes (critical).
-- `KubernetesContainerTerminatedAbnormally`: a current failed termination or a non-zero exit within 10 minutes, sustained for 1 minute. The reason includes OOMKilled/Error; Completed containers and Pods being deleted are excluded.
+- `KubernetesContainerTerminatedAbnormally`: a current failed termination or a non-zero exit within 10 minutes, sustained for 1 minute. The reason includes OOMKilled/Error; Completed containers and Pods being deleted are excluded. Retained failed Job Pods (including SonarQube PR cleanup) resolve 10 minutes after their recorded completion. New failures, active Jobs and failed service containers still alert; missing completion data does not suppress an alert.
 - `KubernetesContainerStateMonitoringDown`: exporter scrape or container inventory absent for 5 minutes.
 
 Application namespaces route to their existing Tactical Heroes or .NET Template Telegram topics; `observability` routes to Observability and other system namespaces to Core Platform. The alert links retain namespace, Pod, and container filters. History is collected from deployment onward.
+
+## Managed control-plane log collection
+
+The Timeweb collector accepts native klog timestamps and provider renderings with `GMT`,
+`GMT+0000` or an explicit numeric offset. It polls all four control-plane services
+independently, so a failed service does not block the others. Errors include only a safe
+failure reason, operation, node ID and scope; provider bodies and exception text stay private.
+
+Each page is exported before its cursor is saved in `timeweb-control-plane-log-state`.
+After at most 20 pages per service in a cycle, backfill continues from that cursor on
+the next cycle or after a restart. The previous completed watermark and overlap counts
+remain intact until the scan reaches its original cutoff. This bounds memory to a page
+and the overlap checkpoint instead of buffering the entire backlog. Argo CD preserves
+the runtime ConfigMap data during sync.
+
+Delivery is at least once: an ambiguous export/checkpoint failure may replay the last
+page, but never advances past unconfirmed records. Source timestamps are retained during
+backfill; neither the state nor the cutoff is reset to skip history. Recovery depends
+on the history still being available from Timeweb within the seven-day query window.
+Unknown timestamps, malformed responses, non-advancing cursors and an oversized checkpoint
+fail explicitly without advancing that page. Rejected cursors restart from the original
+cutoff, potentially replaying confirmed pages instead of skipping the remaining backlog.
+`timeweb_control_plane_logs_pending_scans` counts unfinished
+scans; `ControlPlaneLogCollectionStalled` clears after a fully successful polling cycle.
+
+Validate with `python3 -B -m unittest discover -s tests`, Helm lint/render and
+`python3 -B tests/verify_container_alerts.py <rendered-manifests.yaml>` (Docker required).
 
 ## Infrastructure release monitoring
 
