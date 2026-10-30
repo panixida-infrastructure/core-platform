@@ -63,6 +63,38 @@ class ValkeyConfigurationTests(unittest.TestCase):
                 valkey.verify_database(self.db, backups, self.config)
 
 
+class ValkeyExporterCredentialsTests(unittest.TestCase):
+    def test_provider_monitoring_credentials_are_published_separately_from_database_accounts(self):
+        exporter = {"id": "a05c874e-65e8-40e9-9b30-adcb565c970b", "login": "admin", "password": "metrics-password"}
+        with patch.object(valkey, "request_json", return_value={"exporters": [exporter]}) as request, \
+                patch.object(valkey, "update_secret") as update, patch("builtins.print"):
+            valkey.publish_exporter_credentials({"id": "123"}, {"Authorization": "provider"},
+                                               "https://bao.invalid", {"X-Vault-Token": "bao"})
+        self.assertEqual(request.call_args.args[0], "https://api.timeweb.cloud/api/v1/dbs/123/exporters")
+        self.assertEqual(update.call_args.args, (
+            "https://bao.invalid/v1/secret/data/core-platform/observability", {"X-Vault-Token": "bao"}, {
+                "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_ID": exporter["id"],
+                "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_USERNAME": "admin",
+                "OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_PASSWORD": "metrics-password"}))
+
+    def test_missing_or_ambiguous_replica_exporter_does_not_overwrite_credentials(self):
+        for exporters in ([], [{}, {}]):
+            with self.subTest(exporters=exporters), \
+                    patch.object(valkey, "request_json", return_value={"exporters": exporters}), \
+                    patch.object(valkey, "update_secret") as update, self.assertRaises(ValueError):
+                valkey.publish_exporter_credentials({"id": "123"}, {}, "https://bao.invalid", {})
+            update.assert_not_called()
+
+    def test_incomplete_or_invalid_exporter_credentials_are_rejected(self):
+        valid = {"id": "a05c874e-65e8-40e9-9b30-adcb565c970b", "login": "admin", "password": "password"}
+        for key, value in (("id", "not-a-uuid"), ("password", ""), ("password", None), ("login", " ")):
+            with self.subTest(key=key, value=value), \
+                    patch.object(valkey, "request_json", return_value={"exporters": [{**valid, key: value}]}), \
+                    patch.object(valkey, "update_secret") as update, self.assertRaises(ValueError):
+                valkey.publish_exporter_credentials({"id": "123"}, {}, "https://bao.invalid", {})
+            update.assert_not_called()
+
+
 class ValkeyCredentialPublicationTests(unittest.TestCase):
     def test_new_secret_is_created_with_cas_zero_and_verified(self):
         desired = {"VALKEY_USERNAME": "envoy_gateway_user", "VALKEY_PASSWORD": "gateway-password"}
@@ -204,6 +236,7 @@ class ValkeyUserRetirementTests(unittest.TestCase):
                 patch.object(valkey, "openbao_headers", return_value=("https://example.invalid", {})), \
                 patch.object(valkey, "publish_credentials"), \
                 patch.object(valkey, "publish_gateway_credentials"), \
+                patch.object(valkey, "publish_exporter_credentials"), \
                 patch.object(valkey, "probe_workers", side_effect=[None, RuntimeError("probe failed")]), \
                 patch.object(valkey, "retire_default_user") as retire, patch("builtins.print"), \
                 self.assertRaisesRegex(RuntimeError, "probe failed"):
@@ -225,6 +258,7 @@ class ValkeyUserRetirementTests(unittest.TestCase):
                     patch.object(valkey, "openbao_headers", return_value=("https://example.invalid", {})), \
                     patch.object(valkey, "publish_credentials"), \
                     patch.object(valkey, "publish_gateway_credentials"), \
+                    patch.object(valkey, "publish_exporter_credentials"), \
                     patch.object(valkey, "probe_workers", side_effect=results), \
                     patch.object(valkey, "retire_default_user") as retire, \
                     patch.object(valkey, "update_secret") as cleanup, patch("builtins.print"), \

@@ -147,6 +147,49 @@ data:
               relabel_configs:
                 - target_label: instance
                   replacement: managed-postgres
+            {{- if .Values.observability.valkey.enabled }}
+            - job_name: timeweb-dbaas-valkey
+              scheme: https
+              metrics_path: /${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_ID}/service/metrics
+              basic_auth:
+                username: ${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_USERNAME}
+                password: ${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_PASSWORD}
+              static_configs:
+                - targets: [dbs-exporter.timeweb.cloud]
+                  labels:
+                    db_cluster: valkey
+                    db_cluster_id: {{ .Values.observability.valkey.clusterId | int64 | quote }}
+                    db_system: valkey
+                    provider: timeweb
+              relabel_configs:
+                - target_label: instance
+                  replacement: managed-valkey
+              # Only instance aggregates; no key names, values or slowlog contents.
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  action: keep
+                  regex: redis_(up|uptime_in_seconds|instance_info|exporter_last_scrape_error|exporter_last_scrape_duration_seconds|exporter_last_scrape_connect_time_seconds|exporter_build_info|memory_used_bytes|memory_used_rss_bytes|memory_used_peak_bytes|memory_max_bytes|mem_not_counted_for_eviction_bytes|mem_fragmentation_ratio|connected_clients|max_clients|blocked_clients|rejected_connections_total|connections_received_total|commands_processed_total|commands_total|commands_duration_seconds_total|commands_failed_calls_total|commands_rejected_calls_total|errors_total|keyspace_hits_total|keyspace_misses_total|expired_keys_total|evicted_keys_total|net_input_bytes_total|net_output_bytes_total|aof_enabled|aof_last_write_status|aof_last_bgrewrite_status|aof_current_size_bytes|aof_delayed_fsync|rdb_last_bgsave_status|rdb_last_save_timestamp_seconds|rdb_changes_since_last_save|rdb_bgsave_in_progress|pubsub_channels|pubsub_patterns|pubsub_clients|cpu_sys_seconds_total|cpu_user_seconds_total|db_keys|db_keys_expiring)
+            - job_name: timeweb-dbaas-valkey-node
+              scheme: https
+              metrics_path: /${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_ID}/node-exporter/metrics
+              basic_auth:
+                username: ${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_USERNAME}
+                password: ${env:OBSERVABILITY_TIMEWEB_VALKEY_EXPORTER_PASSWORD}
+              static_configs:
+                - targets: [dbs-exporter.timeweb.cloud]
+                  labels:
+                    db_cluster: valkey
+                    db_cluster_id: {{ .Values.observability.valkey.clusterId | int64 | quote }}
+                    db_system: valkey
+                    provider: timeweb
+              relabel_configs:
+                - target_label: instance
+                  replacement: managed-valkey
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  action: keep
+                  regex: node_(time_seconds|cpu_seconds_total|memory_MemAvailable_bytes|memory_MemTotal_bytes|filesystem_avail_bytes|filesystem_size_bytes|filesystem_readonly|filesystem_device_error)
+            {{- end }}
             - job_name: kube-state-metrics
               static_configs:
                 - targets: [kube-state-metrics.{{ .Values.observability.namespace }}.svc.cluster.local:8080]
@@ -729,6 +772,9 @@ metadata:
 data:
   rules.yml: |
     groups:
+      {{- if .Values.observability.valkey.enabled }}
+      {{- tpl (.Files.Get "files/valkey-alerts.yaml") . | nindent 6 }}
+      {{- end }}
       - name: application-telemetry-delivery
         rules:
           - alert: TelemetryCollectorDown
