@@ -15,6 +15,9 @@ kind: ConfigMap
 metadata:
   name: timeweb-control-plane-log-state
   namespace: {{ .Values.observability.namespace }}
+  annotations:
+    # Runtime state can exceed the client-side last-applied annotation limit.
+    argocd.argoproj.io/sync-options: ServerSideApply=true
   labels:
     {{- include "core-platform-workloads.labels" . | nindent 4 }}
 data:

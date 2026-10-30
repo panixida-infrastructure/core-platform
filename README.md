@@ -225,7 +225,8 @@ After at most 20 pages per service in a cycle, backfill continues from that curs
 the next cycle or after a restart. The previous completed watermark and overlap counts
 remain intact until the scan reaches its original cutoff. This bounds memory to a page
 and the overlap checkpoint instead of buffering the entire backlog. Argo CD preserves
-the runtime ConfigMap data during sync.
+the runtime ConfigMap data during sync and uses server-side apply for this resource,
+so checkpoints are not copied into the size-limited last-applied annotation.
 
 Delivery is at least once: an ambiguous export/checkpoint failure may replay the last
 page, but never advances past unconfirmed records. Source timestamps are retained during
