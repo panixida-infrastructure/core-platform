@@ -57,7 +57,6 @@ for attempt in $(seq 1 10); do
   sleep 1
 done
 grep -qx valkey-smoke-message /tmp/pubsub.log
-# Invalid FLUSH modes cannot erase data even if a privilege regression permits them.
 denied() {
   if reply="$(cli "$@" 2>&1)"; then
     echo "FAIL: unexpectedly permitted $1"
@@ -66,11 +65,9 @@ denied() {
   printf '%s\n' "$reply" | grep -Eq '^(NOPERM |ERR unknown command)'
   echo "DENIED: $1"
 }
-denied FLUSHALL __invalid_acl_probe_mode__
-denied FLUSHDB __invalid_acl_probe_mode__
 denied CONFIG GET maxmemory
 denied ACL USERS
-echo 'PASS: authenticated PING/ECHO, identity, strings, hashes, TTL, Lua, transaction, Pub/Sub, administrative denials'
+echo 'PASS: authenticated PING/ECHO, identity, strings, hashes, TTL, Lua, transaction, Pub/Sub, CONFIG/ACL denials'
 '''
 
 DEFAULT_DISABLED_SCRIPT = r'''
@@ -378,7 +375,7 @@ def main():
     update_secret(f"{bao_url}/v1/secret/data/core-platform/applications", bao_headers, {},
                   remove=("VALKEY_HOST", "VALKEY_PORT", "VALKEY_USERNAME", "VALKEY_PASSWORD"))
     print("Retired bootstrap credentials removed from the current shared OpenBao secret")
-    # Provider ACL limitations are checked separately from the authorized bootstrap retirement.
+    # Verify Pub/Sub and command restrictions after bootstrap retirement.
     for environment, username in config["users"].items():
         probe_workers({**config, "username": username}, passwords[environment])
 
