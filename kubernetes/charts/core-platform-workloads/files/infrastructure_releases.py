@@ -18,6 +18,7 @@ import urllib.error
 DAY = 86400
 EVENT_WINDOW = 3600
 DEFAULT_PATTERN = r"v?(\d+\.\d+\.\d+)"
+DATABASE_PATTERN = r"(\d+(?:\.\d+){0,3})"
 KUBE_AUTH = Path("/var/run/secrets/kubernetes.io/serviceaccount")
 
 
@@ -155,10 +156,12 @@ class Client:
         elif kind == "timeweb-kubernetes":
             candidates = [(extract(pattern, tag), "https://timeweb.cloud/docs/k8s/manage-cluster/version-update")
                           for tag in self.timeweb("k8s/k8s-versions")["k8s_versions"]]
-        elif kind == "timeweb-postgresql":
-            candidates = [(item["version"], "https://timeweb.cloud/docs/dbaas")
+        elif kind in ("timeweb-postgresql", "timeweb-valkey"):
+            engine = kind.removeprefix("timeweb-")
+            url = "https://timeweb.cloud/docs/dbaas" + ("/valkey" if engine == "valkey" else "")
+            candidates = [(extract(DATABASE_PATTERN, item["version"]), url)
                           for item in self.timeweb("database-types")["types"]
-                          if item["name"] == "postgresql" and not item["is_deprecated"]]
+                          if item["name"] == engine and not item["is_deprecated"]]
         else:
             raise ValueError("Unknown release source")
         candidates = [(v, url) for v, url in candidates if v]
@@ -270,9 +273,13 @@ class Monitor:
                 if selector.get("kind") == "timeweb-kubernetes":
                     data = client.timeweb(f"k8s/clusters/{self.config['kubernetesClusterId']}")["cluster"]
                     current = [extract(r"v(\d+\.\d+\.\d+\+k0s\.\d+)", data["k8s_version"])]
-                elif selector.get("kind") == "timeweb-postgresql":
-                    data = client.timeweb(f"dbs/{self.config['databaseClusterId']}")["db"]
-                    current = [item["version"] for item in client.timeweb("database-types")["types"] if item["type"] == data["type"]]
+                elif selector.get("kind") in ("timeweb-postgresql", "timeweb-valkey"):
+                    engine = selector["kind"].removeprefix("timeweb-")
+                    cluster_key = "valkeyClusterId" if engine == "valkey" else "databaseClusterId"
+                    data = client.timeweb(f"dbs/{self.config[cluster_key]}")["db"]
+                    current = [extract(DATABASE_PATTERN, item["version"])
+                               for item in client.timeweb("database-types")["types"]
+                               if item["type"] == data["type"] and item["name"] == engine]
                     if not current:
                         raise ValueError("Unknown database type")
                 else:

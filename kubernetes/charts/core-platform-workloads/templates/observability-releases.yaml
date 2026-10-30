@@ -13,6 +13,7 @@ data:
     {{- $catalog := .Files.Get "files/infrastructure-releases.json" | fromJson }}
     {{- $_ := set $catalog "kubernetesClusterId" (.Values.observability.controlPlane.clusterId | int64) }}
     {{- $_ := set $catalog "databaseClusterId" (.Values.observability.postgresBackups.clusterId | int64) }}
+    {{- $_ := set $catalog "valkeyClusterId" (.Values.observability.valkey.clusterId | int64) }}
     {{- $catalog | toPrettyJson | nindent 4 }}
 ---
 apiVersion: v1
@@ -111,7 +112,7 @@ spec:
         app.kubernetes.io/part-of: core-platform
       annotations:
         checksum/code: {{ .Files.Get "files/infrastructure_releases.py" | sha256sum }}
-        checksum/catalog: {{ printf "%s-%v-%v" (.Files.Get "files/infrastructure-releases.json") .Values.observability.controlPlane.clusterId .Values.observability.postgresBackups.clusterId | sha256sum }}
+        checksum/catalog: {{ printf "%s-%v-%v-%v" (.Files.Get "files/infrastructure-releases.json") .Values.observability.controlPlane.clusterId .Values.observability.postgresBackups.clusterId .Values.observability.valkey.clusterId | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "9090"
     spec:
