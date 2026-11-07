@@ -49,6 +49,12 @@
       "newCode": "PREVIOUS_VERSION"
     },
     {
+      "repository": "panixida-dotnet-core/presentation-signalr",
+      "projectKey": "panixida-dotnet-core-presentation-signalr",
+      "projectName": "PANiXiDA Core Presentation SignalR",
+      "newCode": "PREVIOUS_VERSION"
+    },
+    {
       "repository": "panixida-dotnet-core/result-pattern",
       "projectKey": "panixida-dotnet-core-result-pattern",
       "projectName": "PANiXiDA Core Result Pattern",
