@@ -1,6 +1,12 @@
 {
   "repositories": [
     {
+      "repository": "panixida-dotnet-core/api-documentation",
+      "projectKey": "panixida-dotnet-core-api-documentation",
+      "projectName": "PANiXiDA Core API Documentation",
+      "newCode": "PREVIOUS_VERSION"
+    },
+    {
       "repository": "panixida-dotnet-core/application",
       "projectKey": "panixida-dotnet-core-application",
       "projectName": "PANiXiDA Core Application",
@@ -52,6 +58,12 @@
       "repository": "panixida-dotnet-core/presentation-signalr",
       "projectKey": "panixida-dotnet-core-presentation-signalr",
       "projectName": "PANiXiDA Core Presentation SignalR",
+      "newCode": "PREVIOUS_VERSION"
+    },
+    {
+      "repository": "panixida-dotnet-core/presentation-scalar",
+      "projectKey": "panixida-dotnet-core-presentation-scalar",
+      "projectName": "PANiXiDA Core Presentation Scalar",
       "newCode": "PREVIOUS_VERSION"
     },
     {
