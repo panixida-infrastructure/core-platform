@@ -27,7 +27,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
         run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
@@ -37,5 +37,5 @@ jobs:
         with:
           context: images/sonarqube
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/panixida-infrastructure/core-platform/sonarqube:${{ github.sha }}
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          tags: ghcr.io/panixida-infrastructure/core-platform/sonarqube:${{ github.event.pull_request.head.sha || github.sha }}

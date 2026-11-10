@@ -12,8 +12,9 @@ is installed, so the web UI is usable after reconciliation.
 `images/sonarqube/Dockerfile` pins both the official SonarQube 26.9 image and the
 Temurin JDK by digest. The server JAR, bundled analyzers, branch plugin and patched
 webapp keep their existing versions. The `SonarQube runtime image` workflow builds
-pull requests and publishes main/manual builds to GHCR using the commit SHA as
-the tag. The package must allow anonymous pulls; chart values pin the verified
+pull requests and publishes same-repository PR, main and manual builds to GHCR
+using the commit SHA as the tag. Fork PRs build without registry credentials.
+The package must allow anonymous pulls; chart values pin the verified
 published digest rather than following a mutable tag.
 
 All three server JVMs use `-XX:TrimNativeHeapInterval=300000` to return unused
