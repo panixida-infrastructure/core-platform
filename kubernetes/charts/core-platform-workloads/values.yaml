@@ -103,9 +103,9 @@ sonarqube:
     key: GitHub
     apiUrl: https://api.github.com
   javaOpts:
-    web: -Xms128m -Xmx384m
-    ce: -Xms128m -Xmx384m
-    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
+    web: -Xms128m -Xmx384m -XX:TrimNativeHeapInterval=300000
+    ce: -Xms128m -Xmx384m -XX:TrimNativeHeapInterval=300000
+    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m -XX:TrimNativeHeapInterval=300000
   persistence:
     enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud

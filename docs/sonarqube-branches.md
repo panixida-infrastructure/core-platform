@@ -2,9 +2,27 @@
 
 The server stays on SonarQube Community Build **26.9.0.129388**. The chart installs
 the Community Branch Plugin JAR and its matching patched webapp, with SHA256
-verification, and enables both Java agents. The stock server image is retained.
+verification, and enables both Java agents. The runtime image retains the stock
+server files and replaces only the JDK with Temurin **25.0.5+8**.
 The configuration job records plugin consent when this explicitly enabled plugin
 is installed, so the web UI is usable after reconciliation.
+
+## Java runtime and native memory
+
+`images/sonarqube/Dockerfile` pins both the official SonarQube 26.9 image and the
+Temurin JDK by digest. The server JAR, bundled analyzers, branch plugin and patched
+webapp keep their existing versions. The `SonarQube runtime image` workflow builds
+pull requests and publishes main/manual builds to GHCR using the commit SHA as
+the tag. The package must allow anonymous pulls; chart values pin the verified
+published digest rather than following a mutable tag.
+
+All three server JVMs use `-XX:TrimNativeHeapInterval=300000` to return unused
+glibc native-heap pages every five minutes. This does not run a full Java GC.
+JDK 25.0.5 includes the native heap trimmer lock-order fix JDK-8375125. Keep this
+fix when updating the runtime. Verify Java versions and this flag in the web,
+Compute Engine and Elasticsearch processes after rollout, then compare memory
+and analysis duration under normal load. Lower intervals increase trimming
+overhead; this setting does not impose a memory limit.
 
 ## Pinned fork
 
