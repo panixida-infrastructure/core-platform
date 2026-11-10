@@ -70,7 +70,7 @@ sonarqube:
   enabled: true
   namespace: quality
   host: sonar.panixida.ru
-  image: public.ecr.aws/docker/library/sonarqube:26.9.0.129388-community
+  image: ghcr.io/panixida-infrastructure/core-platform/sonarqube:1cc81e8c7b08938bcb93773eb237de90ca702e16@sha256:6007cd6235c638314116996a164474d6431b2450b67ba0c3e3080574e2447b89
   # TODO: replace the 26.9 fork with a compatible mc1arke release after staging verification.
   branchPlugin:
     enabled: true
