@@ -6,26 +6,11 @@ verification, and enables both Java agents. The stock server image is retained.
 The configuration job records plugin consent when this explicitly enabled plugin
 is installed, so the web UI is usable after reconciliation.
 
-## Pinned fork
+## Plugin release
 
-- Source: [Adrian-Eckardt fork, commit a68cf75cc414a0725e54ec73d7a1ff6d51afadd7](https://github.com/Adrian-Eckardt/sonarqube-community-branch-plugin/tree/a68cf75cc414a0725e54ec73d7a1ff6d51afadd7).
-- Upstream contribution: [mc1arke PR #1298](https://github.com/mc1arke/sonarqube-community-branch-plugin/pull/1298).
-- Verified build: [run 34239488815](https://github.com/Adrian-Eckardt/sonarqube-community-branch-plugin/actions/runs/34239488815).
-- Durable binaries, source archives, licenses and provenance:
-  [our pinned release](https://github.com/panixida-infrastructure/core-platform/releases/tag/sonarqube-26.9-cbp-a68cf75).
-
-The release mirrors that build unchanged; checksums are pinned in chart values.
-GitHub Actions artifact archive digests were checked before extracting the JAR
-and webapp. This avoids deployment relying on expiring upstream CI artifacts.
-To rebuild, unpack both source archives, put the webapp source at
-`sonarqube-webapp`, and follow the pinned `.github/workflows/build.yml`:
-Java 21 `./gradlew clean build`, then Node 22, the addon setup script, Yarn install
-and `yarn nx run sq-server:build`. Keep JAR and webapp from the same source revision.
-
-**TODO: switch to an original mc1arke release supporting the deployed server
-version once available.** Verify it on a restored database first, then replace
-both asset URLs/checksums and the agent JAR filename together. Recheck branch/PR
-APIs, Quality Gates and the general settings UI before production deployment.
+The chart uses [mc1arke 26.9.0](https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/tag/26.9.0)
+for SonarQube 26.9. When updating it, pin the JAR filename, both download URLs and
+both SHA256 checksums from the same release.
 
 ## Analysis and new code
 
@@ -65,13 +50,17 @@ independent of this job.
 
 ## Rollout and recovery
 
-Before changing the plugin, create a fresh database backup and verify restoring
-it into an isolated PostgreSQL instance. Start the same Sonar image with the fork
-against that restored database; do not run bound PR analyses there because they
-could send comments to production repositories.
+Before changing the plugin, restore a fresh database backup into an isolated
+PostgreSQL instance. Run the same Sonar image with the current and proposed plugin
+versions against that database. Check the branch and PR APIs, Quality Gates and
+the settings UI. Isolate the test instance from production integrations and use
+an unbound project for test analyses.
 
-The Deployment uses `Recreate`, so rollout briefly interrupts analysis. Keep the
-previous Helm values and backup until live validation completes. Set
+The Deployment uses `Recreate`, so rollout briefly interrupts analysis. The init
+container moves the previous JAR to `disabled-plugins`, and the new pod extracts
+the matching webapp into an empty volume. Keep the previous Helm values, plugin
+assets and database backup until live validation completes. After validation,
+remove the superseded JAR from `disabled-plugins`. Set
 `sonarqube.branchPlugin.enabled=false` to start the stock webapp without agents;
 the init container moves only Community Branch Plugin JARs into `disabled-plugins`
 on the existing PVC, leaving other plugins untouched. This provides a server
