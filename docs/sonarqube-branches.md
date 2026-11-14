@@ -1,6 +1,6 @@
 # SonarQube branches and pull requests
 
-The server stays on SonarQube Community Build **26.9.0.129388**. The chart installs
+The server uses SonarQube Community Build **26.10.0.133078**. The chart installs
 the Community Branch Plugin JAR and its matching patched webapp, with SHA256
 verification, and enables both Java agents. The stock server image is retained.
 The configuration job records plugin consent when this explicitly enabled plugin
@@ -8,9 +8,14 @@ is installed, so the web UI is usable after reconciliation.
 
 ## Plugin release
 
-The chart uses [mc1arke 26.9.0](https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/tag/26.9.0)
-for SonarQube 26.9. When updating it, pin the JAR filename, both download URLs and
+The chart uses [mc1arke 26.10.0](https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/tag/26.10.0)
+for SonarQube 26.10. When updating it, pin the JAR filename, both download URLs and
 both SHA256 checksums from the same release.
+
+The official image includes Temurin 25.0.5+8 with the fix for
+[JDK-8375125](https://bugs.openjdk.org/browse/JDK-8375125). The web, Compute Engine
+and Elasticsearch JVMs use `-XX:TrimNativeHeapInterval=300000` to return unused
+native memory to Linux every five minutes.
 
 ## Analysis and new code
 
@@ -50,13 +55,14 @@ independent of this job.
 
 ## Rollout and recovery
 
-Before changing the plugin, restore a fresh database backup into an isolated
-PostgreSQL instance. Run the same Sonar image with the current and proposed plugin
-versions against that database. Check the branch and PR APIs, Quality Gates and
-the settings UI. Isolate the test instance from production integrations and use
-an unbound project for test analyses.
+Before updating SonarQube, restore a fresh database backup into an isolated
+PostgreSQL instance and test the new image with its matching plugin. If SonarQube
+reports that a database migration is needed, complete it at `/setup`. Check the
+branch and PR APIs, Quality Gates and the settings UI. Isolate the test instance
+from production integrations and use an unbound project for test analyses.
 
-The Deployment uses `Recreate`, so rollout briefly interrupts analysis. The init
+The Deployment uses `Recreate`, so rollout interrupts analysis until startup and
+any required database migration finish. The init
 container moves the previous JAR to `disabled-plugins`, and the new pod extracts
 the matching webapp into an empty volume. Keep the previous Helm values, plugin
 assets and database backup until live validation completes. After validation,
