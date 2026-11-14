@@ -126,6 +126,8 @@ spec:
               value: cloudflare.com:443,github.com:443
             - name: DNS_SERVER
               value: "on"
+            - name: DNS_CACHING
+              value: "off"
             - name: DNS_UPSTREAM_RESOLVER_TYPE
               value: doh
             - name: DNS_UPSTREAM_RESOLVERS
