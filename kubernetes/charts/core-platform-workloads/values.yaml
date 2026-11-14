@@ -70,15 +70,15 @@ sonarqube:
   enabled: true
   namespace: quality
   host: sonar.panixida.ru
-  image: public.ecr.aws/docker/library/sonarqube:26.9.0.129388-community
+  image: public.ecr.aws/docker/library/sonarqube:26.10.0.133078-community
   branchPlugin:
     enabled: true
-    sourceCommit: 1ba1c3a4099bd40fab7ccae6e393497e1dc2da11
-    jarName: sonarqube-community-branch-plugin-26.9.0.jar
-    jarUrl: https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/26.9.0/sonarqube-community-branch-plugin-26.9.0.jar
-    jarSha256: d346c416a734402bffc038c41201b11b1fa7643b6dd63eb06bee6809000861cb
-    webappUrl: https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/26.9.0/sonarqube-webapp.zip
-    webappSha256: 780aaacbff35fffe5bd72d44ef39c0c05b542c82b779b08bad186f9ff98c1aa4
+    sourceCommit: ed7e51aa1b4246cc3387cd288743dcd9f9e9a4e1
+    jarName: sonarqube-community-branch-plugin-26.10.0.jar
+    jarUrl: https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/26.10.0/sonarqube-community-branch-plugin-26.10.0.jar
+    jarSha256: bba05997898782d765a981757f091dd0cd1ace8fd5c30955453a0d21f1b1b909
+    webappUrl: https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/26.10.0/sonarqube-webapp.zip
+    webappSha256: 8878540a4b7dda2a2b7e275c48f93eddef856dd94208a6d9065f3ab5e5fa750d
   newCodeDays: 30
   prCleanup:
     enabled: true
@@ -102,9 +102,10 @@ sonarqube:
     key: GitHub
     apiUrl: https://api.github.com
   javaOpts:
-    web: -Xms128m -Xmx384m
-    ce: -Xms128m -Xmx384m
-    search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m
+      # Temurin 25.0.5 includes the fix for native heap trimmer lock ordering.
+      web: -Xms128m -Xmx384m -XX:TrimNativeHeapInterval=300000
+      ce: -Xms128m -Xmx384m -XX:TrimNativeHeapInterval=300000
+      search: -Xms512m -Xmx512m -XX:MaxDirectMemorySize=128m -XX:TrimNativeHeapInterval=300000
   persistence:
     enabled: true
   storageClassName: nvme.network-drives.csi.timeweb.cloud
