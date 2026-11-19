@@ -5,18 +5,30 @@ set -euo pipefail
 : "${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}"
 
 bucket=panixida-storage
+endpoint=https://s3.twcstorage.ru
+region=ru-1
 rule_file="$(dirname "${BASH_SOURCE[0]}")/storage-noncurrent-versions.json"
 
 s3() {
-  aws s3api "$@" --bucket "$bucket" --endpoint-url https://s3.twcstorage.ru \
-    --region ru-1 --no-cli-pager
+  aws s3api "$@" --bucket "$bucket" --endpoint-url "$endpoint" \
+    --region "$region" --no-cli-pager
+}
+
+lifecycle_is_missing() {
+  local response
+  # AWS CLI can misparse the empty Message in Timeweb's lifecycle 404.
+  response="$(jq -nr '"user = " + ((env.AWS_ACCESS_KEY_ID + ":" + env.AWS_SECRET_ACCESS_KEY) | @json)' \
+    | curl --config - --aws-sigv4 "aws:amz:$region:s3" --silent --show-error \
+      --max-time 20 --write-out '\n%{http_code}' "$endpoint/$bucket?lifecycle=")" || return 1
+  [[ "$response" == *'<Code>NoSuchLifecycleConfiguration</Code>'*$'\n404' ]]
 }
 
 read_lifecycle() {
   local response
   if response="$(s3 get-bucket-lifecycle-configuration --output json 2>&1)"; then
     printf '%s\n' "$response"
-  elif [[ "$response" == *'(NoSuchLifecycleConfiguration)'* ]]; then
+  elif [[ "$response" == *'(NoSuchLifecycleConfiguration)'* ]] ||
+    { [[ "$response" == *"argument of type 'NoneType'"* ]] && lifecycle_is_missing; }; then
     printf '%s\n' '{"Rules":[]}'
   else
     printf '%s\n' "$response" >&2
