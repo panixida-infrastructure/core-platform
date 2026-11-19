@@ -1,0 +1,35 @@
+name: Timeweb S3 Bucket
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type reconcile-panixida-storage to enable versioning and expire noncurrent versions bucket-wide
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opentofu-production
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Reconcile panixida-storage
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.TOFU_STATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOFU_STATE_SECRET_KEY }}
+          AWS_EC2_METADATA_DISABLED: "true"
+        run: |
+          if [[ "$CONFIRM" != reconcile-panixida-storage ]]; then
+            echo "::error::Confirmation must be exactly reconcile-panixida-storage"
+            exit 1
+          fi
+          bash scripts/timeweb/reconcile-storage-bucket.sh
