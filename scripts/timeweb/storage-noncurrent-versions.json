@@ -1,0 +1,8 @@
+{
+  "ID": "expire-noncurrent-versions",
+  "Status": "Enabled",
+  "Filter": {},
+  "NoncurrentVersionExpiration": {
+    "NoncurrentDays": 1
+  }
+}

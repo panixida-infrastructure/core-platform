@@ -43,4 +43,11 @@ TOFU_STATE_SECRET_KEY
 
 The bucket itself is referenced as a `twc_s3_bucket` data source for now. It is not managed as a resource yet because the current provider docs do not document import syntax for `twc_s3_bucket`; managing the state bucket from the same state also deserves an explicit `prevent_destroy` review before we turn it into a resource.
 
-Enable bucket versioning if Timeweb Object Storage supports it for this bucket.
+The `Timeweb S3 Bucket` workflow enables versioning and expires noncurrent
+versions one day after they become noncurrent. The rule covers the entire
+`panixida-storage` bucket, including previous versions of the OpenTofu state.
+Current objects have no age-based expiration under this rule.
+
+Run the workflow with `reconcile-panixida-storage` as confirmation. It applies
+the tracked rule through the S3 API, keeps other lifecycle rules, and verifies
+versioning and lifecycle configuration after applying the change.
