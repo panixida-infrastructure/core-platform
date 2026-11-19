@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: Type reconcile-panixida-storage to enable versioning and expire noncurrent versions bucket-wide
+        description: Type reconcile-panixida-storage to enable versioning and apply the bucket-wide lifecycle configuration
         required: true
         type: string
 
