@@ -13,6 +13,12 @@
       "newCode": "PREVIOUS_VERSION"
     },
     {
+      "repository": "panixida-dotnet-core/backend-code-generator",
+      "projectKey": "panixida-dotnet-core-backend-code-generator",
+      "projectName": "PANiXiDA Core Backend Code Generator",
+      "newCode": "PREVIOUS_VERSION"
+    },
+    {
       "repository": "panixida-dotnet-core/domain",
       "projectKey": "panixida-dotnet-core-domain",
       "projectName": "PANiXiDA Core Domain",
